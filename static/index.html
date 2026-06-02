@@ -11,53 +11,64 @@
 <meta name="apple-mobile-web-app-title" content="Playground">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <style>
-:root{--green:#2e7d32;--green-lt:#4caf50;--green-dk:#1b5e20;--amber:#f57f17;--blue:#1565c0;--bg:#f4f6f4;--card:#ffffff;--txt:#212121;--txt2:#6b6b6b;--border:#dde2dd;--radius:14px}
+:root{--green:#2e7d32;--green-lt:#4caf50;--green-dk:#1b5e20;--amber:#f57f17;--blue:#1565c0;--bg:#f4f6f4;--card:#fff;--txt:#212121;--txt2:#6b6b6b;--border:#dde2dd;--radius:14px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;max-width:540px;margin:0 auto}
 header{background:var(--green);color:#fff;padding:14px 16px 0;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.app-title{font-size:1.1rem;font-weight:700;letter-spacing:.3px;margin-bottom:10px;cursor:pointer;user-select:none}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.app-title{font-size:1.1rem;font-weight:700;letter-spacing:.3px;cursor:pointer;user-select:none}
+.settings-btn{background:rgba(255,255,255,.18);border:none;border-radius:8px;color:#fff;font-size:1rem;padding:5px 9px;cursor:pointer;display:none}
+.settings-btn:active{background:rgba(255,255,255,.35)}
 .tabs{display:flex}
-.tab-btn{flex:1;padding:10px 8px;background:transparent;border:none;color:rgba(255,255,255,.65);font-size:.9rem;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;letter-spacing:.2px}
+.tab-btn{flex:1;padding:10px 8px;background:transparent;border:none;color:rgba(255,255,255,.65);font-size:.9rem;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s}
 .tab-btn.active{color:#fff;border-bottom-color:#fff}
 main{padding:14px}
-.pane{display:none}
-.pane.active{display:block}
+.pane{display:none}.pane.active{display:block}
 .card{background:var(--card);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .clabel{font-size:.7rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:9px}
 .sub-label{font-size:.68rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.7px;margin:12px 0 7px}
 .shift-hdr{font-size:.95rem;font-weight:700;color:var(--txt);margin-bottom:12px}
 /* setup */
-.setup-wrap{padding:8px 0}
 .setup-title{font-size:1.3rem;font-weight:800;color:var(--green);margin-bottom:6px}
-.setup-sub{font-size:.9rem;color:var(--txt2);margin-bottom:20px;line-height:1.5}
-.setup-input{width:100%;padding:12px;border:2px solid var(--border);border-radius:9px;font-size:1rem;font-family:inherit;color:var(--txt);background:#fff;margin-bottom:8px}
+.setup-sub{font-size:.9rem;color:var(--txt2);margin-bottom:18px;line-height:1.5}
+.setup-list{display:flex;flex-direction:column;gap:7px;margin-bottom:8px}
+.setup-row{display:flex;gap:7px;align-items:center}
+.setup-input{flex:1;padding:11px 12px;border:2px solid var(--border);border-radius:9px;font-size:.95rem;font-family:inherit;color:var(--txt);background:#fff}
 .setup-input:focus{outline:none;border-color:var(--green-lt)}
-/* date row */
+.setup-remove{width:34px;height:34px;border:2px solid var(--border);border-radius:8px;background:#fff;color:var(--txt2);font-size:1.1rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.setup-remove:active{background:#ffebee;color:#c62828;border-color:#c62828}
+.setup-add{background:none;border:2px dashed var(--border);border-radius:9px;color:var(--txt2);font-size:.88rem;font-weight:600;padding:9px;cursor:pointer;width:100%;text-align:center}
+.setup-add:active{background:#edf7ed}
+/* date */
 .date-row{display:grid;grid-template-columns:36px 1fr 36px;gap:6px;align-items:center}
-.date-arrow{width:36px;height:36px;border:2px solid var(--border);border-radius:9px;background:#fff;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--green);transition:all .15s;flex-shrink:0}
+.date-arrow{width:36px;height:36px;border:2px solid var(--border);border-radius:9px;background:#fff;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--green);transition:all .15s}
 .date-arrow:active{background:#edf7ed}
 .date-arrow:disabled{color:#ccc;cursor:default}
 input[type=date]{width:100%;padding:11px 12px;border:2px solid var(--border);border-radius:9px;font-size:1rem;font-family:inherit;color:var(--txt);background:#fff;cursor:pointer;-webkit-appearance:none}
 input[type=date]:focus{outline:none;border-color:var(--green-lt)}
 .future-note{background:#fff8e1;border:2px solid #ffe082;border-radius:9px;padding:10px 12px;font-size:.85rem;color:#8a6000;font-weight:500;margin-bottom:10px;display:none}
-.tog-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.tog{padding:13px 8px;border:2px solid var(--border);border-radius:9px;background:#fff;font-size:.95rem;font-weight:600;cursor:pointer;text-align:center;color:var(--txt);transition:all .15s;line-height:1.3}
+/* toggles */
+.tog-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+.tog{padding:12px 8px;border:2px solid var(--border);border-radius:9px;background:#fff;font-size:.9rem;font-weight:600;cursor:pointer;text-align:center;color:var(--txt);transition:all .15s;line-height:1.3}
 .tog:active{transform:scale(.96)}
 .tog.sel-morning{background:var(--amber);border-color:var(--amber);color:#fff}
 .tog.sel-evening{background:var(--blue);border-color:var(--blue);color:#fff}
 .tog.sel-user{background:var(--green);border-color:var(--green);color:#fff}
 .tog:disabled{opacity:.4;pointer-events:none}
+/* vacation */
 .vac-row{display:flex;align-items:center;justify-content:space-between}
-.vac-label{font-size:1rem;font-weight:600;color:var(--txt)}
+.vac-label{font-size:1rem;font-weight:600}
 .sw{position:relative;display:inline-block;width:50px;height:27px}
 .sw input{opacity:0;width:0;height:0}
 .sl{position:absolute;cursor:pointer;inset:0;background:#c8c8c8;border-radius:27px;transition:.3s}
 .sl::before{content:'';position:absolute;height:19px;width:19px;left:4px;bottom:4px;background:#fff;border-radius:50%;transition:.3s}
 input:checked+.sl{background:var(--amber)}
 input:checked+.sl::before{transform:translateX(23px)}
+/* chips */
 .chips{display:flex;flex-wrap:wrap;gap:7px}
 .chip{padding:8px 13px;border:2px solid var(--border);border-radius:20px;background:#fff;font-size:.85rem;font-weight:500;cursor:pointer;color:var(--txt);transition:all .15s;user-select:none}
 .chip.active{background:var(--green);border-color:var(--green);color:#fff}
+/* activity tags */
 .tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px}
 .atag{padding:6px 11px;border:2px solid var(--border);border-radius:16px;background:#fff;font-size:.82rem;font-weight:500;cursor:pointer;color:var(--txt);transition:all .15s;user-select:none;line-height:1}
 .atag:active{transform:scale(.95)}
@@ -66,21 +77,23 @@ input:checked+.sl::before{transform:translateX(23px)}
 .tag-input{flex:1;padding:8px 11px;border:2px solid var(--border);border-radius:9px;font-size:.85rem;font-family:inherit;color:var(--txt);background:#fff;min-width:0}
 .tag-input:focus{outline:none;border-color:var(--green-lt)}
 .tag-btn{padding:8px 14px;background:var(--green);color:#fff;border:none;border-radius:9px;font-size:1rem;font-weight:700;cursor:pointer;flex-shrink:0}
-.kids-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.kid{display:flex;align-items:center;gap:10px;padding:13px 12px;border:2px solid var(--border);border-radius:9px;cursor:pointer;transition:all .15s;user-select:none;background:#fff}
+/* kids */
+.kids-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+.kid{display:flex;align-items:center;gap:8px;padding:11px 10px;border:2px solid var(--border);border-radius:9px;cursor:pointer;transition:all .15s;user-select:none;background:#fff}
 .kid.on{border-color:var(--green);background:#edf7ed}
-.kbox{width:21px;height:21px;border:2px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;transition:all .15s}
+.kbox{width:20px;height:20px;border:2px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;transition:all .15s}
 .kid.on .kbox{background:var(--green);border-color:var(--green);color:#fff}
-.kname{font-size:.95rem;font-weight:600}
-.submit{width:100%;padding:15px;background:var(--green);color:#fff;border:none;border-radius:var(--radius);font-size:1rem;font-weight:700;cursor:pointer;margin-top:2px;transition:background .2s;letter-spacing:.3px}
+.kname{font-size:.9rem;font-weight:600}
+/* submit */
+.submit{width:100%;padding:15px;background:var(--green);color:#fff;border:none;border-radius:var(--radius);font-size:1rem;font-weight:700;cursor:pointer;margin-top:2px;transition:background .2s}
 .submit:active{background:var(--green-dk)}
+/* entries */
 .sec-title{font-size:.72rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.6px;margin:16px 0 6px}
 .entry{background:var(--card);border-radius:var(--radius);padding:13px 14px;margin-bottom:7px;box-shadow:0 1px 3px rgba(0,0,0,.07);position:relative}
 .e-head{display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap}
 .badge{padding:3px 9px;border-radius:11px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
 .badge.morning{background:#fff3e0;color:#bf360c}
-.badge.evening{background:#e3f2fd;color:#0d47a1}
-.badge.afternoon{background:#e3f2fd;color:#0d47a1}
+.badge.evening,.badge.afternoon{background:#e3f2fd;color:#0d47a1}
 .badge.vac{background:#fce4ec;color:#b71c1c}
 .e-user{font-weight:700;font-size:.95rem}
 .e-body{font-size:.83rem;color:var(--txt2);line-height:1.7}
@@ -90,18 +103,19 @@ input:checked+.sl::before{transform:translateX(23px)}
 .na{display:inline-block;padding:1px 7px;background:#f0f0f0;color:#999;border-radius:4px;font-size:.78rem}
 .del{position:absolute;top:10px;right:10px;background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;line-height:1;padding:3px 5px;border-radius:4px}
 .del:hover{background:#ffebee;color:#c62828}
+/* dashboard */
 .period-tabs{display:flex;gap:5px;margin-bottom:8px}
 .ptab{flex:1;padding:8px 2px;border:2px solid var(--border);border-radius:9px;background:#fff;font-size:.78rem;font-weight:600;cursor:pointer;text-align:center;color:var(--txt2);transition:all .15s}
 .ptab.active{background:var(--green);border-color:var(--green);color:#fff}
 .month-nav{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:var(--radius);padding:12px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .month-nav button{background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--green);width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%}
-.month-nav button:active{background:#edf7ed}
 .month-nav span{font-weight:700;font-size:1rem;text-align:center;flex:1}
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .stat{background:var(--card);border-radius:var(--radius);padding:16px 12px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .stat-n{font-size:2.1rem;font-weight:800;color:var(--green);line-height:1}
-.stat-n.stat-sm{font-size:1.4rem}
+.stat-n.sm{font-size:1.4rem}
 .stat-l{font-size:.75rem;color:var(--txt2);margin-top:3px;font-weight:500}
+/* charts */
 .charts-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .chart-card{background:var(--card);border-radius:var(--radius);padding:12px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .chart-title{font-size:.65rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;text-align:center}
@@ -126,7 +140,10 @@ input:checked+.sl::before{transform:translateX(23px)}
 <body>
 
 <header>
-  <div class="app-title">🌳 Playground Tracker</div>
+  <div class="hdr-row">
+    <div class="app-title">🌳 Playground Tracker</div>
+    <button class="settings-btn" id="settingsBtn" title="Family settings">⚙️</button>
+  </div>
   <div class="tabs" id="mainTabs" style="display:none">
     <button class="tab-btn active" data-tab="entry">Log Entry</button>
     <button class="tab-btn" data-tab="dash">Dashboard</button>
@@ -135,24 +152,25 @@ input:checked+.sl::before{transform:translateX(23px)}
 
 <main>
 
-<!-- SETUP PANE -->
+<!-- ── SETUP ────────────────────────────────────────────── -->
 <div id="pane-setup" class="pane active">
   <div class="card">
-    <div class="setup-wrap">
-      <div class="setup-title">Welcome! 👋</div>
-      <div class="setup-sub">Let's set up your family profile. You can always change this later from the settings.</div>
-      <div class="clabel">Parents</div>
-      <input class="setup-input" id="setup-p1" type="text" placeholder="Parent 1 name" autocomplete="off">
-      <input class="setup-input" id="setup-p2" type="text" placeholder="Parent 2 name" autocomplete="off">
-      <div class="clabel" style="margin-top:14px">Kids</div>
-      <input class="setup-input" id="setup-k1" type="text" placeholder="Kid 1 name" autocomplete="off">
-      <input class="setup-input" id="setup-k2" type="text" placeholder="Kid 2 name" autocomplete="off">
-      <button class="submit" id="setup-save" style="margin-top:6px">Start Tracking! 🌳</button>
-    </div>
+    <div class="setup-title" id="setup-title">Welcome! 👋</div>
+    <div class="setup-sub" id="setup-sub">Let's set up your family. You can always add more people later.</div>
+
+    <div class="clabel">Parents / Grandparents</div>
+    <div class="setup-list" id="setup-parents"></div>
+    <button type="button" class="setup-add" id="add-parent-btn">+ Add parent</button>
+
+    <div class="clabel" style="margin-top:16px">Kids</div>
+    <div class="setup-list" id="setup-kids"></div>
+    <button type="button" class="setup-add" id="add-kid-btn">+ Add kid</button>
+
+    <button class="submit" id="setup-save" style="margin-top:16px">Save &amp; Start 🌳</button>
   </div>
 </div>
 
-<!-- ENTRY PANE -->
+<!-- ── ENTRY ─────────────────────────────────────────────── -->
 <div id="pane-entry" class="pane">
 
   <div class="card">
@@ -169,10 +187,7 @@ input:checked+.sl::before{transform:translateX(23px)}
 
   <div class="card" id="cardWho">
     <div class="clabel">Who went?</div>
-    <div class="tog-row">
-      <button class="tog" id="btn-p1" data-user="">Parent 1</button>
-      <button class="tog" id="btn-p2" data-user="">Parent 2</button>
-    </div>
+    <div class="tog-row" id="parent-btns"></div>
   </div>
 
   <div class="card" id="cardWhen">
@@ -190,7 +205,7 @@ input:checked+.sl::before{transform:translateX(23px)}
     </div>
   </div>
 
-  <!-- Morning detail -->
+  <!-- Morning -->
   <div class="card" id="morning-card" style="display:none">
     <div class="shift-hdr">☀️ Morning</div>
     <div class="sub-label">How long?</div>
@@ -204,10 +219,7 @@ input:checked+.sl::before{transform:translateX(23px)}
       <div class="chip" data-dur="2+ hours">2+ h</div>
     </div>
     <div class="sub-label">Which kids?</div>
-    <div class="kids-row" id="morning-kids">
-      <div class="kid on" id="morning-kid1" data-kid=""><div class="kbox">✓</div><span class="kname" id="morning-kid1-name">👧 Kid 1</span></div>
-      <div class="kid on" id="morning-kid2" data-kid=""><div class="kbox">✓</div><span class="kname" id="morning-kid2-name">👧 Kid 2</span></div>
-    </div>
+    <div class="kids-row" id="morning-kids"></div>
     <div class="sub-label">Activities</div>
     <div class="tag-row" id="morning-act-tags"></div>
     <div class="tag-add">
@@ -216,7 +228,7 @@ input:checked+.sl::before{transform:translateX(23px)}
     </div>
   </div>
 
-  <!-- Evening detail -->
+  <!-- Evening -->
   <div class="card" id="evening-card" style="display:none">
     <div class="shift-hdr">🌙 Evening</div>
     <div class="sub-label">How long?</div>
@@ -230,10 +242,7 @@ input:checked+.sl::before{transform:translateX(23px)}
       <div class="chip" data-dur="2+ hours">2+ h</div>
     </div>
     <div class="sub-label">Which kids?</div>
-    <div class="kids-row" id="evening-kids">
-      <div class="kid on" id="evening-kid1" data-kid=""><div class="kbox">✓</div><span class="kname" id="evening-kid1-name">👧 Kid 1</span></div>
-      <div class="kid on" id="evening-kid2" data-kid=""><div class="kbox">✓</div><span class="kname" id="evening-kid2-name">👧 Kid 2</span></div>
-    </div>
+    <div class="kids-row" id="evening-kids"></div>
     <div class="sub-label">Activities</div>
     <div class="tag-row" id="evening-act-tags"></div>
     <div class="tag-add">
@@ -244,7 +253,7 @@ input:checked+.sl::before{transform:translateX(23px)}
 
   <!-- Excuse -->
   <div class="card" id="excuse-card" style="display:none">
-    <div class="clabel" id="excuse-label">Why didn't the other parent go? (optional)</div>
+    <div class="clabel" id="excuse-label">Why didn't they go? (optional)</div>
     <div class="tag-row" id="excuse-tags"></div>
     <div class="tag-add">
       <input type="text" class="tag-input" id="excuse-input" placeholder="Add reason...">
@@ -257,7 +266,7 @@ input:checked+.sl::before{transform:translateX(23px)}
   <div id="todayList"></div>
 </div>
 
-<!-- DASHBOARD PANE -->
+<!-- ── DASHBOARD ──────────────────────────────────────────── -->
 <div id="pane-dash" class="pane">
   <div class="period-tabs">
     <button class="ptab" data-period="week">Week</button>
@@ -270,14 +279,14 @@ input:checked+.sl::before{transform:translateX(23px)}
     <span id="dashPeriodLabel"></span>
     <button id="dash-next">&#8250;</button>
   </div>
-  <div class="stats-grid">
-    <div class="stat"><div class="stat-n" id="s-p1">0</div><div class="stat-l" id="s-p1-label">Parent 1 outings</div></div>
-    <div class="stat"><div class="stat-n" id="s-p2">0</div><div class="stat-l" id="s-p2-label">Parent 2 outings</div></div>
-    <div class="stat"><div class="stat-n" id="s-k1">0</div><div class="stat-l" id="s-k1-label">Kid 1 outside</div></div>
-    <div class="stat"><div class="stat-n" id="s-k2">0</div><div class="stat-l" id="s-k2-label">Kid 2 outside</div></div>
-    <div class="stat"><div class="stat-n stat-sm" id="s-avg">–</div><div class="stat-l">Avg duration</div></div>
-    <div class="stat"><div class="stat-n stat-sm" id="s-total">–</div><div class="stat-l">Total time</div></div>
+
+  <div class="stats-grid" id="parent-stats"></div>
+  <div class="stats-grid" id="kid-stats"></div>
+  <div class="stats-grid" style="margin-bottom:10px">
+    <div class="stat"><div class="stat-n sm" id="s-avg">–</div><div class="stat-l">Avg duration</div></div>
+    <div class="stat"><div class="stat-n sm" id="s-total">–</div><div class="stat-l">Total time</div></div>
   </div>
+
   <div class="charts-2col">
     <div class="chart-card">
       <div class="chart-title">Morning / Evening</div>
@@ -287,13 +296,15 @@ input:checked+.sl::before{transform:translateX(23px)}
     <div class="chart-card">
       <div class="chart-title">Who Went</div>
       <div class="donut-wrap"><div class="donut-ring" id="donut-users"></div><div class="donut-center" id="donut-users-n">–</div></div>
-      <div class="chart-legend"><span class="dot" style="background:#2e7d32"></span><span id="legend-p1">P1</span>&nbsp;&nbsp;<span class="dot" style="background:#c62828"></span><span id="legend-p2">P2</span></div>
+      <div class="chart-legend" id="user-donut-legend"></div>
     </div>
   </div>
+
   <div class="chart-card" style="margin-bottom:10px">
     <div class="chart-title">Top Activities</div>
     <div id="acts-bars" class="bar-chart"></div>
   </div>
+
   <div class="sec-title">Log</div>
   <div id="dashList"></div>
 </div>
@@ -302,100 +313,143 @@ input:checked+.sl::before{transform:translateX(23px)}
 <div class="toast" id="toast"></div>
 
 <script>
-var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-var cfg    = null;
+var MONTHS  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+var COLORS  = ['#2e7d32','#c62828','#1565c0','#f57f17','#6a1b9a','#00838f','#558b2f','#ad1457'];
+var DUR_MAP = {'15 min':15,'30 min':30,'45 min':45,'1 hour':60,'1.5 hours':90,'2 hours':120,'2+ hours':150};
 
-// ─── State (initialised after config loads) ───────────────
-var shifts       = { morning: false, evening: false };
-var users        = {};
-var shiftDuration= { morning: null, evening: null };
-var shiftKids    = { morning: {}, evening: {} };
-var shiftTags    = { morning: new Set(), evening: new Set() };
-var excuseTags   = new Set();
-var customActTags= [];
-var customExcTags= [];
-var dashPeriod   = 'month';
-var dashRef      = today().slice(0,7);
+var cfg = null;  // {parents:[...], kids:[...]}
+
+// ─── per-entry state ─────────────────────────────────────
+var shifts        = {morning:false,evening:false};
+var users         = {};
+var shiftDuration = {morning:null,evening:null};
+var shiftKids     = {morning:{},evening:{}};
+var shiftTags     = {morning:new Set(),evening:new Set()};
+var excuseTags    = new Set();
+var customActTags = [];
+var customExcTags = [];
+var dashPeriod    = 'month';
+var dashRef       = today().slice(0,7);
 
 // ─── Boot ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-  apiFetch('/api/config').then(function(c) {
-    if (c && c.parent1) {
-      cfg = c;
-      showMain();
-    } else {
-      showSetup();
-    }
+  initSetupUI(false);
+  apiFetch('/api/family').then(function(f) {
+    if (f && f.parents && f.parents.length) { cfg = f; showMain(); }
+    else showSetup(false);
   });
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(function(){});
 });
 
-function showSetup() {
+// ─── Setup UI ────────────────────────────────────────────
+function initSetupUI(isEdit) {
+  document.getElementById('setup-title').textContent = isEdit ? 'Family Settings' : 'Welcome! 👋';
+  document.getElementById('setup-sub').textContent   = isEdit
+    ? 'Update your family members. Existing entries are not affected.'
+    : "Let's set up your family. You can always add more people later.";
+}
+
+function addPersonRow(containerId, placeholder, value) {
+  var row   = document.createElement('div'); row.className = 'setup-row';
+  var input = document.createElement('input');
+  input.className = 'setup-input'; input.type = 'text';
+  input.placeholder = placeholder; input.value = value || '';
+  var btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'setup-remove'; btn.textContent = '×';
+  btn.onclick = function() { row.remove(); };
+  row.appendChild(input); row.appendChild(btn);
+  document.getElementById(containerId).appendChild(row);
+}
+
+document.getElementById('add-parent-btn').onclick = function() { addPersonRow('setup-parents','Parent / grandparent name'); };
+document.getElementById('add-kid-btn').onclick     = function() { addPersonRow('setup-kids','Kid name'); };
+
+document.getElementById('settingsBtn').addEventListener('click', function() {
+  initSetupUI(true);
+  document.getElementById('setup-parents').innerHTML = '';
+  document.getElementById('setup-kids').innerHTML    = '';
+  if (cfg) {
+    cfg.parents.forEach(function(p){ addPersonRow('setup-parents','Parent / grandparent name', p); });
+    cfg.kids.forEach(function(k){    addPersonRow('setup-kids','Kid name', k); });
+  }
+  showSetup(true);
+});
+
+document.getElementById('setup-save').addEventListener('click', function() {
+  var parents = Array.from(document.querySelectorAll('#setup-parents .setup-input')).map(function(i){return i.value.trim();}).filter(Boolean);
+  var kids    = Array.from(document.querySelectorAll('#setup-kids .setup-input')).map(function(i){return i.value.trim();}).filter(Boolean);
+  if (!parents.length || !kids.length) { toast('Add at least one parent and one kid'); return; }
+  fetch('/api/family',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({parents:parents,kids:kids})})
+    .then(function(r){ if(r.ok){ cfg={parents:parents,kids:kids}; showMain(); } else toast('Error saving'); });
+});
+
+function showSetup(isEdit) {
+  document.querySelectorAll('.pane').forEach(function(p){p.classList.remove('active');});
   document.getElementById('pane-setup').classList.add('active');
-  document.getElementById('pane-entry').classList.remove('active');
-  document.getElementById('pane-dash').classList.remove('active');
   document.getElementById('mainTabs').style.display = 'none';
+  document.getElementById('settingsBtn').style.display = 'none';
+  if (!isEdit) {
+    document.getElementById('setup-parents').innerHTML = '';
+    document.getElementById('setup-kids').innerHTML    = '';
+    addPersonRow('setup-parents','e.g. Mum');
+    addPersonRow('setup-parents','e.g. Dad');
+    addPersonRow('setup-kids','e.g. Emma');
+    addPersonRow('setup-kids','e.g. Tom');
+  }
 }
 
 function showMain() {
   applyConfig();
-  document.getElementById('pane-setup').classList.remove('active');
+  document.querySelectorAll('.pane').forEach(function(p){p.classList.remove('active');});
   document.getElementById('pane-entry').classList.add('active');
   document.getElementById('mainTabs').style.display = '';
+  document.getElementById('settingsBtn').style.display = '';
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+  document.querySelector('.tab-btn[data-tab="entry"]').classList.add('active');
   var d = today();
   document.getElementById('entryDate').value = d;
   document.getElementById('dateNext').disabled = true;
-  updateDayName(d);
-  loadToday();
-  loadCustomTags();
+  updateDayName(d); loadToday(); loadCustomTags();
 }
 
 function applyConfig() {
   // parent buttons
-  var bp1 = document.getElementById('btn-p1');
-  var bp2 = document.getElementById('btn-p2');
-  bp1.textContent = cfg.parent1; bp1.dataset.user = cfg.parent1;
-  bp2.textContent = cfg.parent2; bp2.dataset.user = cfg.parent2;
-  // kid buttons (both shifts)
+  var pb = document.getElementById('parent-btns'); pb.innerHTML = '';
+  users = {};
+  cfg.parents.forEach(function(name) {
+    users[name] = false;
+    var btn = document.createElement('button');
+    btn.className = 'tog'; btn.dataset.user = name; btn.textContent = name;
+    btn.addEventListener('click', function() {
+      users[name] = !users[name];
+      btn.classList.toggle('sel-user', users[name]);
+      refreshExcuseCard();
+    });
+    pb.appendChild(btn);
+  });
+  // kid buttons per shift
   ['morning','evening'].forEach(function(s) {
-    var k1 = document.getElementById(s+'-kid1');
-    var k2 = document.getElementById(s+'-kid2');
-    k1.dataset.kid = cfg.kid1; document.getElementById(s+'-kid1-name').textContent = '👧 '+cfg.kid1;
-    k2.dataset.kid = cfg.kid2; document.getElementById(s+'-kid2-name').textContent = '👧 '+cfg.kid2;
+    shiftKids[s] = {};
+    var container = document.getElementById(s+'-kids'); container.innerHTML = '';
+    cfg.kids.forEach(function(name) {
+      shiftKids[s][name] = true;
+      var el = document.createElement('div');
+      el.className = 'kid on'; el.dataset.kid = name;
+      el.innerHTML = '<div class="kbox">✓</div><span class="kname">👧 '+esc(name)+'</span>';
+      el.addEventListener('click', function() {
+        shiftKids[s][name] = !shiftKids[s][name];
+        el.classList.toggle('on', shiftKids[s][name]);
+      });
+      container.appendChild(el);
+    });
   });
-  // state
-  users = {}; users[cfg.parent1] = false; users[cfg.parent2] = false;
-  shiftKids.morning = {}; shiftKids.morning[cfg.kid1] = true; shiftKids.morning[cfg.kid2] = true;
-  shiftKids.evening = {}; shiftKids.evening[cfg.kid1] = true; shiftKids.evening[cfg.kid2] = true;
-  // dashboard labels
-  document.getElementById('s-p1-label').textContent = cfg.parent1 + ' outings';
-  document.getElementById('s-p2-label').textContent = cfg.parent2 + ' outings';
-  document.getElementById('s-k1-label').textContent = cfg.kid1 + ' outside';
-  document.getElementById('s-k2-label').textContent = cfg.kid2 + ' outside';
-  document.getElementById('legend-p1').textContent = cfg.parent1;
-  document.getElementById('legend-p2').textContent = cfg.parent2;
 }
-
-// ─── Setup save ──────────────────────────────────────────
-document.getElementById('setup-save').addEventListener('click', function() {
-  var p1 = document.getElementById('setup-p1').value.trim();
-  var p2 = document.getElementById('setup-p2').value.trim();
-  var k1 = document.getElementById('setup-k1').value.trim();
-  var k2 = document.getElementById('setup-k2').value.trim();
-  if (!p1 || !p2 || !k1 || !k2) { toast('Please fill in all fields'); return; }
-  fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({parent1:p1, parent2:p2, kid1:k1, kid2:k2})
-  }).then(function() {
-    cfg = {parent1:p1, parent2:p2, kid1:k1, kid2:k2};
-    showMain();
-  });
-});
 
 // ─── Tabs ────────────────────────────────────────────────
 document.querySelectorAll('.tab-btn').forEach(function(btn) {
   btn.addEventListener('click', function() {
-    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
-    document.querySelectorAll('.pane').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+    document.querySelectorAll('.pane').forEach(function(p){p.classList.remove('active');});
     btn.classList.add('active');
     document.getElementById('pane-'+btn.dataset.tab).classList.add('active');
     if (btn.dataset.tab === 'dash') loadDash();
@@ -403,8 +457,8 @@ document.querySelectorAll('.tab-btn').forEach(function(btn) {
 });
 
 // ─── Date navigation ─────────────────────────────────────
-document.getElementById('datePrev').addEventListener('click', function(){ shiftDate(-1); });
-document.getElementById('dateNext').addEventListener('click', function(){ shiftDate(+1); });
+document.getElementById('datePrev').addEventListener('click', function(){shiftDate(-1);});
+document.getElementById('dateNext').addEventListener('click', function(){shiftDate(+1);});
 document.getElementById('entryDate').addEventListener('change', function() {
   var v = document.getElementById('entryDate').value;
   document.getElementById('dateNext').disabled = v >= today();
@@ -421,171 +475,138 @@ function shiftDate(dir) {
 }
 
 function updateDayName(s) {
-  var DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  document.getElementById('dayName').textContent = s === today() ? 'Today' : DAYS[localDate(s).getDay()];
+  var DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  document.getElementById('dayName').textContent = s===today()?'Today':DAYS[localDate(s).getDay()];
 }
 
 function handleFutureDate() {
   var isFuture = document.getElementById('entryDate').value > today();
-  document.getElementById('futureNote').style.display = isFuture ? 'block' : 'none';
-  document.getElementById('cardWho').style.opacity  = isFuture ? '.45' : '';
-  document.getElementById('cardWhen').style.opacity = isFuture ? '.45' : '';
-  document.querySelectorAll('[data-user],[data-shift]').forEach(function(b){ b.disabled = isFuture; });
-  if (isFuture) {
-    document.getElementById('vacToggle').checked = true;
-    refreshShiftCard('morning'); refreshShiftCard('evening'); refreshExcuseCard();
-  }
+  document.getElementById('futureNote').style.display = isFuture?'block':'none';
+  document.getElementById('cardWho').style.opacity  = isFuture?'.45':'';
+  document.getElementById('cardWhen').style.opacity = isFuture?'.45':'';
+  document.querySelectorAll('[data-user],[data-shift]').forEach(function(b){b.disabled=isFuture;});
+  if (isFuture) { document.getElementById('vacToggle').checked=true; refreshShiftCard('morning'); refreshShiftCard('evening'); refreshExcuseCard(); }
 }
 
-// ─── Shift toggles ───────────────────────────────────────
+// ─── Shifts ──────────────────────────────────────────────
 document.querySelectorAll('[data-shift]').forEach(function(btn) {
   btn.addEventListener('click', function() {
-    var s = btn.dataset.shift; shifts[s] = !shifts[s];
-    btn.classList.toggle(s==='morning'?'sel-morning':'sel-evening', shifts[s]);
+    var s=btn.dataset.shift; shifts[s]=!shifts[s];
+    btn.classList.toggle(s==='morning'?'sel-morning':'sel-evening',shifts[s]);
     refreshShiftCard(s);
   });
 });
 
 function refreshShiftCard(s) {
-  var vac = document.getElementById('vacToggle').checked;
-  var show = shifts[s] && !vac;
-  document.getElementById(s+'-card').style.display = show ? '' : 'none';
-  if (show) buildTags(s+'-act-tags', s+'-act-input', s+'-act-add', 'activity', customActTags, shiftTags[s]);
+  var vac=document.getElementById('vacToggle').checked, show=shifts[s]&&!vac;
+  document.getElementById(s+'-card').style.display=show?'':'none';
+  if (show) buildTags(s+'-act-tags',s+'-act-input',s+'-act-add','activity',customActTags,shiftTags[s]);
 }
 
-// ─── User toggles ────────────────────────────────────────
-document.querySelectorAll('[data-user]').forEach(function(btn) {
-  btn.addEventListener('click', function() {
-    var u = btn.dataset.user; users[u] = !users[u];
-    btn.classList.toggle('sel-user', users[u]); refreshExcuseCard();
-  });
-});
-
+// ─── Excuse card ─────────────────────────────────────────
 function refreshExcuseCard() {
-  var vac = document.getElementById('vacToggle').checked;
-  var sel = Object.keys(users).filter(function(u){ return users[u]; });
+  var vac  = document.getElementById('vacToggle').checked;
+  var sel  = cfg ? cfg.parents.filter(function(p){return users[p];}) : [];
+  var notSel = cfg ? cfg.parents.filter(function(p){return !users[p];}) : [];
   var card = document.getElementById('excuse-card');
-  if (!vac && sel.length === 1) {
-    var other = sel[0] === cfg.parent1 ? cfg.parent2 : cfg.parent1;
-    document.getElementById('excuse-label').textContent = "Why didn't "+other+" go? (optional)";
-    card.style.display = '';
-    buildTags('excuse-tags','excuse-input','excuse-add','excuse', customExcTags, excuseTags);
-  } else { excuseTags.clear(); card.style.display = 'none'; }
+  if (!vac && sel.length>0 && notSel.length>0) {
+    document.getElementById('excuse-label').textContent = "Why didn't "+notSel.join(' & ')+" go? (optional)";
+    card.style.display='';
+    buildTags('excuse-tags','excuse-input','excuse-add','excuse',customExcTags,excuseTags);
+  } else { excuseTags.clear(); card.style.display='none'; }
 }
-
-// ─── Tags ────────────────────────────────────────────────
-function loadCustomTags() {
-  apiFetch('/api/tags?type=activity').then(function(r){ customActTags = r||[]; });
-  apiFetch('/api/tags?type=excuse').then(function(r){ customExcTags = r||[]; });
-}
-
-function buildTags(rowId, inputId, addBtnId, type, customs, selectedSet) {
-  var row = document.getElementById(rowId); row.innerHTML = '';
-  customs.forEach(function(tag) {
-    var btn = document.createElement('button'); btn.type='button';
-    btn.className = 'atag'+(selectedSet.has(tag)?' on':'');
-    btn.textContent = tag;
-    btn.onclick = function() {
-      if (selectedSet.has(tag)) selectedSet.delete(tag); else selectedSet.add(tag);
-      btn.classList.toggle('on', selectedSet.has(tag));
-    };
-    row.appendChild(btn);
-  });
-  var input = document.getElementById(inputId);
-  var addBtn = document.getElementById(addBtnId);
-  addBtn.onclick = function(){ doAddTag(input, type, customs, selectedSet, rowId, inputId, addBtnId); };
-  input.onkeydown = function(e){ if(e.key==='Enter'){e.preventDefault(); doAddTag(input,type,customs,selectedSet,rowId,inputId,addBtnId);} };
-}
-
-function doAddTag(input, type, customs, selectedSet, rowId, inputId, addBtnId) {
-  var val = input.value.trim(); if (!val) return; input.value='';
-  fetch('/api/tags',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:type,name:val})});
-  if (customs.indexOf(val)===-1) customs.push(val);
-  selectedSet.add(val);
-  buildTags(rowId, inputId, addBtnId, type, customs, selectedSet);
-}
-
-// ─── Duration chips ──────────────────────────────────────
-['morning','evening'].forEach(function(s) {
-  document.querySelectorAll('#'+s+'-chips .chip').forEach(function(chip) {
-    chip.addEventListener('click', function() {
-      var dur = chip.dataset.dur;
-      if (shiftDuration[s]===dur){shiftDuration[s]=null;chip.classList.remove('active');}
-      else{shiftDuration[s]=dur;document.querySelectorAll('#'+s+'-chips .chip').forEach(function(c){c.classList.remove('active');});chip.classList.add('active');}
-    });
-  });
-});
-
-// ─── Kids ────────────────────────────────────────────────
-['morning','evening'].forEach(function(s) {
-  document.querySelectorAll('#'+s+'-kids .kid').forEach(function(el) {
-    el.addEventListener('click', function() {
-      var k = el.dataset.kid; shiftKids[s][k] = !shiftKids[s][k];
-      el.classList.toggle('on', shiftKids[s][k]);
-    });
-  });
-});
 
 // ─── Vacation ────────────────────────────────────────────
 document.getElementById('vacToggle').addEventListener('change', function() {
   refreshShiftCard('morning'); refreshShiftCard('evening'); refreshExcuseCard();
 });
 
+// ─── Tags ────────────────────────────────────────────────
+function loadCustomTags() {
+  apiFetch('/api/tags?type=activity').then(function(r){customActTags=r||[];});
+  apiFetch('/api/tags?type=excuse').then(function(r){customExcTags=r||[];});
+}
+
+function buildTags(rowId,inputId,addBtnId,type,customs,selectedSet) {
+  var row=document.getElementById(rowId); row.innerHTML='';
+  customs.forEach(function(tag) {
+    var btn=document.createElement('button'); btn.type='button';
+    btn.className='atag'+(selectedSet.has(tag)?' on':''); btn.textContent=tag;
+    btn.onclick=function(){if(selectedSet.has(tag))selectedSet.delete(tag);else selectedSet.add(tag);btn.classList.toggle('on',selectedSet.has(tag));};
+    row.appendChild(btn);
+  });
+  var input=document.getElementById(inputId), addBtn=document.getElementById(addBtnId);
+  addBtn.onclick=function(){doAddTag(input,type,customs,selectedSet,rowId,inputId,addBtnId);};
+  input.onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();doAddTag(input,type,customs,selectedSet,rowId,inputId,addBtnId);}};
+}
+
+function doAddTag(input,type,customs,selectedSet,rowId,inputId,addBtnId) {
+  var val=input.value.trim(); if(!val)return; input.value='';
+  fetch('/api/tags',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:type,name:val})});
+  if(customs.indexOf(val)===-1)customs.push(val);
+  selectedSet.add(val);
+  buildTags(rowId,inputId,addBtnId,type,customs,selectedSet);
+}
+
+// ─── Duration chips ──────────────────────────────────────
+['morning','evening'].forEach(function(s) {
+  document.querySelectorAll('#'+s+'-chips .chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      var dur=chip.dataset.dur;
+      if(shiftDuration[s]===dur){shiftDuration[s]=null;chip.classList.remove('active');}
+      else{shiftDuration[s]=dur;document.querySelectorAll('#'+s+'-chips .chip').forEach(function(c){c.classList.remove('active');});chip.classList.add('active');}
+    });
+  });
+});
+
 // ─── Save ────────────────────────────────────────────────
 document.getElementById('saveBtn').addEventListener('click', async function() {
-  var selShifts = Object.keys(shifts).filter(function(s){return shifts[s];});
-  var selUsers  = Object.keys(users).filter(function(u){return users[u];});
-  var vac = document.getElementById('vacToggle').checked;
-  if (!selUsers.length)           { toast('Please select who went'); return; }
-  if (!vac && !selShifts.length)  { toast('Select morning, evening or both'); return; }
-  var userVal = selUsers.length===2 ? 'both' : selUsers[0];
-  var excStr  = excuseTags.size ? Array.from(excuseTags).join(', ') : null;
-  var dateVal = document.getElementById('entryDate').value;
-  var entries = vac
-    ? [{date:dateVal,shift:'morning',user:userVal,vacation:true,duration:null,kids:null,activities:null,excuse:null}]
-    : selShifts.map(function(s) {
-        var kArr = Object.keys(shiftKids[s]).filter(function(k){return shiftKids[s][k];});
-        return {date:dateVal,shift:s,user:userVal,vacation:false,
-          duration:shiftDuration[s],
-          kids: kArr.length===2?'both':(kArr[0]||null),
-          activities: shiftTags[s].size?Array.from(shiftTags[s]).join(', '):null,
-          excuse: excStr};
+  var selShifts=Object.keys(shifts).filter(function(s){return shifts[s];});
+  var selUsers =cfg?cfg.parents.filter(function(p){return users[p];}):[];
+  var vac=document.getElementById('vacToggle').checked;
+  if(!selUsers.length){toast('Please select who went');return;}
+  if(!vac&&!selShifts.length){toast('Select morning, evening or both');return;}
+  var userVal=selUsers.join(',');
+  var excStr=excuseTags.size?Array.from(excuseTags).join(', '):null;
+  var dateVal=document.getElementById('entryDate').value;
+  var entries=vac
+    ?[{date:dateVal,shift:'morning',user:userVal,vacation:true,duration:null,kids:null,activities:null,excuse:null}]
+    :selShifts.map(function(s){
+        var kArr=cfg?cfg.kids.filter(function(k){return shiftKids[s][k];}):[];
+        return{date:dateVal,shift:s,user:userVal,vacation:false,
+          duration:shiftDuration[s],kids:kArr.join(',')||null,
+          activities:shiftTags[s].size?Array.from(shiftTags[s]).join(', '):null,
+          excuse:excStr};
       });
-  var results = await Promise.all(entries.map(function(body){
+  var results=await Promise.all(entries.map(function(body){
     return fetch('/api/entries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(function(){return null;});
   }));
-  if (results.every(function(r){return r&&r.ok;})) { toast('Entry saved ✓'); resetForm(); loadToday(); }
+  if(results.every(function(r){return r&&r.ok;})){toast('Entry saved ✓');resetForm();loadToday();}
   else toast('Error saving — try again');
 });
 
 function resetForm() {
-  shifts={morning:false,evening:false};
-  users={}; if(cfg){users[cfg.parent1]=false;users[cfg.parent2]=false;}
-  shiftDuration={morning:null,evening:null};
-  shiftKids={morning:{},evening:{}};
-  if(cfg){shiftKids.morning[cfg.kid1]=true;shiftKids.morning[cfg.kid2]=true;shiftKids.evening[cfg.kid1]=true;shiftKids.evening[cfg.kid2]=true;}
+  shifts={morning:false,evening:false}; users={}; shiftDuration={morning:null,evening:null};
   shiftTags={morning:new Set(),evening:new Set()}; excuseTags=new Set();
+  if(cfg){cfg.parents.forEach(function(p){users[p]=false;});}
   document.querySelectorAll('[data-shift]').forEach(function(b){b.classList.remove('sel-morning','sel-evening');});
-  document.querySelectorAll('[data-user]').forEach(function(b){b.classList.remove('sel-user');});
+  document.querySelectorAll('#parent-btns .tog').forEach(function(b){b.classList.remove('sel-user');});
   document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('active');});
-  document.querySelectorAll('.kid').forEach(function(el){el.classList.add('on');});
   document.getElementById('vacToggle').checked=false;
   document.getElementById('morning-card').style.display='none';
   document.getElementById('evening-card').style.display='none';
   document.getElementById('excuse-card').style.display='none';
+  if(cfg){applyConfig();}
 }
 
 // ─── Today list ──────────────────────────────────────────
 async function loadToday() {
-  var d = document.getElementById('entryDate').value;
-  document.getElementById('dayLabel').textContent = d===today()?"Today's Log":'Log — '+fmtDate(d);
-  var list = await apiFetch('/api/entries?date='+d);
+  var d=document.getElementById('entryDate').value;
+  document.getElementById('dayLabel').textContent=d===today()?"Today's Log":'Log — '+fmtDate(d);
+  var list=await apiFetch('/api/entries?date='+d);
   renderList(list||[],'todayList',true);
 }
-async function delEntry(id) {
-  if (!confirm('Delete this entry?')) return;
-  await fetch('/api/entries/'+id,{method:'DELETE'}); loadToday();
-}
+async function delEntry(id){if(!confirm('Delete this entry?'))return;await fetch('/api/entries/'+id,{method:'DELETE'});loadToday();}
 
 // ─── Dashboard ───────────────────────────────────────────
 function localDate(s){var p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);}
@@ -593,29 +614,29 @@ function dateStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2
 function getMondayOf(s){var d=localDate(s),day=d.getDay();d.setDate(d.getDate()+(day===0?-6:1-day));return dateStr(d);}
 function getWeekEnd(m){var d=localDate(m);d.setDate(d.getDate()+6);return dateStr(d);}
 
-function getPeriodLabel() {
-  if (dashPeriod==='all') return 'All Time';
-  if (dashPeriod==='year') return dashRef;
-  if (dashPeriod==='month'){var p=dashRef.split('-');return MONTHS[+p[1]-1]+' '+p[0];}
+function getPeriodLabel(){
+  if(dashPeriod==='all')return'All Time';
+  if(dashPeriod==='year')return dashRef;
+  if(dashPeriod==='month'){var p=dashRef.split('-');return MONTHS[+p[1]-1]+' '+p[0];}
   var s=localDate(dashRef),e=localDate(getWeekEnd(dashRef));
-  if(s.getMonth()===e.getMonth()) return s.getDate()+' – '+e.getDate()+' '+s.toLocaleDateString('en-GB',{month:'long'})+' '+s.getFullYear();
+  if(s.getMonth()===e.getMonth())return s.getDate()+' – '+e.getDate()+' '+s.toLocaleDateString('en-GB',{month:'long'})+' '+s.getFullYear();
   return s.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' – '+e.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
 }
 
-function bumpPeriod(dir) {
+function bumpPeriod(dir){
   if(dashPeriod==='week'){var d=localDate(dashRef);d.setDate(d.getDate()+dir*7);dashRef=dateStr(d);}
   else if(dashPeriod==='month'){var p=dashRef.split('-').map(Number),d2=new Date(p[0],p[1]-1+dir,1);dashRef=d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0');}
-  else if(dashPeriod==='year') dashRef=String(Number(dashRef)+dir);
+  else if(dashPeriod==='year')dashRef=String(Number(dashRef)+dir);
 }
 
-document.querySelectorAll('.ptab').forEach(function(btn) {
-  btn.addEventListener('click', function() {
+document.querySelectorAll('.ptab').forEach(function(btn){
+  btn.addEventListener('click',function(){
     document.querySelectorAll('.ptab').forEach(function(b){b.classList.remove('active');});
     btn.classList.add('active'); dashPeriod=btn.dataset.period;
     var t=today();
-    if(dashPeriod==='week') dashRef=getMondayOf(t);
-    else if(dashPeriod==='month') dashRef=t.slice(0,7);
-    else if(dashPeriod==='year') dashRef=t.slice(0,4);
+    if(dashPeriod==='week')dashRef=getMondayOf(t);
+    else if(dashPeriod==='month')dashRef=t.slice(0,7);
+    else if(dashPeriod==='year')dashRef=t.slice(0,4);
     else dashRef=null;
     loadDash();
   });
@@ -623,44 +644,70 @@ document.querySelectorAll('.ptab').forEach(function(btn) {
 document.getElementById('dash-prev').addEventListener('click',function(){bumpPeriod(-1);loadDash();});
 document.getElementById('dash-next').addEventListener('click',function(){bumpPeriod(+1);loadDash();});
 
-async function loadDash() {
-  var showNav = dashPeriod!=='all';
-  document.getElementById('dash-prev').style.visibility = showNav?'visible':'hidden';
-  document.getElementById('dash-next').style.visibility = showNav?'visible':'hidden';
-  document.getElementById('dashPeriodLabel').textContent = getPeriodLabel();
+async function loadDash(){
+  var showNav=dashPeriod!=='all';
+  document.getElementById('dash-prev').style.visibility=showNav?'visible':'hidden';
+  document.getElementById('dash-next').style.visibility=showNav?'visible':'hidden';
+  document.getElementById('dashPeriodLabel').textContent=getPeriodLabel();
   var url='/api/dashboard?period='+dashPeriod;
-  if(dashPeriod==='week')       url+='&start='+dashRef+'&end='+getWeekEnd(dashRef);
-  else if(dashPeriod==='month') url+='&month='+dashRef;
-  else if(dashPeriod==='year')  url+='&year='+dashRef;
-  var data = await apiFetch(url); if(!data) return;
-  var bu = data.by_user||{}, kids = data.kids||{};
-  document.getElementById('s-p1').textContent  = (cfg&&bu[cfg.parent1])||0;
-  document.getElementById('s-p2').textContent  = (cfg&&bu[cfg.parent2])||0;
-  document.getElementById('s-k1').textContent  = kids.kid1||0;
-  document.getElementById('s-k2').textContent  = kids.kid2||0;
+  if(dashPeriod==='week')url+='&start='+dashRef+'&end='+getWeekEnd(dashRef);
+  else if(dashPeriod==='month')url+='&month='+dashRef;
+  else if(dashPeriod==='year')url+='&year='+dashRef;
+  var data=await apiFetch(url); if(!data)return;
+  if(data.family)cfg=data.family;
+  var bu=data.by_user||{}, kd=data.kids||{};
+  // parent stats
+  if(cfg) document.getElementById('parent-stats').innerHTML=cfg.parents.map(function(p){
+    return'<div class="stat"><div class="stat-n">'+(bu[p]||0)+'</div><div class="stat-l">'+esc(p)+'</div></div>';
+  }).join('');
+  // kid stats
+  if(cfg) document.getElementById('kid-stats').innerHTML=cfg.kids.map(function(k){
+    return'<div class="stat"><div class="stat-n">'+(kd[k]||0)+'</div><div class="stat-l">'+esc(k)+' outside</div></div>';
+  }).join('');
+  // duration
   var ds=calcDurStats(data.entries||[]);
-  document.getElementById('s-avg').textContent   = fmtMins(ds.avg);
-  document.getElementById('s-total').textContent = fmtMins(ds.total);
+  document.getElementById('s-avg').textContent=fmtMins(ds.avg);
+  document.getElementById('s-total').textContent=fmtMins(ds.total);
+  // charts
   setDonut('donut-shifts',(data.shifts||{}).morning||0,(data.shifts||{}).evening||0,'#f57f17','#1565c0','donut-shifts-n');
-  setDonut('donut-users', cfg?bu[cfg.parent1]||0:0, cfg?bu[cfg.parent2]||0:0,'#2e7d32','#c62828','donut-users-n');
+  updateUserDonut(bu);
   buildActivityBars(data.entries||[]);
+  // log
   var grouped={};
   (data.entries||[]).forEach(function(e){if(!grouped[e.date])grouped[e.date]=[];grouped[e.date].push(e);});
   var container=document.getElementById('dashList');
   var dates=Object.keys(grouped).sort(function(a,b){return b.localeCompare(a);});
   if(!dates.length){container.innerHTML='<div class="empty">No entries this period</div>';return;}
   container.innerHTML=dates.map(function(date){
-    return '<div class="day-group"><div class="day-hdr">'+fmtDate(date)+'</div>'+grouped[date].map(function(e){return entryHTML(e,false);}).join('')+'</div>';
+    return'<div class="day-group"><div class="day-hdr">'+fmtDate(date)+'</div>'+grouped[date].map(function(e){return entryHTML(e,false);}).join('')+'</div>';
   }).join('');
 }
 
 // ─── Charts ──────────────────────────────────────────────
-function setDonut(ringId,v1,v2,c1,c2,numId) {
-  var total=v1+v2, ring=document.getElementById(ringId); if(!ring) return;
+function setDonut(ringId,v1,v2,c1,c2,numId){
+  var total=v1+v2,ring=document.getElementById(ringId);if(!ring)return;
   ring.style.background=total?'conic-gradient('+c1+' 0% '+(v1/total*100).toFixed(1)+'%, '+c2+' 0% 100%)':'#e0e0e0';
   document.getElementById(numId).textContent=total||'–';
 }
-function buildActivityBars(entries) {
+
+function updateUserDonut(byUser){
+  if(!cfg)return;
+  var segs=cfg.parents.map(function(p,i){return{count:byUser[p]||0,color:COLORS[i%COLORS.length],name:p};});
+  var total=segs.reduce(function(s,seg){return s+seg.count;},0);
+  var ring=document.getElementById('donut-users');
+  if(!total){ring.style.background='#e0e0e0';document.getElementById('donut-users-n').textContent='–';}
+  else{
+    var pct=0,stops=[];
+    segs.forEach(function(seg){var end=pct+(seg.count/total*100);stops.push(seg.color+' '+pct.toFixed(1)+'% '+end.toFixed(1)+'%');pct=end;});
+    ring.style.background='conic-gradient('+stops.join(',')+')';
+    document.getElementById('donut-users-n').textContent=total;
+  }
+  document.getElementById('user-donut-legend').innerHTML=segs.map(function(seg){
+    return'<span class="dot" style="background:'+seg.color+'"></span>'+esc(seg.name);
+  }).join('&nbsp;&nbsp;');
+}
+
+function buildActivityBars(entries){
   var counts={};
   entries.forEach(function(e){if(!e.vacation&&e.activities)e.activities.split(',').forEach(function(t){var tag=t.trim();if(tag)counts[tag]=(counts[tag]||0)+1;});});
   var sorted=Object.entries(counts).sort(function(a,b){return b[1]-a[1];}).slice(0,6);
@@ -669,43 +716,43 @@ function buildActivityBars(entries) {
   var maxVal=sorted[0][1];
   container.innerHTML=sorted.map(function(kv){
     var pct=Math.max(3,Math.round(kv[1]/maxVal*100));
-    return '<div class="bar-row"><div class="bar-label">'+esc(kv[0])+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%"></div></div><div class="bar-count">'+kv[1]+'</div></div>';
+    return'<div class="bar-row"><div class="bar-label">'+esc(kv[0])+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%"></div></div><div class="bar-count">'+kv[1]+'</div></div>';
   }).join('');
 }
 
-// ─── Duration stats ──────────────────────────────────────
-var DUR_MAP={'15 min':15,'30 min':30,'45 min':45,'1 hour':60,'1.5 hours':90,'2 hours':120,'2+ hours':150};
-function calcDurStats(entries) {
-  var vals=entries.filter(function(e){return !e.vacation&&e.duration;}).map(function(e){return DUR_MAP[e.duration]||0;}).filter(Boolean);
-  if(!vals.length) return {avg:0,total:0};
+// ─── Duration helpers ────────────────────────────────────
+function calcDurStats(entries){
+  var vals=entries.filter(function(e){return!e.vacation&&e.duration;}).map(function(e){return DUR_MAP[e.duration]||0;}).filter(Boolean);
+  if(!vals.length)return{avg:0,total:0};
   var total=vals.reduce(function(s,v){return s+v;},0);
-  return {avg:Math.round(total/vals.length),total:total};
+  return{avg:Math.round(total/vals.length),total:total};
 }
 function fmtMins(m){if(!m)return'–';var h=Math.floor(m/60),mn=m%60;return h?(mn?h+'h '+mn+'m':h+'h'):mn+'m';}
 
 // ─── Entry rendering ─────────────────────────────────────
-function renderList(entries,id,withDel) {
+function renderList(entries,id,withDel){
   var el=document.getElementById(id);
   if(!entries.length){el.innerHTML='<div class="empty">No entries yet</div>';return;}
   el.innerHTML=entries.map(function(e){return entryHTML(e,withDel);}).join('');
 }
-function entryHTML(e,withDel) {
+
+function entryHTML(e,withDel){
   var shiftIcon=e.shift==='morning'?'☀️':'🌙';
   var shiftDisplay=e.shift==='afternoon'?'Afternoon':cap(e.shift);
-  var userDisplay=e.user==='both'?(cfg?cfg.parent1+' & '+cfg.parent2:'Both'):esc(e.user);
+  var userDisplay=e.user==='both'?(cfg?cfg.parents.join(' & '):'Both'):e.user.split(',').map(esc).join(' & ');
   var body='';
   if(!e.vacation){
     var dur=e.duration?'<strong>'+e.duration+'</strong>':'<span class="na">NA</span>';
-    var kds=e.kids?'<strong>'+(e.kids==='both'?(cfg?cfg.kid1+' & '+cfg.kid2:'Both'):e.kids)+'</strong>':'<span class="na">NA</span>';
-    var tags='';
-    if(e.activities) tags='<div class="e-tags">'+e.activities.split(',').map(function(t){return '<span class="etag">'+esc(t.trim())+'</span>';}).join('')+'</div>';
+    var kList=e.kids==='both'?(cfg?cfg.kids.join(' & '):'All'):(e.kids?e.kids.split(',').map(esc).join(' & '):null);
+    var kds=kList?'<strong>'+kList+'</strong>':'<span class="na">NA</span>';
+    var tags=e.activities?'<div class="e-tags">'+e.activities.split(',').map(function(t){return'<span class="etag">'+esc(t.trim())+'</span>';}).join('')+'</div>':'';
     var exc=e.excuse?'<div style="margin-top:3px;font-size:.8rem;color:var(--txt2)">💬 <em>'+esc(e.excuse)+'</em></div>':'';
     body='<div class="e-body">⏱ '+dur+' &nbsp;·&nbsp; 👧 '+kds+'</div>'+tags+exc;
   }
   var delBtn=withDel?'<button class="del" onclick="delEntry('+e.id+')">✕</button>':'';
   var shiftBadge=!e.vacation?'<span class="badge '+e.shift+'">'+shiftIcon+' '+shiftDisplay+'</span>':'';
   var vacBadge=e.vacation?'<span class="badge vac">🏖️ Vacation</span>':'';
-  return '<div class="entry">'+delBtn+'<div class="e-head">'+shiftBadge+'<span class="e-user">'+userDisplay+'</span>'+vacBadge+'</div>'+body+'</div>';
+  return'<div class="entry">'+delBtn+'<div class="e-head">'+shiftBadge+'<span class="e-user">'+userDisplay+'</span>'+vacBadge+'</div>'+body+'</div>';
 }
 
 // ─── Utilities ───────────────────────────────────────────
@@ -717,17 +764,17 @@ async function apiFetch(url){try{var r=await fetch(url);return r.ok?r.json():nul
 var _tt;
 function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(function(){el.classList.remove('show');},2600);}
 
-// ─── PWA hard refresh on header tap ──────────────────────
-document.querySelector('.app-title').addEventListener('click', function() {
+// ─── PWA hard refresh ────────────────────────────────────
+document.querySelector('.app-title').addEventListener('click',function(){
   toast('Refreshing…');
   var doReload=function(){location.reload();};
   if('caches' in window){
     caches.keys().then(function(names){return Promise.all(names.map(function(n){return caches.delete(n);}));})
     .then(function(){
-      if('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(function(regs){Promise.all(regs.map(function(r){return r.unregister();})).then(doReload);});
+      if('serviceWorker' in navigator)navigator.serviceWorker.getRegistrations().then(function(regs){Promise.all(regs.map(function(r){return r.unregister();})).then(doReload);});
       else doReload();
     }).catch(doReload);
-  } else doReload();
+  }else doReload();
 });
 </script>
 </body>

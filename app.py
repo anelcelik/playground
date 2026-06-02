@@ -11,12 +11,15 @@ def db():
 
 def init_db():
     with db() as conn:
-        conn.execute('''CREATE TABLE IF NOT EXISTS config (
-            id      INTEGER PRIMARY KEY CHECK (id=1),
-            parent1 TEXT NOT NULL,
-            parent2 TEXT NOT NULL,
-            kid1    TEXT NOT NULL,
-            kid2    TEXT NOT NULL
+        conn.execute('''CREATE TABLE IF NOT EXISTS parents (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            sort_order INTEGER DEFAULT 0
+        )''')
+        conn.execute('''CREATE TABLE IF NOT EXISTS kids (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            sort_order INTEGER DEFAULT 0
         )''')
         conn.execute('''CREATE TABLE IF NOT EXISTS entries (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,32 +40,45 @@ def init_db():
             UNIQUE(type, name)
         )''')
 
-def get_cfg(conn):
-    row = conn.execute('SELECT * FROM config LIMIT 1').fetchone()
-    return dict(row) if row else None
+def get_family(conn):
+    parents = [r['name'] for r in conn.execute('SELECT name FROM parents ORDER BY sort_order,id').fetchall()]
+    kids    = [r['name'] for r in conn.execute('SELECT name FROM kids    ORDER BY sort_order,id').fetchall()]
+    return {'parents': parents, 'kids': kids}
+
+def count_in_field(conn, where, p, field, name):
+    """Count entries where name appears anywhere in a comma-separated field."""
+    return conn.execute(
+        f"""SELECT COUNT(*) FROM entries WHERE {where} AND vacation=0 AND
+            ({field}=? OR {field} LIKE ? OR {field} LIKE ? OR {field} LIKE ?)""",
+        p + (name, name + ',%', '%,' + name, '%,' + name + ',%')
+    ).fetchone()[0]
 
 @app.route('/')
 def index():
     return app.send_static_file('index.html')
 
-# ── Config ────────────────────────────────────────────────
-@app.route('/api/config', methods=['GET'])
-def api_config_get():
+# ── Family config ─────────────────────────────────────────
+@app.route('/api/family', methods=['GET'])
+def api_family_get():
     with db() as conn:
-        cfg = get_cfg(conn)
-    return jsonify(cfg)
+        return jsonify(get_family(conn))
 
-@app.route('/api/config', methods=['POST'])
-def api_config_post():
-    d = request.json
+@app.route('/api/family', methods=['POST'])
+def api_family_post():
+    d       = request.json
+    parents = [p.strip() for p in d.get('parents', []) if p.strip()]
+    kids    = [k.strip() for k in d.get('kids',    []) if k.strip()]
+    if not parents or not kids:
+        return jsonify({'error': 'Need at least one parent and one kid'}), 400
     with db() as conn:
-        conn.execute('''INSERT INTO config (id,parent1,parent2,kid1,kid2)
-                        VALUES (1,?,?,?,?)
-                        ON CONFLICT(id) DO UPDATE SET
-                        parent1=excluded.parent1, parent2=excluded.parent2,
-                        kid1=excluded.kid1, kid2=excluded.kid2''',
-                     (d['parent1'].strip(), d['parent2'].strip(),
-                      d['kid1'].strip(),    d['kid2'].strip()))
+        conn.execute('DELETE FROM parents')
+        conn.execute('DELETE FROM kids')
+        for i, name in enumerate(parents):
+            try: conn.execute('INSERT INTO parents (name,sort_order) VALUES (?,?)', (name, i))
+            except: pass
+        for i, name in enumerate(kids):
+            try: conn.execute('INSERT INTO kids (name,sort_order) VALUES (?,?)', (name, i))
+            except: pass
     return '', 204
 
 # ── Tags ──────────────────────────────────────────────────
@@ -77,10 +93,8 @@ def get_tags():
 def add_tag():
     d = request.json
     with db() as conn:
-        try:
-            conn.execute('INSERT INTO tags (type,name) VALUES (?,?)', (d['type'], d['name'].strip()))
-        except sqlite3.IntegrityError:
-            pass
+        try: conn.execute('INSERT INTO tags (type,name) VALUES (?,?)', (d['type'], d['name'].strip()))
+        except sqlite3.IntegrityError: pass
     return '', 204
 
 # ── Entries ───────────────────────────────────────────────
@@ -110,7 +124,7 @@ def add_entry():
             'INSERT INTO entries (date,shift,user,vacation,duration,kids,activities,excuse) VALUES (?,?,?,?,?,?,?,?)',
             (d['date'], d['shift'], d['user'], vac,
              None if vac else (d.get('duration') or None),
-             None if vac else (d.get('kids') or None),
+             None if vac else (d.get('kids')     or None),
              None if vac else ((d.get('activities') or '').strip() or None),
              excuse)
         )
@@ -141,26 +155,10 @@ def dashboard():
         where, p = 'date LIKE ?', (month + '%',)
 
     with db() as conn:
-        cfg = get_cfg(conn)
-        p1  = cfg['parent1'] if cfg else 'Parent 1'
-        p2  = cfg['parent2'] if cfg else 'Parent 2'
-        k1  = cfg['kid1']    if cfg else 'Kid 1'
-        k2  = cfg['kid2']    if cfg else 'Kid 2'
+        family = get_family(conn)
 
-        by_user = {}
-        for name in [p1, p2]:
-            cnt = conn.execute(
-                f"SELECT COUNT(*) FROM entries WHERE {where} AND vacation=0 AND (user=? OR user='both')",
-                p + (name,)
-            ).fetchone()[0]
-            by_user[name] = cnt
-
-        kids_row = conn.execute(
-            f'''SELECT SUM(CASE WHEN kids=? OR kids='both' THEN 1 ELSE 0 END) kid1,
-                       SUM(CASE WHEN kids=? OR kids='both' THEN 1 ELSE 0 END) kid2
-                FROM entries WHERE {where} AND vacation=0''', p + (k1, k2)
-        ).fetchone()
-        kids = dict(kids_row) if kids_row else {'kid1': 0, 'kid2': 0}
+        by_user = {name: count_in_field(conn, where, p, 'user', name) for name in family['parents']}
+        kids    = {name: count_in_field(conn, where, p, 'kids', name) for name in family['kids']}
 
         shift_row = conn.execute(
             f"""SELECT SUM(CASE WHEN shift='morning' THEN 1 ELSE 0 END) morning,
@@ -173,7 +171,7 @@ def dashboard():
             f'SELECT * FROM entries WHERE {where} ORDER BY date,shift', p
         ).fetchall()]
 
-    return jsonify({'by_user': by_user, 'kids': kids, 'shifts': shifts, 'entries': entries})
+    return jsonify({'by_user': by_user, 'kids': kids, 'shifts': shifts, 'entries': entries, 'family': family})
 
 if __name__ == '__main__':
     init_db()
