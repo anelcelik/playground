@@ -13,9 +13,6 @@ class InviteFamilyScreen extends StatefulWidget {
 class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
   List<Map<String, dynamic>> _participants = [];
   bool _loading = true;
-  bool _isIos = SyncService.instance.status.value != SyncStatus.unavailable ||
-      // always try to load on iOS even if sync is idle
-      true;
 
   @override
   void initState() {
