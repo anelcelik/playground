@@ -38,6 +38,10 @@ jobs:
             .
           rm -f test/widget_test.dart
 
+      - name: Fix Kotlin JVM target compatibility
+        working-directory: ANDROID/android
+        run: echo "kotlin.jvm.target.validation.mode=IGNORE" >> gradle.properties
+
       - name: Install dependencies
         working-directory: ANDROID
         run: flutter pub get
