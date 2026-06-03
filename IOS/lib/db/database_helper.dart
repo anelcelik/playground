@@ -20,7 +20,7 @@ class DatabaseHelper {
     final path = join(dbPath, 'playground.db');
     return openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -51,6 +51,7 @@ class DatabaseHelper {
         shift         TEXT NOT NULL,
         user          TEXT NOT NULL,
         vacation      INTEGER DEFAULT 0,
+        no_playground INTEGER DEFAULT 0,
         duration      TEXT,
         kids          TEXT,
         activities    TEXT,
@@ -111,6 +112,12 @@ class DatabaseHelper {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 6) {
+      try {
+        await db.execute(
+            'ALTER TABLE entries ADD COLUMN no_playground INTEGER DEFAULT 0');
+      } catch (_) {}
+    }
     if (oldVersion < 5) {
       try {
         await db.execute(
@@ -281,9 +288,11 @@ class DatabaseHelper {
     final byUser = {for (final p in parents) p: _countInField(entries, 'user', p)};
     final byKid = {for (final k in kids) k: _countInField(entries, 'kids', k)};
 
-    int morning = 0, evening = 0;
+    int morning = 0, evening = 0, missed = 0;
     for (final e in entries) {
-      if (!e.vacation) {
+      if (e.noPlayground) {
+        missed++;
+      } else if (!e.vacation) {
         if (e.shift == 'morning') {
           morning++;
         } else {
@@ -297,6 +306,7 @@ class DatabaseHelper {
       'by_user': byUser,
       'kids': byKid,
       'shifts': {'morning': morning, 'evening': evening},
+      'missed': missed,
       'parents': parents,
       'kids_list': kids,
     };
@@ -304,7 +314,7 @@ class DatabaseHelper {
 
   int _countInField(List<Entry> entries, String field, String name) {
     return entries.where((e) {
-      if (e.vacation) return false;
+      if (e.vacation || e.noPlayground) return false;
       final val = field == 'user' ? e.user : (e.kids ?? '');
       return val.split(',').map((s) => s.trim()).contains(name);
     }).length;
@@ -416,6 +426,7 @@ class DatabaseHelper {
             'shift': r['shift'] as String,
             'user': r['user'] as String,
             'vacation': (r['vacation'] as bool? ?? false) ? 1 : 0,
+            'no_playground': (r['no_playground'] as bool? ?? false) ? 1 : 0,
             'duration': r['duration'] as String?,
             'kids': r['kids'] as String?,
             'activities': r['activities'] as String?,
@@ -435,6 +446,7 @@ class DatabaseHelper {
                 'shift': r['shift'] as String,
                 'user': r['user'] as String,
                 'vacation': (r['vacation'] as bool? ?? false) ? 1 : 0,
+                'no_playground': (r['no_playground'] as bool? ?? false) ? 1 : 0,
                 'duration': r['duration'] as String?,
                 'kids': r['kids'] as String?,
                 'activities': r['activities'] as String?,

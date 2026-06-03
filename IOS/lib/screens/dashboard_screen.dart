@@ -239,6 +239,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final parents = (data['parents'] as List?)?.cast<String>() ?? widget.family.parents;
     final kids = (data['kids_list'] as List?)?.cast<String>() ?? widget.family.kids;
     final durStats = _calcDurStats(entries);
+    final missed   = data['missed'] as int? ?? 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,11 +252,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _statsGrid(kids.map((k) => _statCard('${byKid[k] ?? 0}', '$k outside')).toList()),
         const SizedBox(height: 8),
 
-        // Duration stats
+        // Duration + missed stats
         Row(children: [
           Expanded(child: _statCard(_fmtMins(durStats['avg']!), 'Avg duration', small: true)),
           const SizedBox(width: 8),
           Expanded(child: _statCard(_fmtMins(durStats['total']!), 'Total time', small: true)),
+          const SizedBox(width: 8),
+          Expanded(child: _statCard('$missed', 'No playground', small: true, accent: const Color(0xFFE53935))),
         ]),
         const SizedBox(height: 8),
 
@@ -444,7 +447,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }).toList();
   }
 
-  Widget _statCard(String num, String label, {bool small = false}) => Container(
+  Widget _statCard(String num, String label, {bool small = false, Color? accent}) => Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -460,7 +463,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: TextStyle(
                     fontSize: small ? 22 : 34,
                     fontWeight: FontWeight.w800,
-                    color: _kGreen,
+                    color: accent ?? _kGreen,
                     height: 1)),
             const SizedBox(height: 3),
             Text(label,
@@ -500,7 +503,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Map<String, int> _calcDurStats(List<Entry> entries) {
     final vals = entries
-        .where((e) => !e.vacation && e.duration != null)
+        .where((e) => !e.vacation && !e.noPlayground && e.duration != null)
         .map((e) => _durMap[e.duration] ?? 0)
         .where((v) => v > 0)
         .toList();
@@ -641,7 +644,16 @@ class _DashEntryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            if (!e.vacation)
+            if (e.noPlayground)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                decoration: BoxDecoration(
+                    color: const Color(0xFFFFEBEE), borderRadius: BorderRadius.circular(11)),
+                child: Text('❌ No playground',
+                    style: TextStyle(
+                        color: const Color(0xFFB71C1C), fontSize: 11, fontWeight: FontWeight.w700)),
+              )
+            else if (!e.vacation)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 decoration: BoxDecoration(color: shiftBg, borderRadius: BorderRadius.circular(11)),
@@ -664,7 +676,13 @@ class _DashEntryCard extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
             ),
           ]),
-          if (!e.vacation) ...[
+          if (e.noPlayground && e.excuse != null && e.excuse!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text('💬 ${e.excuse}',
+                  style: TextStyle(fontSize: 13, color: _kTxt2, fontStyle: FontStyle.italic)),
+            ),
+          if (!e.vacation && !e.noPlayground) ...[
             const SizedBox(height: 5),
             Text(
               '⏱ ${e.duration ?? 'NA'}   ·   👧 ${e.kidList.isEmpty ? 'NA' : e.kidList.join(' & ')}',

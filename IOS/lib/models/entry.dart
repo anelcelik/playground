@@ -7,6 +7,7 @@ class Entry {
   final String shift;
   final String user;
   final bool vacation;
+  final bool noPlayground;   // nobody went — reason stored in excuse field
   final String? duration;
   final String? kids;
   final String? activities;
@@ -22,6 +23,7 @@ class Entry {
     required this.shift,
     required this.user,
     required this.vacation,
+    this.noPlayground = false,
     this.duration,
     this.kids,
     this.activities,
@@ -39,6 +41,7 @@ class Entry {
       shift: map['shift'] as String,
       user: map['user'] as String,
       vacation: (map['vacation'] as int? ?? 0) == 1,
+      noPlayground: (map['no_playground'] as int? ?? 0) == 1,
       duration: map['duration'] as String?,
       kids: map['kids'] as String?,
       activities: map['activities'] as String?,
@@ -55,6 +58,7 @@ class Entry {
         'shift': shift,
         'user': user,
         'vacation': vacation ? 1 : 0,
+        'no_playground': noPlayground ? 1 : 0,
         'duration': duration,
         'kids': kids,
         'activities': activities,
@@ -69,6 +73,7 @@ class Entry {
         'shift': shift,
         'user': user,
         'vacation': vacation,
+        'no_playground': noPlayground,
         'duration': duration,
         'kids': kids,
         'activities': activities,

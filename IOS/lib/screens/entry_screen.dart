@@ -40,20 +40,24 @@ class EntryScreenState extends State<EntryScreen> {
 
   DateTime _date = DateTime.now();
   bool _isVacation = false;
+  bool _isNoPlayground = false;
   final Set<String> _selUsers = {};
   final Set<String> _selShifts = {};
   final Map<String, String?> _dur = {'morning': null, 'evening': null};
   final Map<String, Map<String, bool>> _kids = {'morning': {}, 'evening': {}};
   final Map<String, Set<String>> _acts = {'morning': {}, 'evening': {}};
   final Set<String> _excuseSel = {};
+  final Set<String> _missedReasonSel = {};
   List<String> _actTags = [];
   List<String> _excTags = [];
+  List<String> _missedReasonTags = [];
   List<Entry> _dayEntries = [];
   List<RecurringActivityStatus> _recurringStatuses = [];
 
   // Theme-aware colours — updated at the start of every build()
 
   // Persistent controllers — created once, never leaked
+  final _missedReasonCtrl = TextEditingController();
   final _morningActCtrl = TextEditingController();
   final _eveningActCtrl = TextEditingController();
   final _excuseCtrl = TextEditingController();
@@ -70,6 +74,7 @@ class EntryScreenState extends State<EntryScreen> {
   @override
   void dispose() {
     AppSettings.instance.removeListener(_onSettingsChanged);
+    _missedReasonCtrl.dispose();
     _morningActCtrl.dispose();
     _eveningActCtrl.dispose();
     _excuseCtrl.dispose();
@@ -93,7 +98,8 @@ class EntryScreenState extends State<EntryScreen> {
   Future<void> _loadTags() async {
     final a = await DatabaseHelper.instance.getTags('activity');
     final e = await DatabaseHelper.instance.getTags('excuse');
-    if (mounted) setState(() { _actTags = a; _excTags = e; });
+    final m = await DatabaseHelper.instance.getTags('missed_reason');
+    if (mounted) setState(() { _actTags = a; _excTags = e; _missedReasonTags = m; });
   }
 
   Future<void> _loadEntries() async {
@@ -163,17 +169,28 @@ class EntryScreenState extends State<EntryScreen> {
   }
 
   Future<void> _save() async {
-    if (_selUsers.isEmpty) { _toast('Please select who went'); return; }
-    if (!_isVacation && _selShifts.isEmpty) {
+    if (!_isVacation && !_isNoPlayground && _selUsers.isEmpty) {
+      _toast('Please select who went'); return;
+    }
+    if (!_isVacation && !_isNoPlayground && _selShifts.isEmpty) {
       _toast('Select morning, evening or both');
       return;
     }
     final dateStr = _fmt(_date);
-    final userStr =
-        widget.family.parents.where((p) => _selUsers.contains(p)).join(',');
+    // For no-playground and vacation, use all parents if none selected
+    final userStr = _selUsers.isEmpty
+        ? widget.family.parents.join(',')
+        : widget.family.parents.where((p) => _selUsers.contains(p)).join(',');
     final excuseStr = _excuseSel.isEmpty ? null : _excuseSel.join(', ');
 
-    if (_isVacation) {
+    if (_isNoPlayground) {
+      final reasonStr = _missedReasonSel.isEmpty ? null : _missedReasonSel.join(', ');
+      final saved = await DatabaseHelper.instance.insertEntry(Entry(
+        date: dateStr, shift: 'morning', user: userStr,
+        vacation: false, noPlayground: true, excuse: reasonStr,
+      ));
+      SyncService.instance.pushEntry(saved);
+    } else if (_isVacation) {
       final saved = await DatabaseHelper.instance.insertEntry(Entry(
         date: dateStr, shift: 'morning', user: userStr,
         vacation: true,
@@ -204,6 +221,8 @@ class EntryScreenState extends State<EntryScreen> {
   void _resetForm() {
     setState(() {
       _isVacation = false;
+      _isNoPlayground = false;
+      _missedReasonSel.clear();
       _selUsers.clear();
       _selShifts.clear();
       _dur['morning'] = null;
@@ -392,13 +411,62 @@ class EntryScreenState extends State<EntryScreen> {
                 value: _isVacation,
                 activeThumbColor: _kAmber,
                 activeTrackColor: _kAmber.withAlpha(100),
-                onChanged: (v) => setState(() { _isVacation = v; if (v) _selShifts.clear(); }),
+                onChanged: (v) => setState(() {
+                  _isVacation = v;
+                  if (v) { _selShifts.clear(); _isNoPlayground = false; }
+                }),
               ),
             ],
           )),
 
-          if (_selShifts.contains('morning') && !_isVacation) _buildShiftCard('morning'),
-          if (_selShifts.contains('evening') && !_isVacation) _buildShiftCard('evening'),
+          // No playground today
+          _card(Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('❌  No playground today',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _kTxt)),
+                  Switch.adaptive(
+                    value: _isNoPlayground,
+                    activeThumbColor: const Color(0xFFE53935),
+                    activeTrackColor: const Color(0xFFE53935).withAlpha(100),
+                    onChanged: (v) => setState(() {
+                      _isNoPlayground = v;
+                      if (v) { _selShifts.clear(); _isVacation = false; _missedReasonSel.clear(); }
+                    }),
+                  ),
+                ],
+              ),
+              if (_isNoPlayground) ...[
+                const SizedBox(height: 10),
+                Text('Why? (optional)',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+                        color: _kTxt2, letterSpacing: 0.7)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6, runSpacing: 6,
+                  children: _missedReasonTags.map((tag) {
+                    final on = _missedReasonSel.contains(tag);
+                    return GestureDetector(
+                      onTap: () => setState(() =>
+                          on ? _missedReasonSel.remove(tag) : _missedReasonSel.add(tag)),
+                      child: _tagChip(tag, on),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 7),
+                _tagInput('Add reason...', _missedReasonCtrl,
+                    () => _addTag('missed_reason', _missedReasonTags, _missedReasonSel, _missedReasonCtrl)),
+              ],
+            ],
+          )),
+
+          if (_selShifts.contains('morning') && !_isVacation && !_isNoPlayground)
+            _buildShiftCard('morning'),
+          if (_selShifts.contains('evening') && !_isVacation && !_isNoPlayground)
+            _buildShiftCard('evening'),
           if (_showExcuseCard) _buildExcuseCard(),
 
           SizedBox(
@@ -789,17 +857,26 @@ class _EntryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(children: [
-                  if (!e.vacation)
+                  if (e.noPlayground)
+                    _badge('❌ No playground', const Color(0xFFFFEBEE), const Color(0xFFB71C1C))
+                  else if (e.vacation)
+                    _badge('🏖️ Vacation', const Color(0xFFFCE4EC), const Color(0xFFB71C1C))
+                  else
                     _badge(shiftLabel, shiftBg, shiftColor),
-                  if (e.vacation)
-                    _badge('🏖️ Vacation', const Color(0xFFFCE4EC), const Color(0xFFB71C1C)),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(userDisplay,
                         style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   ),
                 ]),
-                if (!e.vacation) ...[
+                if (e.noPlayground && e.excuse != null && e.excuse!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text('💬 ${e.excuse}',
+                        style: TextStyle(fontSize: 13, color: _kTxt2,
+                            fontStyle: FontStyle.italic)),
+                  ),
+                if (!e.vacation && !e.noPlayground) ...[
                   const SizedBox(height: 5),
                   RichText(
                     text: TextSpan(
