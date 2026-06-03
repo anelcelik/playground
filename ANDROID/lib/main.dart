@@ -27,12 +27,13 @@ Future<void> main() async {
   }
 
   // Timezone setup — required for scheduling notifications at local time
+  // flutter_timezone 5.x returns TimezoneInfo; .name gives the IANA string.
   tz.initializeTimeZones();
   try {
-    final localTz = await FlutterTimezone.getLocalTimezone();
-    tz_local.setLocalLocation(tz_local.getLocation(localTz));
+    final tzInfo = await FlutterTimezone.getLocalTimezone();
+    tz_local.setLocalLocation(tz_local.getLocation(tzInfo.identifier));
   } catch (_) {
-    // Falls back to UTC if timezone detection fails (e.g. on Linux desktop)
+    // Falls back to UTC if timezone detection fails
   }
 
   // Load display preferences (date/time format) + dashboard layout
