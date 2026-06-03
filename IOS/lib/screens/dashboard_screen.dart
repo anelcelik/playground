@@ -323,6 +323,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _chartCard(title: 'Top Activities', child: _buildActivityBars(entries)),
         const SizedBox(height: 8),
 
+        // No-playground reasons
+        _chartCard(
+          title: 'No Playground — Reasons',
+          accent: const Color(0xFFE53935),
+          child: _buildMissedReasonBars(entries, missed),
+        ),
+        const SizedBox(height: 8),
+
         // Log entries
         Text(
           'LOG',
@@ -363,6 +371,66 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (i + 2 < children.length) rows.add(const SizedBox(height: 8));
     }
     return Column(children: rows);
+  }
+
+  Widget _buildMissedReasonBars(List<Entry> entries, int totalMissed) {
+    final counts = <String, int>{};
+    for (final e in entries) {
+      if (e.noPlayground && e.excuse != null) {
+        for (final t in e.excuse!.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty)) {
+          counts[t] = (counts[t] ?? 0) + 1;
+        }
+      }
+    }
+    if (counts.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(12),
+          child: Text(
+            totalMissed == 0
+                ? 'No missed days this period'
+                : 'No reasons logged yet',
+            style: TextStyle(color: _kTxt2, fontSize: 13)),
+        ),
+      );
+    }
+    final sorted = counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final maxVal = sorted.first.value;
+    return Column(
+      children: sorted.map((kv) {
+        final pct = (kv.value / maxVal).clamp(0.03, 1.0);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 5),
+          child: Row(children: [
+            SizedBox(
+              width: 68,
+              child: Text(kv.key,
+                  textAlign: TextAlign.right,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 11, color: _kTxt2)),
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: pct,
+                  minHeight: 16,
+                  backgroundColor: const Color(0xFFF0F0F0),
+                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFE53935)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            SizedBox(
+              width: 24,
+              child: Text('${kv.value}',
+                  style: TextStyle(fontSize: 11, color: _kTxt2, fontWeight: FontWeight.w600)),
+            ),
+          ]),
+        );
+      }).toList(),
+    );
   }
 
   Widget _buildActivityBars(List<Entry> entries) {
@@ -474,7 +542,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       );
 
-  Widget _chartCard({required String title, required Widget child}) => Container(
+  Widget _chartCard({required String title, required Widget child, Color? accent}) => Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -486,7 +554,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(children: [
           Text(title.toUpperCase(),
               style: TextStyle(
-                  fontSize: 10, fontWeight: FontWeight.w700, color: _kTxt2, letterSpacing: 0.6)),
+                  fontSize: 10, fontWeight: FontWeight.w700,
+                  color: accent ?? _kTxt2, letterSpacing: 0.6)),
           const SizedBox(height: 10),
           child,
         ]),
