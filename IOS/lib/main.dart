@@ -6,6 +6,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/timezone.dart' as tz_local;
 
 import 'db/database_helper.dart';
+import 'models/dashboard_prefs.dart';
 import 'notifications/notification_service.dart';
 import 'screens/setup_screen.dart';
 import 'screens/home_screen.dart';
@@ -34,8 +35,9 @@ Future<void> main() async {
     // Falls back to UTC if timezone detection fails (e.g. on Linux desktop)
   }
 
-  // Load display preferences (dark mode, date/time format)
+  // Load display preferences (date/time format) + dashboard layout
   await AppSettings.instance.load();
+  await DashboardPrefs.instance.load();
 
   // Local notifications (no-op on unsupported platforms)
   await NotificationService.instance.init();

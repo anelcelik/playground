@@ -2,11 +2,13 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../db/database_helper.dart';
+import '../models/dashboard_prefs.dart';
 import '../models/family.dart';
 import '../models/entry.dart';
 
 import '../settings/app_settings.dart';
 import '../theme.dart';
+import 'dashboard_customise_screen.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
 const _kGreen   = kGreen;
@@ -55,11 +57,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _resetRef();
     _load();
     AppSettings.instance.addListener(_onSettingsChanged);
+    DashboardPrefs.instance.addListener(_onSettingsChanged);
   }
 
   @override
   void dispose() {
     AppSettings.instance.removeListener(_onSettingsChanged);
+    DashboardPrefs.instance.removeListener(_onSettingsChanged);
     super.dispose();
   }
 
@@ -198,7 +202,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildPeriodNav() => Container(
+  Widget _buildPeriodNav() => Row(children: [
+        Expanded(child: _buildPeriodNavCard()),
+        const SizedBox(width: 8),
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const DashboardCustomiseScreen()),
+          ),
+          child: Container(
+            height: 48,
+            width: 48,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: const [
+                BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
+              ],
+            ),
+            child: Icon(Icons.tune_rounded, color: _kGreen, size: 22),
+          ),
+        ),
+      ]);
+
+  Widget _buildPeriodNavCard() => Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
@@ -241,102 +268,105 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final durStats = _calcDurStats(entries);
     final missed   = data['missed'] as int? ?? 0;
 
+    // Map section ID → its widget
+    final sectionWidgets = <String, Widget>{
+      'parent_stats': _statsGrid(
+          parents.map((p) => _statCard('${byUser[p] ?? 0}', p)).toList()),
+      'kid_stats': _statsGrid(
+          kids.map((k) => _statCard('${byKid[k] ?? 0}', '$k outside')).toList()),
+      'time_stats': Row(children: [
+        Expanded(child: _statCard(_fmtMins(durStats['avg']!), 'Avg duration', small: true)),
+        const SizedBox(width: 8),
+        Expanded(child: _statCard(_fmtMins(durStats['total']!), 'Total time', small: true)),
+        const SizedBox(width: 8),
+        Expanded(child: _statCard('$missed', 'No playground', small: true, accent: const Color(0xFFE53935))),
+      ]),
+      'charts': IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: _chartCard(
+                title: 'Morning / Evening',
+                child: Column(children: [
+                  DonutChart(
+                    segments: [
+                      DonutSegment(value: shifts['morning'] ?? 0, color: _kAmber),
+                      DonutSegment(value: shifts['evening'] ?? 0, color: _kBlue),
+                    ],
+                    center: '${(shifts['morning'] ?? 0) + (shifts['evening'] ?? 0)}',
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(alignment: WrapAlignment.center, spacing: 8, children: [
+                    _legend(_kAmber, 'Morning'),
+                    _legend(_kBlue, 'Evening'),
+                  ]),
+                ]),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _chartCard(
+                title: 'Who Went',
+                child: Column(children: [
+                  DonutChart(
+                    segments: parents.asMap().entries.map((e) => DonutSegment(
+                          value: byUser[e.value] ?? 0,
+                          color: _colors[e.key % _colors.length],
+                        )).toList(),
+                    center: '${byUser.values.fold(0, (a, b) => a + b)}',
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 6, runSpacing: 4,
+                    children: parents.asMap().entries
+                        .map((e) => _legend(_colors[e.key % _colors.length], e.value))
+                        .toList(),
+                  ),
+                ]),
+              ),
+            ),
+          ],
+        ),
+      ),
+      'activities': _chartCard(
+          title: 'Top Activities', child: _buildActivityBars(entries)),
+      'missed_reasons': _chartCard(
+        title: 'No Playground — Reasons',
+        accent: const Color(0xFFE53935),
+        child: _buildMissedReasonBars(entries, missed),
+      ),
+      'log': _buildLogSection(entries),
+    };
+
+    // Render visible sections in user-configured order
+    final widgets = <Widget>[];
+    for (final section in DashboardPrefs.instance.sections) {
+      if (!section.visible) continue;
+      final w = sectionWidgets[section.id];
+      if (w != null) {
+        widgets.add(w);
+        widgets.add(const SizedBox(height: 8));
+      }
+    }
+    if (widgets.isNotEmpty) widgets.removeLast();
+    widgets.add(const SizedBox(height: 20));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: widgets,
+    );
+  }
+
+  Widget _buildLogSection(List<Entry> entries) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Parent stats
-        _statsGrid(parents.map((p) => _statCard('${byUser[p] ?? 0}', p)).toList()),
-        const SizedBox(height: 8),
-
-        // Kid stats
-        _statsGrid(kids.map((k) => _statCard('${byKid[k] ?? 0}', '$k outside')).toList()),
-        const SizedBox(height: 8),
-
-        // Duration + missed stats
-        Row(children: [
-          Expanded(child: _statCard(_fmtMins(durStats['avg']!), 'Avg duration', small: true)),
-          const SizedBox(width: 8),
-          Expanded(child: _statCard(_fmtMins(durStats['total']!), 'Total time', small: true)),
-          const SizedBox(width: 8),
-          Expanded(child: _statCard('$missed', 'No playground', small: true, accent: const Color(0xFFE53935))),
-        ]),
-        const SizedBox(height: 8),
-
-        // Donut charts row
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: _chartCard(
-                  title: 'Morning / Evening',
-                  child: Column(children: [
-                    DonutChart(
-                      segments: [
-                        DonutSegment(value: shifts['morning'] ?? 0, color: _kAmber),
-                        DonutSegment(value: shifts['evening'] ?? 0, color: _kBlue),
-                      ],
-                      center: '${(shifts['morning'] ?? 0) + (shifts['evening'] ?? 0)}',
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 8,
-                      children: [
-                        _legend(_kAmber, 'Morning'),
-                        _legend(_kBlue, 'Evening'),
-                      ],
-                    ),
-                  ]),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _chartCard(
-                  title: 'Who Went',
-                  child: Column(children: [
-                    DonutChart(
-                      segments: parents.asMap().entries.map((e) => DonutSegment(
-                            value: byUser[e.value] ?? 0,
-                            color: _colors[e.key % _colors.length],
-                          )).toList(),
-                      center: '${byUser.values.fold(0, (a, b) => a + b)}',
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: parents.asMap().entries
-                          .map((e) => _legend(_colors[e.key % _colors.length], e.value))
-                          .toList(),
-                    ),
-                  ]),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-
-        // Activity bars
-        _chartCard(title: 'Top Activities', child: _buildActivityBars(entries)),
-        const SizedBox(height: 8),
-
-        // No-playground reasons
-        _chartCard(
-          title: 'No Playground — Reasons',
-          accent: const Color(0xFFE53935),
-          child: _buildMissedReasonBars(entries, missed),
-        ),
-        const SizedBox(height: 8),
-
-        // Log entries
-        Text(
-          'LOG',
-          style: TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w700, color: _kTxt2, letterSpacing: 0.6),
-        ),
+        Text('LOG',
+            style: TextStyle(
+                fontSize: 11, fontWeight: FontWeight.w700,
+                color: _kTxt2, letterSpacing: 0.6)),
         const SizedBox(height: 6),
         if (entries.isEmpty)
           Container(
@@ -349,8 +379,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           )
         else
           ..._buildGroupedLog(entries),
-
-        const SizedBox(height: 20),
       ],
     );
   }
