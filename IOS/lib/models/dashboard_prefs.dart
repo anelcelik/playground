@@ -5,8 +5,8 @@ import '../db/database_helper.dart';
 // ── Section metadata (label + icon, never persisted) ─────
 
 const kSectionMeta = <String, ({String label, IconData icon})>{
-  'parent_stats':    (label: 'Parent trips',              icon: Icons.people_outline),
-  'kid_stats':       (label: 'Kid trips',                 icon: Icons.child_care_rounded),
+  'parent_stats':    (label: 'Who went',                  icon: Icons.people_outline),
+  'kid_stats':       (label: 'Kids outside',              icon: Icons.child_care_rounded),
   'time_stats':      (label: 'Time & missed days',        icon: Icons.timer_outlined),
   'charts':          (label: 'Charts',                    icon: Icons.pie_chart_outline),
   'activities':      (label: 'Top Activities',            icon: Icons.local_activity_outlined),
