@@ -43,6 +43,10 @@ jobs:
         working-directory: IOS
         run: flutter pub get
 
+      - name: Generate app icons
+        working-directory: IOS
+        run: dart run flutter_launcher_icons
+
       - name: Install CocoaPods dependencies
         working-directory: IOS/ios
         run: pod install
