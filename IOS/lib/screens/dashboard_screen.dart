@@ -436,7 +436,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildActivityBars(List<Entry> entries) {
     final counts = <String, int>{};
     for (final e in entries) {
-      if (!e.vacation) {
+      if (!e.vacation && !e.noPlayground) {
         for (final t in e.activityList) {
           counts[t] = (counts[t] ?? 0) + 1;
         }

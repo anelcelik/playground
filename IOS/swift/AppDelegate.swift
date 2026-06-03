@@ -28,7 +28,9 @@ import Flutter
         options: [UIApplication.OpenURLOptionsKey: Any] = [:]
     ) -> Bool {
         if url.scheme?.hasPrefix("cloudkit-") == true {
-            CloudKitPlugin().handleIncomingShareURL(url)
+            // Use the registered shared instance, not a new one, so the
+            // cached zone state is properly invalidated after accepting.
+            CloudKitPlugin.shared?.handleIncomingShareURL(url)
             return true
         }
         return super.application(app, open: url, options: options)

@@ -117,8 +117,8 @@ Xcode will automatically create the container in your Apple Developer account.
 ## 7. Set minimum iOS version
 
 1. Still on target **Runner** → tab **General**
-2. Under **Minimum Deployments** → set iOS to **14.0** or higher
-   (flutter_local_notifications requires iOS 13+; icloud_storage requires iOS 13+)
+2. Under **Minimum Deployments** → set iOS to **15.0**
+   (CloudKit zone sharing requires iOS 15+; flutter_local_notifications requires iOS 13+)
 
 ---
 

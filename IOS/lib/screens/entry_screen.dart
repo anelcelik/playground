@@ -131,7 +131,7 @@ class EntryScreenState extends State<EntryScreen> {
   }
 
   bool get _showExcuseCard {
-    if (_isVacation) return false;
+    if (_isVacation || _isNoPlayground) return false;
     final selCount = widget.family.parents.where((p) => _selUsers.contains(p)).length;
     return selCount > 0 && selCount < widget.family.parents.length;
   }
@@ -142,7 +142,7 @@ class EntryScreenState extends State<EntryScreen> {
   void _shiftDate(int dir) {
     setState(() {
       _date = _date.add(Duration(days: dir));
-      if (_isFuture) { _isVacation = true; _selShifts.clear(); }
+      if (_isFuture) { _isVacation = true; _isNoPlayground = false; _selShifts.clear(); }
     });
     _loadEntries();
   }
@@ -162,7 +162,7 @@ class EntryScreenState extends State<EntryScreen> {
     if (picked != null && mounted) {
       setState(() {
         _date = picked;
-        if (_isFuture) { _isVacation = true; _selShifts.clear(); }
+        if (_isFuture) { _isVacation = true; _isNoPlayground = false; _selShifts.clear(); }
       });
       _loadEntries();
     }

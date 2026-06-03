@@ -51,12 +51,16 @@ import UIKit
 
     // MARK: - FlutterPlugin registration
 
+    /// The registered instance — AppDelegate uses this for incoming share URL handling.
+    private(set) static var shared: CloudKitPlugin?
+
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(
             name: channelName,
             binaryMessenger: registrar.messenger()
         )
         let instance = CloudKitPlugin()
+        CloudKitPlugin.shared = instance   // store so AppDelegate can reach it
         registrar.addMethodCallDelegate(instance, channel: channel)
         registrar.addApplicationDelegate(instance)
     }
@@ -189,9 +193,10 @@ import UIKit
         record["date"]          = (map["date"]  as? String ?? "") as CKRecordValue
         record["shift"]         = (map["shift"] as? String ?? "morning") as CKRecordValue
         record["user"]          = (map["user"]  as? String ?? "") as CKRecordValue
-        record["vacation"]      = ((map["vacation"] as? Bool ?? false) ? 1 : 0) as CKRecordValue
+        record["vacation"]      = ((map["vacation"]      as? Bool ?? false) ? 1 : 0) as CKRecordValue
+        record["no_playground"] = ((map["no_playground"] as? Bool ?? false) ? 1 : 0) as CKRecordValue
         record["last_modified"] = (map["last_modified"] as? Int ?? 0) as CKRecordValue
-        record["is_deleted"]    = ((map["is_deleted"] as? Bool ?? false) ? 1 : 0) as CKRecordValue
+        record["is_deleted"]    = ((map["is_deleted"]   as? Bool ?? false) ? 1 : 0) as CKRecordValue
 
         setOptionalString(record: record, key: "duration",   value: map["duration"])
         setOptionalString(record: record, key: "kids",       value: map["kids"])
@@ -592,6 +597,7 @@ import UIKit
         m["shift"]         = record["shift"]         as? String ?? "morning"
         m["user"]          = record["user"]          as? String ?? ""
         m["vacation"]      = (record["vacation"]      as? Int64 ?? 0) == 1
+        m["no_playground"] = (record["no_playground"] as? Int64 ?? 0) == 1
         m["duration"]      = record["duration"]      as? String
         m["kids"]          = record["kids"]          as? String
         m["activities"]    = record["activities"]    as? String
