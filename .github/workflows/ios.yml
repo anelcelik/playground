@@ -1,0 +1,113 @@
+name: Build iOS App
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'IOS/**'
+      - '.github/workflows/ios.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'IOS/**'
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: Flutter iOS build (unsigned)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: stable
+          cache: true
+
+      - name: Generate iOS project files
+        working-directory: IOS
+        run: |
+          flutter create \
+            --project-name playground_tracker \
+            --org com.playground.tracker \
+            --platforms ios \
+            .
+          # linux/ was generated locally for UI preview — remove it from iOS CI
+          rm -rf linux android
+
+      - name: Install Flutter dependencies
+        working-directory: IOS
+        run: flutter pub get
+
+      - name: Install CocoaPods dependencies
+        working-directory: IOS/ios
+        run: pod install
+
+      - name: Analyze Dart code
+        working-directory: IOS
+        run: flutter analyze --no-fatal-infos
+
+      - name: Build iOS (no code signing — compile validation only)
+        working-directory: IOS
+        run: flutter build ios --no-codesign --release
+
+      - name: Upload Runner.app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: playground-tracker-ios-${{ github.sha }}
+          path: IOS/build/ios/iphoneos/Runner.app
+          if-no-files-found: warn
+          retention-days: 14
+
+  # ── Signed IPA (requires secrets — uncomment when ready) ──────────────
+  # To enable signed IPA creation:
+  #   1. Export your Distribution certificate as a .p12 file
+  #   2. Add these GitHub secrets:
+  #        IOS_CERTIFICATE_BASE64   — base64-encoded .p12 file
+  #        IOS_CERTIFICATE_PASSWORD — .p12 export password
+  #        IOS_PROVISION_PROFILE_BASE64 — base64-encoded .mobileprovision
+  #        KEYCHAIN_PASSWORD         — any random string
+  #   3. Uncomment the job below and delete the no-codesign build above
+  #
+  # build-ipa:
+  #   name: Flutter IPA (signed)
+  #   runs-on: macos-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: subosito/flutter-action@v2
+  #       with: { flutter-version: '3.x', channel: stable, cache: true }
+  #     - name: Import certificate
+  #       run: |
+  #         echo "$IOS_CERTIFICATE_BASE64" | base64 --decode > cert.p12
+  #         security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+  #         security import cert.p12 -k build.keychain -P "$IOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+  #         security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+  #         security list-keychains -d user -s build.keychain
+  #       env:
+  #         IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+  #         IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+  #         KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+  #     - name: Install profile
+  #       run: |
+  #         mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+  #         echo "$IOS_PROVISION_PROFILE_BASE64" | base64 --decode \
+  #           > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+  #       env:
+  #         IOS_PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+  #     - name: Generate + install deps
+  #       working-directory: IOS
+  #       run: |
+  #         flutter create --project-name playground_tracker --org com.playground.tracker --platforms ios .
+  #         flutter pub get && cd ios && pod install
+  #     - name: Build IPA
+  #       working-directory: IOS
+  #       run: flutter build ipa --release
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: playground-tracker-${{ github.sha }}.ipa
+  #         path: IOS/build/ios/ipa/*.ipa
+  #         retention-days: 30
