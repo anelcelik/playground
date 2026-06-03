@@ -63,9 +63,53 @@ class SyncService {
 
   // ── Share link (owner creates, partner taps) ──────────
 
+  // ── Family sharing ───────────────────────────────────
+
+  /// Opens the native iOS UICloudSharingController.
+  /// Shows current participants, lets owner invite via Messages / WhatsApp /
+  /// copy link, and revoke access — all in Apple's own UI.
+  Future<void> openShareSheet() async {
+    if (!_isIos) return;
+    try {
+      await _kChannel.invokeMethod<void>('openShareSheet');
+    } catch (e) {
+      debugPrint('[CloudKit] openShareSheet error: $e');
+    }
+  }
+
+  /// Returns the list of connected participants.
+  /// Each map: {name, email, role ('owner'|'participant'), status ('accepted'|'pending')}
+  Future<List<Map<String, dynamic>>> getParticipants() async {
+    if (!_isIos) return [];
+    try {
+      final raw = await _kChannel.invokeMethod<List>('getParticipants');
+      return raw?.cast<Map<Object?, Object?>>()
+              .map((m) => m.cast<String, dynamic>())
+              .toList() ??
+          [];
+    } catch (e) {
+      debugPrint('[CloudKit] getParticipants error: $e');
+      return [];
+    }
+  }
+
+  /// Removes a participant from the CloudKit share.
+  /// [participantRecordName] comes from the `id` field returned by getParticipants().
+  Future<bool> revokeParticipant(String participantRecordName) async {
+    if (!_isIos) return false;
+    try {
+      await _kChannel.invokeMethod<void>(
+          'revokeParticipant', participantRecordName);
+      return true;
+    } catch (e) {
+      debugPrint('[CloudKit] revokeParticipant error: $e');
+      return false;
+    }
+  }
+
   /// Returns the iCloud share URL string, or null on error.
   /// Owner calls this once and sends the link via WhatsApp / iMessage.
-  /// Partner taps the link → iOS shows "Accept Share" dialog automatically.
+  /// Partner taps the link → iOS handles the accept flow automatically.
   Future<String?> createShareLink() async {
     if (!_isIos) return null;
     try {

@@ -10,6 +10,7 @@ import 'dashboard_screen.dart';
 import 'notifications_screen.dart';
 import 'manage_recurring_screen.dart';
 import 'display_settings_screen.dart';
+import 'invite_family_screen.dart';
 
 const _kGreen = Color(0xFF2e7d32);
 
@@ -24,14 +25,15 @@ class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabs;
   Family _family = const Family(parents: [], kids: []);
+  bool _showInviteBanner = false;
 
   @override
   void initState() {
     super.initState();
     _tabs = TabController(length: 2, vsync: this);
     _loadFamily();
-    // Auto-mark any unresolved past activities as missed
     RecurringService.instance.autoMarkMissed();
+    _checkInviteBanner();
   }
 
   @override
@@ -45,6 +47,20 @@ class _HomeScreenState extends State<HomeScreen>
     if (mounted) setState(() => _family = f);
   }
 
+  /// Show the invite banner if the user hasn't dismissed it and no one
+  /// has connected yet (only relevant on iOS where CloudKit is available).
+  Future<void> _checkInviteBanner() async {
+    final dismissed =
+        await DatabaseHelper.instance.getMeta('invite_banner_dismissed');
+    if (dismissed == '1') return;
+    if (mounted) setState(() => _showInviteBanner = true);
+  }
+
+  Future<void> _dismissBanner() async {
+    await DatabaseHelper.instance.setMeta('invite_banner_dismissed', '1');
+    if (mounted) setState(() => _showInviteBanner = false);
+  }
+
   Future<void> _openSettings() async {
     await Navigator.push(
       context,
@@ -56,12 +72,21 @@ class _HomeScreenState extends State<HomeScreen>
           onComplete: () {
             Navigator.pop(context);
             _loadFamily();
-            // Push updated family config to iCloud immediately
             SyncService.instance.sync();
           },
         ),
       ),
     );
+  }
+
+  void _openInvite() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const InviteFamilyScreen()),
+    ).then((_) {
+      // Re-check banner after returning — if someone connected, hide it
+      _checkInviteBanner();
+    });
   }
 
   @override
@@ -88,8 +113,7 @@ class _HomeScreenState extends State<HomeScreen>
             tooltip: 'Notification settings',
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder: (_) => const NotificationsScreen()),
+              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
             ),
           ),
           PopupMenuButton<String>(
@@ -97,6 +121,7 @@ class _HomeScreenState extends State<HomeScreen>
             tooltip: 'Settings',
             onSelected: (v) {
               if (v == 'family') _openSettings();
+              if (v == 'sync') _openInvite();
               if (v == 'recurring') {
                 Navigator.push(context, MaterialPageRoute(
                     builder: (_) => const ManageRecurringScreen()));
@@ -113,6 +138,13 @@ class _HomeScreenState extends State<HomeScreen>
                     Icon(Icons.people_outline),
                     SizedBox(width: 10),
                     Text('Family Settings'),
+                  ])),
+              PopupMenuItem(
+                  value: 'sync',
+                  child: Row(children: [
+                    Icon(Icons.sync_rounded),
+                    SizedBox(width: 10),
+                    Text('Family Sync'),
                   ])),
               PopupMenuItem(
                   value: 'recurring',
@@ -147,22 +179,80 @@ class _HomeScreenState extends State<HomeScreen>
       ),
       body: _family.isEmpty
           ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabs,
-              physics: const NeverScrollableScrollPhysics(),
+          : Column(
               children: [
-                EntryScreen(
-                  family: _family,
-                  onEntrySaved: () => SyncService.instance.sync(),
+                if (_showInviteBanner) _InviteBanner(
+                  onInvite: () {
+                    _dismissBanner();
+                    _openInvite();
+                  },
+                  onDismiss: _dismissBanner,
                 ),
-                DashboardScreen(family: _family),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabs,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      EntryScreen(
+                        family: _family,
+                        onEntrySaved: () => SyncService.instance.sync(),
+                      ),
+                      DashboardScreen(family: _family),
+                    ],
+                  ),
+                ),
               ],
             ),
     );
   }
 }
 
-// ── Sync status indicator ─────────────────────────────────
+// ── Invite banner ─────────────────────────────────────────
+
+class _InviteBanner extends StatelessWidget {
+  final VoidCallback onInvite;
+  final VoidCallback onDismiss;
+  const _InviteBanner({required this.onInvite, required this.onDismiss});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        color: const Color(0xFFEDF7ED),
+        padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+        child: Row(children: [
+          const Text('👨‍👩‍👧', style: TextStyle(fontSize: 22)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Invite your partner',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: _kGreen)),
+                const Text(
+                  'Share this journal across different Apple IDs',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF555555)),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: onInvite,
+            style: TextButton.styleFrom(foregroundColor: _kGreen),
+            child: const Text('Invite →',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 18, color: Color(0xFF888888)),
+            onPressed: onDismiss,
+            tooltip: 'Dismiss',
+          ),
+        ]),
+      );
+}
+
+// ── Sync status dot ───────────────────────────────────────
 
 class _SyncDot extends StatelessWidget {
   final SyncStatus status;
@@ -172,16 +262,16 @@ class _SyncDot extends StatelessWidget {
   Widget build(BuildContext context) {
     const tooltip = {
       SyncStatus.syncing: 'Syncing…',
-      SyncStatus.synced: 'iCloud synced',
+      SyncStatus.synced: 'CloudKit synced',
       SyncStatus.error: 'Sync error — will retry',
-      SyncStatus.unavailable: 'iCloud unavailable',
+      SyncStatus.unavailable: 'Sync not available',
       SyncStatus.idle: 'Waiting to sync',
     };
     final color = switch (status) {
-      SyncStatus.synced => const Color(0xFF69F0AE),
+      SyncStatus.synced  => const Color(0xFF69F0AE),
       SyncStatus.syncing => const Color(0xFFFFD740),
-      SyncStatus.error => const Color(0xFFFF5252),
-      _ => Colors.white30,
+      SyncStatus.error   => const Color(0xFFFF5252),
+      _                  => Colors.white30,
     };
 
     return Tooltip(
@@ -190,15 +280,14 @@ class _SyncDot extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 18),
         child: status == SyncStatus.syncing
             ? const SizedBox(
-                width: 14,
-                height: 14,
+                width: 14, height: 14,
                 child: CircularProgressIndicator(
                     strokeWidth: 2, color: Color(0xFFFFD740)),
               )
             : Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                width: 10, height: 10,
+                decoration:
+                    BoxDecoration(color: color, shape: BoxShape.circle),
               ),
       ),
     );

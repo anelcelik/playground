@@ -87,6 +87,18 @@ import UIKit
             case "createShareLink":
                 self.createShareLink(db: db, zoneID: zoneID, result: result)
 
+            case "openShareSheet":
+                self.openShareSheet(db: db, zoneID: zoneID, result: result)
+
+            case "getParticipants":
+                self.getParticipants(db: db, zoneID: zoneID, result: result)
+
+            case "revokeParticipant":
+                guard let participantID = call.arguments as? String else {
+                    result(self.err("ARGS", "revokeParticipant requires a string")); return
+                }
+                self.revokeParticipant(participantID, db: db, zoneID: zoneID, result: result)
+
             default:
                 result(FlutterMethodNotImplemented)
             }
@@ -395,6 +407,160 @@ import UIKit
         }
     }
 
+    // MARK: - openShareSheet
+
+    /// Presents Apple's native UICloudSharingController.
+    /// Handles invite, participant management, and revoke — all in Apple's own UI.
+    private func openShareSheet(
+        db: CKDatabase,
+        zoneID: CKRecordZone.ID,
+        result: @escaping FlutterResult
+    ) {
+        guard db.databaseScope == .private else {
+            result(err("NOT_OWNER", "Only the share owner can manage the share")); return
+        }
+        guard #available(iOS 15.0, *) else {
+            result(err("IOS_VERSION", "Requires iOS 15+")); return
+        }
+
+        let shareID = CKRecord.ID(recordName: "pg_zone_share", zoneID: zoneID)
+
+        db.fetch(withRecordID: shareID) { existingRecord, _ in
+            DispatchQueue.main.async {
+                let controller: UICloudSharingController
+
+                if let share = existingRecord as? CKShare {
+                    // Share already exists — show management UI
+                    controller = UICloudSharingController(
+                        share: share, container: self.ckContainer
+                    )
+                } else {
+                    // No share yet — use preparation handler to create it
+                    controller = UICloudSharingController { (_, completion) in
+                        let newShare = CKShare(recordZoneID: zoneID)
+                        newShare[CKShare.SystemFieldKey.title] =
+                            Self.shareTitle as CKRecordValue
+                        newShare.publicPermission = .none
+
+                        let op = CKModifyRecordsOperation(recordsToSave: [newShare])
+                        op.modifyRecordsResultBlock = { opResult in
+                            switch opResult {
+                            case .success:
+                                completion(newShare, self.ckContainer, nil)
+                            case .failure(let error):
+                                completion(nil, self.ckContainer, error)
+                            }
+                        }
+                        db.add(op)
+                    }
+                }
+
+                controller.availablePermissions = [.allowReadWrite, .allowPrivate]
+                controller.delegate = self
+
+                guard let rootVC = UIApplication.shared.connectedScenes
+                    .compactMap({ $0 as? UIWindowScene })
+                    .flatMap({ $0.windows })
+                    .first(where: { $0.isKeyWindow })?.rootViewController else {
+                    result(self.err("NO_VC", "Could not find root view controller"))
+                    return
+                }
+                rootVC.present(controller, animated: true)
+                result(nil)
+            }
+        }
+    }
+
+    // MARK: - getParticipants
+
+    private func getParticipants(
+        db: CKDatabase,
+        zoneID: CKRecordZone.ID,
+        result: @escaping FlutterResult
+    ) {
+        let shareID = CKRecord.ID(recordName: "pg_zone_share", zoneID: zoneID)
+
+        db.fetch(withRecordID: shareID) { record, error in
+            guard let share = record as? CKShare else {
+                // No share exists yet — just return owner-only list
+                result([[
+                    "id": "",
+                    "name": "You",
+                    "email": "",
+                    "role": "owner",
+                    "status": "accepted",
+                ]])
+                return
+            }
+
+            let participants: [[String: Any]] = share.participants.map { p in
+                let nameComponents = p.userIdentity.nameComponents
+                let name: String = {
+                    if let nc = nameComponents {
+                        let full = [nc.givenName, nc.familyName]
+                            .compactMap { $0 }.joined(separator: " ")
+                        return full.isEmpty ? "Connected user" : full
+                    }
+                    return "Connected user"
+                }()
+                let email = p.userIdentity.lookupInfo?.emailAddress ?? ""
+                let role  = p.role == .owner ? "owner" : "participant"
+                let status: String = {
+                    switch p.acceptanceStatus {
+                    case .accepted:  return "accepted"
+                    case .pending:   return "pending"
+                    case .removed:   return "removed"
+                    default:         return "unknown"
+                    }
+                }()
+                return [
+                    "id":     p.userIdentity.userRecordID?.recordName ?? "",
+                    "name":   name,
+                    "email":  email,
+                    "role":   role,
+                    "status": status,
+                ]
+            }
+            result(participants)
+        }
+    }
+
+    // MARK: - revokeParticipant
+
+    private func revokeParticipant(
+        _ participantRecordName: String,
+        db: CKDatabase,
+        zoneID: CKRecordZone.ID,
+        result: @escaping FlutterResult
+    ) {
+        let shareID = CKRecord.ID(recordName: "pg_zone_share", zoneID: zoneID)
+
+        db.fetch(withRecordID: shareID) { record, error in
+            guard let share = record as? CKShare else {
+                result(self.err("NO_SHARE", "Share not found")); return
+            }
+            guard let participant = share.participants.first(where: {
+                $0.userIdentity.userRecordID?.recordName == participantRecordName
+            }) else {
+                result(self.err("NOT_FOUND", "Participant not found")); return
+            }
+
+            share.removeParticipant(participant)
+
+            let op = CKModifyRecordsOperation(recordsToSave: [share])
+            op.savePolicy = .changedKeys
+            op.modifyRecordsResultBlock = { opResult in
+                switch opResult {
+                case .success:
+                    result(nil)
+                case .failure(let error):
+                    result(self.err("REVOKE_FAILED", error.localizedDescription))
+                }
+            }
+            db.add(op)
+        }
+    }
+
     // MARK: - Handle incoming share URL (call from AppDelegate)
 
     /// Call this from AppDelegate's application(_:open:options:) when the URL
@@ -458,4 +624,42 @@ import UIKit
     private func err(_ code: String, _ msg: String) -> FlutterError {
         FlutterError(code: code, message: msg, details: nil)
     }
+}
+
+// MARK: - UICloudSharingControllerDelegate
+
+extension CloudKitPlugin: UICloudSharingControllerDelegate {
+
+    public func cloudSharingController(
+        _ csc: UICloudSharingController,
+        failedToSaveShareWithError error: Error
+    ) {
+        print("[CloudKit] UICloudSharingController save failed: \(error)")
+    }
+
+    public func cloudSharingControllerDidSaveShare(
+        _ csc: UICloudSharingController
+    ) {
+        // Invalidate cached zone so the next sync re-discovers participants
+        cachedZone = nil
+        cachedDB   = nil
+    }
+
+    public func cloudSharingControllerDidStopSharing(
+        _ csc: UICloudSharingController
+    ) {
+        cachedZone = nil
+        cachedDB   = nil
+        UserDefaults.standard.set(false, forKey: kIsParticipant)
+    }
+
+    public func itemTitle(for csc: UICloudSharingController) -> String? {
+        "Playground Tracker"
+    }
+
+    public func itemThumbnailData(
+        for csc: UICloudSharingController
+    ) -> Data? { nil }
+
+    public func itemType(for csc: UICloudSharingController) -> String? { nil }
 }
