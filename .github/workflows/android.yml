@@ -46,20 +46,49 @@ jobs:
         working-directory: ANDROID
         run: |
           python3 << 'EOF'
-          path = 'android/app/build.gradle'
+          import os, glob
+
+          # Flutter 3.16+ uses Kotlin DSL (.kts), older uses Groovy (.gradle)
+          candidates = glob.glob('android/app/build.gradle.kts') + \
+                       glob.glob('android/app/build.gradle')
+
+          if not candidates:
+              print("No build.gradle found — listing android/app/:")
+              for f in os.listdir('android/app'):
+                  print(' ', f)
+              raise SystemExit(1)
+
+          path = candidates[0]
+          print(f'Patching: {path}')
+          is_kts = path.endswith('.kts')
+
           with open(path) as f:
               src = f.read()
-          src = src.replace(
-              'compileOptions {',
-              'compileOptions {\n        coreLibraryDesugaringEnabled true'
-          )
-          src = src.replace(
-              'dependencies {',
-              "dependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
-          )
+
+          if is_kts:
+              # Kotlin DSL syntax
+              src = src.replace(
+                  'compileOptions {',
+                  'compileOptions {\n        isCoreLibraryDesugaringEnabled = true'
+              )
+              src = src.replace(
+                  'dependencies {',
+                  'dependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
+              )
+          else:
+              # Groovy DSL syntax
+              src = src.replace(
+                  'compileOptions {',
+                  'compileOptions {\n        coreLibraryDesugaringEnabled true'
+              )
+              src = src.replace(
+                  'dependencies {',
+                  "dependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
+              )
+
           with open(path, 'w') as f:
               f.write(src)
-          print('build.gradle patched OK')
+          print('Patched OK')
           EOF
 
       - name: Install dependencies
