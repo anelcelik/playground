@@ -66,25 +66,20 @@ jobs:
               src = f.read()
 
           if is_kts:
-              # Kotlin DSL syntax
+              # Kotlin DSL: add isCoreLibraryDesugaringEnabled inside compileOptions
               src = src.replace(
                   'compileOptions {',
                   'compileOptions {\n        isCoreLibraryDesugaringEnabled = true'
               )
-              src = src.replace(
-                  'dependencies {',
-                  'dependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
-              )
+              # Append a new dependencies block (Gradle merges multiple blocks)
+              src += '\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n'
           else:
-              # Groovy DSL syntax
+              # Groovy DSL
               src = src.replace(
                   'compileOptions {',
                   'compileOptions {\n        coreLibraryDesugaringEnabled true'
               )
-              src = src.replace(
-                  'dependencies {',
-                  "dependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
-              )
+              src += "\ndependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'\n}\n"
 
           with open(path, 'w') as f:
               f.write(src)
