@@ -141,12 +141,6 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
 
 
     return Scaffold(

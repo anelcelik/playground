@@ -88,12 +88,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
+    final _c2 = AppColors.of(context);
+    final _kCard   = _c2.card;
+    final _kBorder = _c2.border;
+    final _kTxt    = _c2.txt;
+    final _kTxt2   = _c2.txt2;
+    final _kBg     = _c2.bg;
+
 
 
     return Scaffold(
@@ -214,12 +215,13 @@ class _NotifCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
+    final _c2 = AppColors.of(context);
+    final _kCard   = _c2.card;
+    final _kBorder = _c2.border;
+    final _kTxt    = _c2.txt;
+    final _kTxt2   = _c2.txt2;
+    final _kBg     = _c2.bg;
+
 
 
     return Container(
@@ -321,12 +323,13 @@ class _PermissionBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
+    final _c2 = AppColors.of(context);
+    final _kCard   = _c2.card;
+    final _kBorder = _c2.border;
+    final _kTxt    = _c2.txt;
+    final _kTxt2   = _c2.txt2;
+    final _kBg     = _c2.bg;
+
 
 
     return Container(
@@ -368,12 +371,13 @@ class _InfoNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
+    final _c2 = AppColors.of(context);
+    final _kCard   = _c2.card;
+    final _kBorder = _c2.border;
+    final _kTxt    = _c2.txt;
+    final _kTxt2   = _c2.txt2;
+    final _kBg     = _c2.bg;
+
 
 
     return Container(
