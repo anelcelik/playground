@@ -1,0 +1,72 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ANDROID/**'
+      - '.github/workflows/android.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'ANDROID/**'
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Flutter Android debug APK
+    runs-on: ubuntu-latest        # ← Linux runner — much faster & cheaper than macOS
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: stable
+          cache: true
+
+      - name: Generate Android project files
+        working-directory: ANDROID
+        run: |
+          flutter create \
+            --project-name playground_tracker \
+            --org com.playground.tracker \
+            --platforms android \
+            .
+          rm -f test/widget_test.dart
+
+      - name: Install dependencies
+        working-directory: ANDROID
+        run: flutter pub get
+
+      - name: Generate app icons
+        working-directory: ANDROID
+        run: dart run flutter_launcher_icons
+
+      - name: Analyze Dart code
+        working-directory: ANDROID
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Build debug APK
+        working-directory: ANDROID
+        run: flutter build apk --debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: playground-tracker-android-debug-${{ github.sha }}
+          path: ANDROID/build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 14
+
+  # ── Release APK (unsigned — sideloadable on any Android) ──────────────────
+  # Uncomment to also build a release APK (smaller, faster, but unsigned)
+  #
+  # build-android-release:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     ... same steps but:
+  #     run: flutter build apk --release --no-shrink
+  #     path: ANDROID/build/app/outputs/flutter-apk/app-release.apk
