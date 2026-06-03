@@ -390,7 +390,7 @@ class DatabaseHelper {
   /// Rules:
   ///   • New UUID on remote  → insert locally (unless is_deleted)
   ///   • Same UUID, remote newer → overwrite local
-  ///   • Same UUID, same timestamp → keep local (Anel's device wins tie)
+  ///   • Same UUID, same timestamp → keep local (local device wins tie)
   ///   • Family/tags: remote wins only if its family_updated_at > ours
   Future<void> mergeFromJson(Map<String, dynamic> remote) async {
     final db = await database;
@@ -446,7 +446,7 @@ class DatabaseHelper {
               whereArgs: [uuid],
             );
           }
-          // remoteTs <= localTs → keep local (handles tie-break for Anel's device)
+          // remoteTs <= localTs → keep local (tie-break: local device wins)
         }
       }
 

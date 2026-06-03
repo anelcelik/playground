@@ -171,7 +171,7 @@ What to verify on device:
 This is the key difference from the old icloud_storage approach.
 **Each family member uses their own Apple ID.**
 
-### Owner setup (your iPhone — Anel)
+### Owner setup (your iPhone (owner))
 
 The app exposes a "Share with family" button — you need to add it to the Settings screen
 or call `SyncService.instance.createShareLink()` from a button.
@@ -312,7 +312,7 @@ Then the CI will produce a signed `.ipa` artifact ready for TestFlight upload.
 - [ ] Tested on simulator — UI works, notifications work
 - [ ] Tested on real iPhone — sync dot turns green
 
-### Family sharing (do once, from Anel's iPhone)
+### Family sharing (do once, from the owner's iPhone)
 - [ ] Owner calls `createShareLink()` from Settings → gets a URL
 - [ ] URL sent via WhatsApp / iMessage to partner / grandma
 - [ ] Partner taps link → iOS shows "Accept" dialog → accepts
