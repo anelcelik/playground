@@ -42,6 +42,27 @@ jobs:
         working-directory: ANDROID/android
         run: echo "kotlin.jvm.target.validation.mode=IGNORE" >> gradle.properties
 
+      - name: Enable core library desugaring (required by flutter_local_notifications)
+        working-directory: ANDROID/android/app
+        run: |
+          python3 - << 'EOF'
+          with open('build.gradle') as f:
+              src = f.read()
+          # Add coreLibraryDesugaringEnabled inside compileOptions
+          src = src.replace(
+              'compileOptions {',
+              'compileOptions {\n        coreLibraryDesugaringEnabled true'
+          )
+          # Add desugaring library to dependencies
+          src = src.replace(
+              'dependencies {',
+              "dependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
+          )
+          with open('build.gradle', 'w') as f:
+              f.write(src)
+          print('build.gradle patched')
+          EOF
+
       - name: Install dependencies
         working-directory: ANDROID
         run: flutter pub get
