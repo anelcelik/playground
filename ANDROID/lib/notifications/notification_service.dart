@@ -51,8 +51,6 @@ class NotificationService {
       final android = _plugin
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
       final granted = await android?.requestNotificationsPermission() ?? false;
-      // Request exact alarm permission for precise scheduling (Android 12+)
-      await android?.requestExactAlarmsPermission();
       return granted;
     }
     return false;
@@ -220,8 +218,8 @@ class NotificationService {
         'playground_reminders',
         'Playground Reminders',
         channelDescription: 'Daily reminders to log playground visits',
-        importance: Importance.defaultImportance,
-        priority: Priority.defaultPriority,
+        importance: Importance.high,
+        priority: Priority.high,
       ),
     );
 

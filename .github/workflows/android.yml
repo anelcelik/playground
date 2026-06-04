@@ -52,7 +52,7 @@ jobs:
           if 'POST_NOTIFICATIONS' not in src:
               perms = (
                   '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n'
-                  '    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>\n'
+                  '    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>\n'
                   '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n'
               )
               src = src.replace('<application', perms + '\n    <application')
