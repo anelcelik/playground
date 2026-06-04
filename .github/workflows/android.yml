@@ -42,6 +42,27 @@ jobs:
         working-directory: ANDROID/android
         run: echo "kotlin.jvm.target.validation.mode=IGNORE" >> gradle.properties
 
+      - name: Add notification permissions to AndroidManifest
+        working-directory: ANDROID
+        run: |
+          python3 << 'EOF'
+          path = 'android/app/src/main/AndroidManifest.xml'
+          with open(path) as f:
+              src = f.read()
+          if 'POST_NOTIFICATIONS' not in src:
+              perms = (
+                  '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n'
+                  '    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>\n'
+                  '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n'
+              )
+              src = src.replace('<application', perms + '\n    <application')
+              with open(path, 'w') as f:
+                  f.write(src)
+              print('Manifest patched with notification permissions')
+          else:
+              print('Manifest already has permissions')
+          EOF
+
       - name: Enable core library desugaring (required by flutter_local_notifications)
         working-directory: ANDROID
         run: |

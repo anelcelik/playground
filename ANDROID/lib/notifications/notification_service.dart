@@ -37,50 +37,63 @@ class NotificationService {
   }
 
   /// Asks iOS for notification permission (shows system dialog on first call).
+  /// Requests notification permission.
+  /// On Android 13+ this shows the system permission dialog.
   Future<bool> requestPermission() async {
+    // iOS
     final ios = _plugin
         .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
-    return await ios?.requestPermissions(alert: true, sound: true) ?? false;
+    if (ios != null) {
+      return await ios.requestPermissions(alert: true, sound: true) ?? false;
+    }
+    // Android 13+ (API 33) — must request POST_NOTIFICATIONS at runtime
+    if (Platform.isAndroid) {
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final granted = await android?.requestNotificationsPermission() ?? false;
+      // Request exact alarm permission for precise scheduling (Android 12+)
+      await android?.requestExactAlarmsPermission();
+      return granted;
+    }
+    return false;
   }
 
   /// Reads saved prefs and re-schedules all enabled notifications.
   Future<void> _restoreSchedule() async {
     final p = await DatabaseHelper.instance.getNotifPrefs();
     if (p.outdoorEnabled) {
-      await _schedule(
-        id: _kIdOutdoor,
-        title: '🌳 Playground reminder',
-        body: 'Did you take the kids outside today?',
-        hour: p.outdoorHour,
-        minute: p.outdoorMinute,
-      );
+      await scheduleOutdoor(p.outdoorHour, p.outdoorMinute,
+          customMessage: p.outdoorMessage);
     }
     if (p.logEnabled) {
-      await _schedule(
-        id: _kIdLog,
-        title: '📝 Log your outdoor time',
-        body: "Don't forget to log today's playground visit",
-        hour: p.logHour,
-        minute: p.logMinute,
-      );
+      await scheduleLog(p.logHour, p.logMinute,
+          customMessage: p.logMessage);
     }
     await rescheduleAllRecurring();
   }
 
   // ── Public API ────────────────────────────────────────────
 
-  Future<void> scheduleOutdoor(int hour, int minute) => _schedule(
+  Future<void> scheduleOutdoor(int hour, int minute,
+          {String? customMessage}) =>
+      _schedule(
         id: _kIdOutdoor,
         title: '🌳 Playground reminder',
-        body: 'Did you take the kids outside today?',
+        body: (customMessage?.trim().isNotEmpty == true)
+            ? customMessage!.trim()
+            : 'Did you take the kids outside today?',
         hour: hour,
         minute: minute,
       );
 
-  Future<void> scheduleLog(int hour, int minute) => _schedule(
+  Future<void> scheduleLog(int hour, int minute,
+          {String? customMessage}) =>
+      _schedule(
         id: _kIdLog,
         title: '📝 Log your outdoor time',
-        body: "Don't forget to log today's playground visit",
+        body: (customMessage?.trim().isNotEmpty == true)
+            ? customMessage!.trim()
+            : "Don't forget to log today's playground visit",
         hour: hour,
         minute: minute,
       );

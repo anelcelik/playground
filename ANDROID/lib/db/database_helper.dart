@@ -344,9 +344,11 @@ class DatabaseHelper {
       outdoorEnabled: (await g('notif_outdoor_on')) == '1',
       outdoorHour: int.tryParse(await g('notif_outdoor_h') ?? '') ?? 15,
       outdoorMinute: int.tryParse(await g('notif_outdoor_m') ?? '') ?? 0,
+      outdoorMessage: await g('notif_outdoor_msg'),
       logEnabled: (await g('notif_log_on')) == '1',
       logHour: int.tryParse(await g('notif_log_h') ?? '') ?? 20,
       logMinute: int.tryParse(await g('notif_log_m') ?? '') ?? 0,
+      logMessage: await g('notif_log_msg'),
     );
   }
 
@@ -358,9 +360,11 @@ class DatabaseHelper {
     await s('notif_outdoor_on', p.outdoorEnabled ? '1' : '0');
     await s('notif_outdoor_h', '${p.outdoorHour}');
     await s('notif_outdoor_m', '${p.outdoorMinute}');
+    await s('notif_outdoor_msg', p.outdoorMessage ?? '');
     await s('notif_log_on', p.logEnabled ? '1' : '0');
     await s('notif_log_h', '${p.logHour}');
     await s('notif_log_m', '${p.logMinute}');
+    await s('notif_log_msg', p.logMessage ?? '');
   }
 
   /// Returns a stable UUID for this device, creating one on first call.
@@ -572,33 +576,47 @@ class NotifPrefs {
   final bool outdoorEnabled;
   final int outdoorHour;
   final int outdoorMinute;
+  final String? outdoorMessage;   // custom notification body, null = default text
   final bool logEnabled;
   final int logHour;
   final int logMinute;
+  final String? logMessage;       // custom notification body, null = default text
 
   const NotifPrefs({
     this.outdoorEnabled = false,
     this.outdoorHour = 15,   // 3 PM default
     this.outdoorMinute = 0,
+    this.outdoorMessage,
     this.logEnabled = false,
     this.logHour = 20,       // 8 PM default
     this.logMinute = 0,
+    this.logMessage,
   });
 
   NotifPrefs copyWith({
     bool? outdoorEnabled,
     int? outdoorHour,
     int? outdoorMinute,
+    Object? outdoorMessage = _sentinel,
     bool? logEnabled,
     int? logHour,
     int? logMinute,
+    Object? logMessage = _sentinel,
   }) =>
       NotifPrefs(
         outdoorEnabled: outdoorEnabled ?? this.outdoorEnabled,
         outdoorHour: outdoorHour ?? this.outdoorHour,
         outdoorMinute: outdoorMinute ?? this.outdoorMinute,
+        outdoorMessage: outdoorMessage == _sentinel
+            ? this.outdoorMessage
+            : outdoorMessage as String?,
         logEnabled: logEnabled ?? this.logEnabled,
         logHour: logHour ?? this.logHour,
         logMinute: logMinute ?? this.logMinute,
+        logMessage: logMessage == _sentinel
+            ? this.logMessage
+            : logMessage as String?,
       );
 }
+
+const _sentinel = Object();

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../db/database_helper.dart';
 import '../notifications/notification_service.dart';
@@ -57,14 +58,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     // Apply immediately
     if (prefs.outdoorEnabled) {
-      await NotificationService.instance
-          .scheduleOutdoor(prefs.outdoorHour, prefs.outdoorMinute);
+      await NotificationService.instance.scheduleOutdoor(
+          prefs.outdoorHour, prefs.outdoorMinute,
+          customMessage: prefs.outdoorMessage);
     } else {
       await NotificationService.instance.cancelOutdoor();
     }
     if (prefs.logEnabled) {
-      await NotificationService.instance
-          .scheduleLog(prefs.logHour, prefs.logMinute);
+      await NotificationService.instance.scheduleLog(
+          prefs.logHour, prefs.logMinute,
+          customMessage: prefs.logMessage);
     } else {
       await NotificationService.instance.cancelLog();
     }
@@ -130,12 +133,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   _NotifCard(
                     icon: '🌳',
                     title: 'Outdoor reminder',
-                    description:
-                        'Did you take the kids outside today? Fires once a day at the time you choose.',
+                    defaultMessage: 'Did you take the kids outside today?',
                     enabled: _prefs.outdoorEnabled,
                     time: TimeOfDay(
                         hour: _prefs.outdoorHour,
                         minute: _prefs.outdoorMinute),
+                    customMessage: _prefs.outdoorMessage,
                     onToggle: (v) => _save(_prefs.copyWith(outdoorEnabled: v)),
                     onTimeTap: !_prefs.outdoorEnabled
                         ? null
@@ -149,6 +152,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                   outdoorMinute: t.minute));
                             }
                           },
+                    onMessageChanged: (msg) =>
+                        _save(_prefs.copyWith(outdoorMessage: msg.isEmpty ? null : msg)),
                   ),
 
                   const SizedBox(height: 10),
@@ -157,11 +162,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   _NotifCard(
                     icon: '📝',
                     title: 'Log entry reminder',
-                    description:
-                        "Don't forget to log today's playground visit. Fires once a day at the time you choose.",
+                    defaultMessage: "Don't forget to log today's playground visit",
                     enabled: _prefs.logEnabled,
                     time: TimeOfDay(
                         hour: _prefs.logHour, minute: _prefs.logMinute),
+                    customMessage: _prefs.logMessage,
                     onToggle: (v) => _save(_prefs.copyWith(logEnabled: v)),
                     onTimeTap: !_prefs.logEnabled
                         ? null
@@ -174,6 +179,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                   logHour: t.hour, logMinute: t.minute));
                             }
                           },
+                    onMessageChanged: (msg) =>
+                        _save(_prefs.copyWith(logMessage: msg.isEmpty ? null : msg)),
                   ),
 
                   const SizedBox(height: 24),
@@ -187,128 +194,136 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
 // ── Notification card ─────────────────────────────────────
 
-class _NotifCard extends StatelessWidget {
+class _NotifCard extends StatefulWidget {
   final String icon;
   final String title;
-  final String description;
+  final String defaultMessage;
   final bool enabled;
   final TimeOfDay time;
+  final String? customMessage;
   final ValueChanged<bool> onToggle;
   final VoidCallback? onTimeTap;
+  final ValueChanged<String> onMessageChanged;
 
   const _NotifCard({
     required this.icon,
     required this.title,
-    required this.description,
+    required this.defaultMessage,
     required this.enabled,
     required this.time,
+    this.customMessage,
     required this.onToggle,
     required this.onTimeTap,
+    required this.onMessageChanged,
   });
 
-  String _fmt(TimeOfDay t) {
-    final h = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
-    final m = t.minute.toString().padLeft(2, '0');
-    final period = t.period == DayPeriod.am ? 'AM' : 'PM';
-    return '$h:$m $period';
+  @override
+  State<_NotifCard> createState() => _NotifCardState();
+}
+
+class _NotifCardState extends State<_NotifCard> {
+  late TextEditingController _msgCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _msgCtrl = TextEditingController(text: widget.customMessage ?? '');
   }
 
   @override
+  void dispose() {
+    _msgCtrl.dispose();
+    super.dispose();
+  }
+
+  String _fmtTime(TimeOfDay t) =>
+      AppSettings.instance.fmtHM(t.hour, t.minute);
+
+  @override
   Widget build(BuildContext context) {
-    final _c2 = AppColors.of(context);
-    final _kCard   = _c2.card;
-    final _kBorder = _c2.border;
-    final _kTxt    = _c2.txt;
-    final _kTxt2   = _c2.txt2;
-    final _kBg     = _c2.bg;
-
-
+    final c = AppColors.of(context);
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: c.card,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-              color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
+        boxShadow: [
+          BoxShadow(color: Colors.black.withAlpha(20), blurRadius: 4, offset: const Offset(0, 1))
         ],
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row
-          Row(
-            children: [
-              Text('$icon ', style: TextStyle(fontSize: 22)),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: _kTxt),
-                ),
-              ),
-              Switch.adaptive(
-                value: enabled,
-                activeThumbColor: _kGreen,
-                activeTrackColor: _kGreenLt.withAlpha(120),
-                onChanged: onToggle,
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            description,
-            style: TextStyle(fontSize: 13, color: _kTxt2, height: 1.5),
-          ),
+          // Header
+          Row(children: [
+            Text('${widget.icon} ', style: const TextStyle(fontSize: 22)),
+            Expanded(
+              child: Text(widget.title,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: c.txt)),
+            ),
+            Switch.adaptive(
+              value: widget.enabled,
+              activeThumbColor: _kGreen,
+              activeTrackColor: _kGreenLt.withAlpha(120),
+              onChanged: widget.onToggle,
+            ),
+          ]),
           const SizedBox(height: 14),
 
-          // Time picker row
+          // Time picker
           GestureDetector(
-            onTap: onTimeTap,
+            onTap: widget.onTimeTap,
             child: AnimatedOpacity(
-              opacity: enabled ? 1.0 : 0.4,
+              opacity: widget.enabled ? 1.0 : 0.4,
               duration: const Duration(milliseconds: 200),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
-                  color: enabled
-                      ? const Color(0xFFEDF7ED)
-                      : const Color(0xFFF5F5F5),
-                  border: Border.all(
-                      color: enabled ? _kGreen : _kBorder, width: 2),
+                  color: widget.enabled ? const Color(0xFFEDF7ED) : const Color(0xFFF5F5F5),
+                  border: Border.all(color: widget.enabled ? _kGreen : c.border, width: 2),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.access_time_rounded,
-                        size: 18, color: enabled ? _kGreen : _kTxt2),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Every day at  ${_fmt(time)}',
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.access_time_rounded,
+                      size: 18, color: widget.enabled ? _kGreen : c.txt2),
+                  const SizedBox(width: 8),
+                  Text('Every day at  ${_fmtTime(widget.time)}',
                       style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: enabled ? _kGreen : _kTxt2,
-                      ),
-                    ),
-                    if (enabled) ...[
-                      const SizedBox(width: 8),
-                      Text('— tap to change',
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: _kTxt2,
-                              fontStyle: FontStyle.italic)),
-                    ],
+                          fontSize: 15, fontWeight: FontWeight.w600,
+                          color: widget.enabled ? _kGreen : c.txt2)),
+                  if (widget.enabled) ...[
+                    const SizedBox(width: 8),
+                    Text('— tap to change',
+                        style: TextStyle(fontSize: 12, color: c.txt2, fontStyle: FontStyle.italic)),
                   ],
-                ),
+                ]),
               ),
             ),
           ),
+
+          // Custom message (only shown when enabled)
+          if (widget.enabled) ...[
+            const SizedBox(height: 10),
+            TextField(
+              controller: _msgCtrl,
+              decoration: InputDecoration(
+                hintText: 'Custom message (optional) — default: "${widget.defaultMessage}"',
+                hintMaxLines: 2,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(9),
+                  borderSide: BorderSide(color: c.border, width: 2),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(9),
+                  borderSide: const BorderSide(color: _kGreenLt, width: 2),
+                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(9)),
+              ),
+              onChanged: widget.onMessageChanged,
+            ),
+          ],
         ],
       ),
     );
@@ -342,11 +357,13 @@ class _PermissionBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text('⚠️ ', style: TextStyle(fontSize: 20)),
-          const Expanded(
+          const Text('⚠️ ', style: TextStyle(fontSize: 20)),
+          Expanded(
             child: Text(
-              'Notifications are blocked. Open Settings → Playground Tracker → Allow Notifications.',
-              style: TextStyle(
+              Platform.isAndroid
+                  ? 'Notifications are blocked. Tap Retry to allow, or open Settings → Apps → Playground Tracker → Notifications → Allow.'
+                  : 'Notifications are blocked. Open Settings → Playground Tracker → Allow Notifications.',
+              style: const TextStyle(
                   fontSize: 13,
                   color: Color(0xFF7B3F00),
                   height: 1.5),

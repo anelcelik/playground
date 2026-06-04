@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../db/database_helper.dart';
 import '../models/family.dart';
@@ -50,6 +51,8 @@ class _HomeScreenState extends State<HomeScreen>
   /// Show the invite banner if the user hasn't dismissed it and no one
   /// has connected yet (only relevant on iOS where CloudKit is available).
   Future<void> _checkInviteBanner() async {
+    // CloudKit sync is iOS only — never show the invite banner on Android
+    if (!Platform.isIOS) return;
     final dismissed =
         await DatabaseHelper.instance.getMeta('invite_banner_dismissed');
     if (dismissed == '1') return;
@@ -131,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen>
                     builder: (_) => const DisplaySettingsScreen()));
               }
             },
-            itemBuilder: (_) => const [
+            itemBuilder: (_) => [
               PopupMenuItem(
                   value: 'family',
                   child: Row(children: [
@@ -139,13 +142,15 @@ class _HomeScreenState extends State<HomeScreen>
                     SizedBox(width: 10),
                     Text('Family Settings'),
                   ])),
-              PopupMenuItem(
-                  value: 'sync',
-                  child: Row(children: [
-                    Icon(Icons.sync_rounded),
-                    SizedBox(width: 10),
-                    Text('Family Sync'),
-                  ])),
+              // Family Sync is CloudKit (iOS only) — hidden on Android
+              if (Platform.isIOS)
+                PopupMenuItem(
+                    value: 'sync',
+                    child: Row(children: [
+                      Icon(Icons.sync_rounded),
+                      SizedBox(width: 10),
+                      Text('Family Sync'),
+                    ])),
               PopupMenuItem(
                   value: 'recurring',
                   child: Row(children: [
