@@ -49,6 +49,7 @@ jobs:
           path = 'android/app/src/main/AndroidManifest.xml'
           with open(path) as f:
               src = f.read()
+          changed = False
           if 'POST_NOTIFICATIONS' not in src:
               perms = (
                   '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n'
@@ -56,11 +57,28 @@ jobs:
                   '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n'
               )
               src = src.replace('<application', perms + '\n    <application')
+              changed = True
+          if 'ScheduledNotificationReceiver' not in src:
+              receivers = (
+                  '        <!-- Required by flutter_local_notifications v17+ -->\n'
+                  '        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />\n'
+                  '        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">\n'
+                  '            <intent-filter>\n'
+                  '                <action android:name="android.intent.action.BOOT_COMPLETED"/>\n'
+                  '                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>\n'
+                  '                <action android:name="android.intent.action.QUICKBOOT_POWERON" />\n'
+                  '                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>\n'
+                  '            </intent-filter>\n'
+                  '        </receiver>\n'
+              )
+              src = src.replace('</application>', receivers + '    </application>')
+              changed = True
+          if changed:
               with open(path, 'w') as f:
                   f.write(src)
-              print('Manifest patched with notification permissions')
+              print('Manifest patched')
           else:
-              print('Manifest already has permissions')
+              print('Manifest already complete')
           EOF
 
       - name: Enable core library desugaring (required by flutter_local_notifications)
@@ -114,6 +132,27 @@ jobs:
       - name: Generate app icons
         working-directory: ANDROID
         run: dart run flutter_launcher_icons
+
+      - name: Configure splash screen
+        working-directory: ANDROID
+        run: |
+          cat > android/app/src/main/res/drawable/launch_background.xml << 'XMLEOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+              <item android:drawable="@color/splash_bg" />
+              <item>
+                  <bitmap android:gravity="center" android:src="@mipmap/ic_launcher" />
+              </item>
+          </layer-list>
+          XMLEOF
+          python3 -c "
+          p='android/app/src/main/res/values/colors.xml'
+          src=open(p).read()
+          if 'splash_bg' not in src:
+              src=src.replace('</resources>','    <color name=\"splash_bg\">#1B5E20</color>\n</resources>')
+              open(p,'w').write(src)
+          print('Splash configured')
+          "
 
       - name: Analyze Dart code
         working-directory: ANDROID
