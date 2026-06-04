@@ -100,6 +100,7 @@ class NotificationService {
   Future<void> cancelLog() => _plugin.cancel(_kIdLog);
   Future<void> cancelAll() => _plugin.cancelAll();
 
+
   // ── Recurring activity notifications ─────────────────────
 
   /// Schedules one weekly notification per repeat day for [activity].

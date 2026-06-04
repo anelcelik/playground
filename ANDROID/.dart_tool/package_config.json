@@ -75,9 +75,15 @@
     },
     {
       "name": "dbus",
-      "rootUri": "file:///home/anel/.pub-cache/hosted/pub.dev/dbus-0.7.13",
+      "rootUri": "file:///home/anel/.pub-cache/hosted/pub.dev/dbus-0.7.14",
       "packageUri": "lib/",
       "languageVersion": "2.17"
+    },
+    {
+      "name": "equatable",
+      "rootUri": "file:///home/anel/.pub-cache/hosted/pub.dev/equatable-2.0.8",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
     },
     {
       "name": "fake_async",
@@ -141,9 +147,9 @@
     },
     {
       "name": "flutter_timezone",
-      "rootUri": "file:///home/anel/.pub-cache/hosted/pub.dev/flutter_timezone-1.0.8",
+      "rootUri": "file:///home/anel/.pub-cache/hosted/pub.dev/flutter_timezone-5.1.0",
       "packageUri": "lib/",
-      "languageVersion": "2.12"
+      "languageVersion": "3.4"
     },
     {
       "name": "flutter_web_plugins",
@@ -165,7 +171,7 @@
     },
     {
       "name": "image",
-      "rootUri": "file:///home/anel/.pub-cache/hosted/pub.dev/image-4.9.1",
+      "rootUri": "file:///home/anel/.pub-cache/hosted/pub.dev/image-4.8.0",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
@@ -174,12 +180,6 @@
       "rootUri": "file:///home/anel/.pub-cache/hosted/pub.dev/intl-0.19.0",
       "packageUri": "lib/",
       "languageVersion": "3.0"
-    },
-    {
-      "name": "js",
-      "rootUri": "file:///home/anel/.pub-cache/hosted/pub.dev/js-0.7.2",
-      "packageUri": "lib/",
-      "languageVersion": "3.7"
     },
     {
       "name": "json_annotation",
@@ -411,9 +411,9 @@
     },
     {
       "name": "xml",
-      "rootUri": "file:///home/anel/.pub-cache/hosted/pub.dev/xml-7.0.1",
+      "rootUri": "file:///home/anel/.pub-cache/hosted/pub.dev/xml-6.6.1",
       "packageUri": "lib/",
-      "languageVersion": "3.11"
+      "languageVersion": "3.8"
     },
     {
       "name": "yaml",
