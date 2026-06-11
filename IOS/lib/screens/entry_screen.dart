@@ -8,6 +8,7 @@ import '../services/recurring_service.dart';
 import '../settings/app_settings.dart';
 import '../sync/sync_service.dart';
 import '../theme.dart';
+import '../widgets/entry_actions.dart';
 import '../widgets/recurring_activity_card.dart';
 import 'edit_entry_screen.dart';
 
@@ -232,28 +233,6 @@ class EntryScreenState extends State<EntryScreen> {
       _excuseSel.clear();
       _resetKids();
     });
-  }
-
-  Future<void> _deleteEntry(int id) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Delete entry?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
-          TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete', style: TextStyle(color: Colors.red))),
-        ],
-      ),
-    );
-    if (ok == true) {
-      await DatabaseHelper.instance.deleteEntry(id);
-      _loadEntries();
-      widget.onEntrySaved?.call();
-    }
   }
 
   Future<void> _addTag(
@@ -522,11 +501,15 @@ class EntryScreenState extends State<EntryScreen> {
           else
             ..._dayEntries.map((e) => _EntryCard(
                   entry: e,
-                  family: widget.family,
-                  onDelete: () => _deleteEntry(e.id!),
-                  onEdit: (e.vacation || e.noPlayground)
-                      ? null
-                      : () => _editEntry(e),
+                  onTap: () => showEntryActions(
+                    context,
+                    entry: e,
+                    family: widget.family,
+                    onChanged: () {
+                      _loadEntries();
+                      widget.onEntrySaved?.call();
+                    },
+                  ),
                 )),
 
           const SizedBox(height: 20),
@@ -569,22 +552,6 @@ class EntryScreenState extends State<EntryScreen> {
         if (i >= 0) _recurringStatuses[i] = result;
       });
     }
-  }
-
-  Future<void> _editEntry(Entry e) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EditEntryScreen(
-          entry: e,
-          family: widget.family,
-          onSaved: () {
-            _loadEntries();
-            widget.onEntrySaved?.call();
-          },
-        ),
-      ),
-    );
   }
 
   Future<void> _editRecurringEntry(RecurringActivityStatus s) async {
@@ -833,16 +800,9 @@ class EntryScreenState extends State<EntryScreen> {
 
 class _EntryCard extends StatelessWidget {
   final Entry entry;
-  final Family family;
-  final VoidCallback onDelete;
-  final VoidCallback? onEdit;
+  final VoidCallback onTap;
 
-  const _EntryCard({
-    required this.entry,
-    required this.family,
-    required this.onDelete,
-    this.onEdit,
-  });
+  const _EntryCard({required this.entry, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -871,11 +831,11 @@ class _EntryCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: onEdit,
+          onTap: onTap,
           child: Stack(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(13, 13, 36, 13),
+            padding: const EdgeInsets.all(13),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -952,16 +912,6 @@ class _EntryCard extends StatelessWidget {
                     ),
                 ],
               ],
-            ),
-          ),
-          Positioned(
-            top: 8, right: 8,
-            child: GestureDetector(
-              onTap: onDelete,
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Icon(Icons.close, size: 16, color: kTxt2),
-              ),
             ),
           ),
         ],

@@ -8,8 +8,8 @@ import '../models/entry.dart';
 import '../settings/app_settings.dart';
 import '../sync/sync_service.dart';
 import '../theme.dart';
+import '../widgets/entry_actions.dart';
 import 'dashboard_customise_screen.dart';
-import 'edit_entry_screen.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
 const _kGreen   = kGreen;
@@ -118,86 +118,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       default:
         return '';
     }
-  }
-
-  /// Edit/Delete sheet for a past log entry.
-  /// Vacation / no-playground entries have nothing meaningful to edit,
-  /// so they only get Delete.
-  Future<void> _showEntryActions(Entry e) async {
-    final canEdit = !e.vacation && !e.noPlayground;
-    final action = await showModalBottomSheet<String>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            if (canEdit)
-              ListTile(
-                leading: const Icon(Icons.edit_outlined),
-                title: const Text('Edit entry'),
-                onTap: () => Navigator.pop(ctx, 'edit'),
-              ),
-            ListTile(
-              leading: const Icon(Icons.delete_outline, color: Colors.red),
-              title: const Text('Delete entry',
-                  style: TextStyle(color: Colors.red)),
-              onTap: () => Navigator.pop(ctx, 'delete'),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-    if (!mounted || action == null) return;
-    if (action == 'edit') {
-      await _editEntry(e);
-    } else if (action == 'delete') {
-      await _deleteEntry(e);
-    }
-  }
-
-  Future<void> _editEntry(Entry e) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EditEntryScreen(
-          entry: e,
-          family: widget.family,
-          onSaved: () {
-            _load();
-            SyncService.instance.sync();
-          },
-        ),
-      ),
-    );
-  }
-
-  Future<void> _deleteEntry(Entry e) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete entry?'),
-        content: Text(
-            '${AppSettings.instance.fmtDateFull(e.date)} — this also removes '
-            'it on synced devices.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child:
-                  const Text('Delete', style: TextStyle(color: Colors.red))),
-        ],
-      ),
-    );
-    if (ok != true || e.id == null) return;
-    await DatabaseHelper.instance.deleteEntry(e.id!);
-    await _load();
-    SyncService.instance.sync();
   }
 
   Future<void> _load() async {
@@ -611,7 +531,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           ...grouped[date]!.map((e) => _DashEntryCard(
                 entry: e,
-                onTap: () => _showEntryActions(e),
+                onTap: () => showEntryActions(
+                  context,
+                  entry: e,
+                  family: widget.family,
+                  onChanged: () {
+                    _load();
+                    SyncService.instance.sync();
+                  },
+                ),
               )),
         ],
       );
