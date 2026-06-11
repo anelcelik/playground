@@ -524,6 +524,9 @@ class EntryScreenState extends State<EntryScreen> {
                   entry: e,
                   family: widget.family,
                   onDelete: () => _deleteEntry(e.id!),
+                  onEdit: (e.vacation || e.noPlayground)
+                      ? null
+                      : () => _editEntry(e),
                 )),
 
           const SizedBox(height: 20),
@@ -566,6 +569,22 @@ class EntryScreenState extends State<EntryScreen> {
         if (i >= 0) _recurringStatuses[i] = result;
       });
     }
+  }
+
+  Future<void> _editEntry(Entry e) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditEntryScreen(
+          entry: e,
+          family: widget.family,
+          onSaved: () {
+            _loadEntries();
+            widget.onEntrySaved?.call();
+          },
+        ),
+      ),
+    );
   }
 
   Future<void> _editRecurringEntry(RecurringActivityStatus s) async {
@@ -816,11 +835,13 @@ class _EntryCard extends StatelessWidget {
   final Entry entry;
   final Family family;
   final VoidCallback onDelete;
+  final VoidCallback? onEdit;
 
   const _EntryCard({
     required this.entry,
     required this.family,
     required this.onDelete,
+    this.onEdit,
   });
 
   @override
@@ -846,7 +867,12 @@ class _EntryCard extends StatelessWidget {
           BoxShadow(color: Color(0x12000000), blurRadius: 3, offset: Offset(0, 1))
         ],
       ),
-      child: Stack(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onEdit,
+          child: Stack(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(13, 13, 36, 13),
@@ -883,7 +909,7 @@ class _EntryCard extends StatelessWidget {
                         TextSpan(
                           text: e.duration ?? 'NA',
                           style: TextStyle(
-                            color: e.duration != null ? kTxt : const Color(0xFF999999),
+                            color: e.duration != null ? kTxt : kTxt2,
                             fontWeight: e.duration != null ? FontWeight.w700 : FontWeight.normal,
                           ),
                         ),
@@ -891,7 +917,7 @@ class _EntryCard extends StatelessWidget {
                         TextSpan(
                           text: e.kidList.isEmpty ? 'NA' : e.kidList.join(' & '),
                           style: TextStyle(
-                            color: e.kidList.isNotEmpty ? kTxt : const Color(0xFF999999),
+                            color: e.kidList.isNotEmpty ? kTxt : kTxt2,
                             fontWeight: e.kidList.isNotEmpty ? FontWeight.w700 : FontWeight.normal,
                           ),
                         ),
@@ -906,12 +932,14 @@ class _EntryCard extends StatelessWidget {
                         children: e.activityList.map((t) => Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEDF7ED),
+                            color: appC2.greenTint,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(t,
-                              style: const TextStyle(
-                                  color: _kGreen, fontSize: 11, fontWeight: FontWeight.w600)),
+                              style: TextStyle(
+                                  color: appC2.green,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600)),
                         )).toList(),
                       ),
                     ),
@@ -930,13 +958,15 @@ class _EntryCard extends StatelessWidget {
             top: 8, right: 8,
             child: GestureDetector(
               onTap: onDelete,
-              child: const Padding(
-                padding: EdgeInsets.all(4),
-                child: Icon(Icons.close, size: 16, color: Color(0xFFCCCCCC)),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(Icons.close, size: 16, color: kTxt2),
               ),
             ),
           ),
         ],
+          ),
+        ),
       ),
     );
   }

@@ -6,8 +6,10 @@ import '../models/family.dart';
 import '../models/entry.dart';
 
 import '../settings/app_settings.dart';
+import '../sync/sync_service.dart';
 import '../theme.dart';
 import 'dashboard_customise_screen.dart';
+import 'edit_entry_screen.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
 const _kGreen   = kGreen;
@@ -116,6 +118,86 @@ class _DashboardScreenState extends State<DashboardScreen> {
       default:
         return '';
     }
+  }
+
+  /// Edit/Delete sheet for a past log entry.
+  /// Vacation / no-playground entries have nothing meaningful to edit,
+  /// so they only get Delete.
+  Future<void> _showEntryActions(Entry e) async {
+    final canEdit = !e.vacation && !e.noPlayground;
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            if (canEdit)
+              ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: const Text('Edit entry'),
+                onTap: () => Navigator.pop(ctx, 'edit'),
+              ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.red),
+              title: const Text('Delete entry',
+                  style: TextStyle(color: Colors.red)),
+              onTap: () => Navigator.pop(ctx, 'delete'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    if (action == 'edit') {
+      await _editEntry(e);
+    } else if (action == 'delete') {
+      await _deleteEntry(e);
+    }
+  }
+
+  Future<void> _editEntry(Entry e) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditEntryScreen(
+          entry: e,
+          family: widget.family,
+          onSaved: () {
+            _load();
+            SyncService.instance.sync();
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteEntry(Entry e) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete entry?'),
+        content: Text(
+            '${AppSettings.instance.fmtDateFull(e.date)} — this also removes '
+            'it on synced devices.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child:
+                  const Text('Delete', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+    if (ok != true || e.id == null) return;
+    await DatabaseHelper.instance.deleteEntry(e.id!);
+    await _load();
+    SyncService.instance.sync();
   }
 
   Future<void> _load() async {
@@ -527,7 +609,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     fontSize: 11, fontWeight: FontWeight.w700,
                     color: _kTxt2, letterSpacing: 0.5)),
           ),
-          ...grouped[date]!.map((e) => _DashEntryCard(entry: e)),
+          ...grouped[date]!.map((e) => _DashEntryCard(
+                entry: e,
+                onTap: () => _showEntryActions(e),
+              )),
         ],
       );
     }).toList();
@@ -693,7 +778,8 @@ class _DonutPainter extends CustomPainter {
 
 class _DashEntryCard extends StatelessWidget {
   final Entry entry;
-  const _DashEntryCard({required this.entry});
+  final VoidCallback? onTap;
+  const _DashEntryCard({required this.entry, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -711,7 +797,6 @@ class _DashEntryCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 7),
-      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: c2.card,
         borderRadius: BorderRadius.circular(14),
@@ -719,7 +804,14 @@ class _DashEntryCard extends StatelessWidget {
           BoxShadow(color: Color(0x10000000), blurRadius: 3, offset: Offset(0, 1))
         ],
       ),
-      child: Column(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(13),
+            child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
@@ -775,16 +867,21 @@ class _DashEntryCard extends StatelessWidget {
                   children: e.activityList.map((t) => Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                        color: const Color(0xFFEDF7ED),
+                        color: c2.greenTint,
                         borderRadius: BorderRadius.circular(10)),
                     child: Text(t,
-                        style: const TextStyle(
-                            color: _kGreen, fontSize: 11, fontWeight: FontWeight.w600)),
+                        style: TextStyle(
+                            color: c2.green,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600)),
                   )).toList(),
                 ),
               ),
           ],
         ],
+            ),
+          ),
+        ),
       ),
     );
   }
