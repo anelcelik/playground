@@ -28,23 +28,12 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate iOS platform files
-        working-directory: IOS
-        run: |
-          flutter create \
-            --project-name playground_tracker \
-            --org com.playground.tracker \
-            --platforms ios \
-            .
-          rm -f test/widget_test.dart
-
+      # The ios/ platform folder is committed (it contains CloudKitPlugin.swift,
+      # the CloudKit-aware AppDelegate/SceneDelegate, and Runner.entitlements),
+      # so no `flutter create` here — that would build an app without sync.
       - name: Install dependencies
         working-directory: IOS
         run: flutter pub get
-
-      - name: Install CocoaPods dependencies
-        working-directory: IOS/ios
-        run: pod install
 
       - name: Generate app icons
         working-directory: IOS
@@ -52,7 +41,11 @@ jobs:
 
       - name: Analyze Dart code
         working-directory: IOS
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        run: flutter analyze
+
+      - name: Run tests
+        working-directory: IOS
+        run: flutter test
 
       - name: Build iOS unsigned release
         working-directory: IOS
