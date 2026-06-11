@@ -160,7 +160,7 @@ class _ActivityTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: appC.card,
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [
           BoxShadow(
@@ -183,9 +183,7 @@ class _ActivityTile extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: a.isActive
-                    ? const Color(0xFFEDF7ED)
-                    : const Color(0xFFF0F0F0),
+                color: a.isActive ? appC.greenTint : appC.bg,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(

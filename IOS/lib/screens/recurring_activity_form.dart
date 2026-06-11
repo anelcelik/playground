@@ -34,9 +34,11 @@ class RecurringActivityForm extends StatefulWidget {
 
 class _RecurringActivityFormState extends State<RecurringActivityForm> {
   // Theme-aware colour getters — readable from any method on this State
+  Color get _kCard   => AppColors.of(context).card;
   Color get _kBorder => AppColors.of(context).border;
   Color get _kTxt    => AppColors.of(context).txt;
   Color get _kTxt2   => AppColors.of(context).txt2;
+  Color get _kTint   => AppColors.of(context).greenTint;
 
   final _titleCtrl = TextEditingController();
   late Set<String> _selKids;
@@ -235,7 +237,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                     decoration: BoxDecoration(
-                      color: sel ? _kGreen : Colors.white,
+                      color: sel ? _kGreen : _kCard,
                       border: Border.all(color: sel ? _kGreen : _kBorder, width: 2),
                       borderRadius: BorderRadius.circular(9),
                     ),
@@ -286,7 +288,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                       decoration: BoxDecoration(
-                        color: sel ? const Color(0xFFEDF7ED) : Colors.white,
+                        color: sel ? _kTint : _kCard,
                         border: Border.all(color: sel ? _kGreen : _kBorder, width: 2),
                         borderRadius: BorderRadius.circular(9),
                       ),
@@ -294,7 +296,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                         Container(
                           width: 18, height: 18,
                           decoration: BoxDecoration(
-                            color: sel ? _kGreen : Colors.white,
+                            color: sel ? _kGreen : _kCard,
                             border: Border.all(color: sel ? _kGreen : _kBorder, width: 2),
                             borderRadius: BorderRadius.circular(4),
                           ),
@@ -359,7 +361,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEDF7ED),
+                    color: _kTint,
                     border: Border.all(color: _kGreen, width: 2),
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -438,7 +440,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
   Widget _card(Widget child) => Container(
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _kCard,
           borderRadius: BorderRadius.circular(14),
           boxShadow: const [
             BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
@@ -461,7 +463,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
   Widget _shiftChip(String label, bool sel, Color activeColor) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: sel ? activeColor : Colors.white,
+          color: sel ? activeColor : _kCard,
           border: Border.all(color: sel ? activeColor : _kBorder, width: 2),
           borderRadius: BorderRadius.circular(9),
         ),
@@ -480,7 +482,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
           decoration: BoxDecoration(
             border: Border.all(color: _kBorder, width: 2),
             borderRadius: BorderRadius.circular(9),
-            color: Colors.white,
+            color: _kCard,
           ),
           child: Text(label,
               style: TextStyle(fontSize: 13, color: _kTxt2),

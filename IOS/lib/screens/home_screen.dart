@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../db/database_helper.dart';
+import '../theme.dart' show AppColors;
 import '../models/family.dart';
 import '../sync/sync_controller.dart';
 import '../sync/sync_service.dart';
@@ -12,7 +13,6 @@ import 'manage_recurring_screen.dart';
 import 'display_settings_screen.dart';
 import 'invite_family_screen.dart';
 
-const _kGreen = Color(0xFF2e7d32);
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -213,13 +213,15 @@ class _InviteBanner extends StatelessWidget {
   const _InviteBanner({required this.onInvite, required this.onDismiss});
 
   @override
-  Widget build(BuildContext context) => Container(
-        color: const Color(0xFFEDF7ED),
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Container(
+        color: c.greenTint,
         padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
         child: Row(children: [
           const Text('👨‍👩‍👧', style: TextStyle(fontSize: 22)),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -227,27 +229,28 @@ class _InviteBanner extends StatelessWidget {
                     style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
-                        color: _kGreen)),
+                        color: c.green)),
                 Text(
                   'Share this journal across different Apple IDs',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF555555)),
+                  style: TextStyle(fontSize: 12, color: c.txt2),
                 ),
               ],
             ),
           ),
           TextButton(
             onPressed: onInvite,
-            style: TextButton.styleFrom(foregroundColor: _kGreen),
+            style: TextButton.styleFrom(foregroundColor: c.green),
             child: const Text('Invite →',
                 style: TextStyle(fontWeight: FontWeight.bold)),
           ),
           IconButton(
-            icon: const Icon(Icons.close, size: 18, color: Color(0xFF888888)),
+            icon: Icon(Icons.close, size: 18, color: c.txt2),
             onPressed: onDismiss,
             tooltip: 'Dismiss',
           ),
         ]),
       );
+  }
 }
 
 // ── Sync status dot ───────────────────────────────────────

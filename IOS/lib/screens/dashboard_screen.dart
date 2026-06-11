@@ -38,6 +38,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   // Theme-aware colour getters — readable from any method on this State
+  Color get _kCard   => AppColors.of(context).card;
   Color get _kBorder => AppColors.of(context).border;
   Color get _kTxt2   => AppColors.of(context).txt2;
 
@@ -171,7 +172,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 margin: EdgeInsets.only(right: p != 'all' ? 5 : 0),
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: sel ? _kGreen : Colors.white,
+                  color: sel ? _kGreen : _kCard,
                   border: Border.all(color: sel ? _kGreen : _kBorder, width: 2),
                   borderRadius: BorderRadius.circular(9),
                 ),
@@ -203,7 +204,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             height: 48,
             width: 48,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _kCard,
               borderRadius: BorderRadius.circular(14),
               boxShadow: const [
                 BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
@@ -218,7 +219,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _kCard,
           borderRadius: BorderRadius.circular(14),
           boxShadow: const [
             BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
@@ -362,7 +363,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             padding: const EdgeInsets.all(28),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-                color: Colors.white, borderRadius: BorderRadius.circular(14)),
+                color: _kCard, borderRadius: BorderRadius.circular(14)),
             child: Text('No entries this period',
                 style: TextStyle(color: _kTxt2, fontSize: 14)),
           )
@@ -535,7 +536,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _statCard(String num, String label, {bool small = false, Color? accent}) => Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _kCard,
           borderRadius: BorderRadius.circular(14),
           boxShadow: const [
             BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
@@ -562,7 +563,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _chartCard({required String title, required Widget child, Color? accent}) => Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _kCard,
           borderRadius: BorderRadius.circular(14),
           boxShadow: const [
             BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
@@ -712,7 +713,7 @@ class _DashEntryCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 7),
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: c2.card,
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [
           BoxShadow(color: Color(0x10000000), blurRadius: 3, offset: Offset(0, 1))

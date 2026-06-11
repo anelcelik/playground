@@ -36,9 +36,11 @@ class EditEntryScreen extends StatefulWidget {
 
 class _EditEntryScreenState extends State<EditEntryScreen> {
   // Theme-aware colour getters — readable from any method on this State
+  Color get _kCard   => AppColors.of(context).card;
   Color get _kBorder => AppColors.of(context).border;
   Color get _kTxt    => AppColors.of(context).txt;
   Color get _kTxt2   => AppColors.of(context).txt2;
+  Color get _kTint   => AppColors.of(context).greenTint;
 
   late Set<String> _selUsers;
   late String _shift;
@@ -232,7 +234,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: sel ? _kGreen : Colors.white,
+                          color: sel ? _kGreen : _kCard,
                           border: Border.all(
                               color: sel ? _kGreen : _kBorder, width: 2),
                           borderRadius: BorderRadius.circular(20),
@@ -265,9 +267,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 9),
                         decoration: BoxDecoration(
-                          color: on
-                              ? const Color(0xFFEDF7ED)
-                              : Colors.white,
+                          color: on ? _kTint : _kCard,
                           border: Border.all(
                               color: on ? _kGreen : _kBorder, width: 2),
                           borderRadius: BorderRadius.circular(9),
@@ -279,7 +279,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                               width: 18,
                               height: 18,
                               decoration: BoxDecoration(
-                                color: on ? _kGreen : Colors.white,
+                                color: on ? _kGreen : _kCard,
                                 border: Border.all(
                                     color: on ? _kGreen : _kBorder, width: 2),
                                 borderRadius: BorderRadius.circular(4),
@@ -319,7 +319,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 11, vertical: 6),
                         decoration: BoxDecoration(
-                          color: on ? _kGreen : Colors.white,
+                          color: on ? _kGreen : _kCard,
                           border: Border.all(
                               color: on ? _kGreen : _kBorder, width: 2),
                           borderRadius: BorderRadius.circular(16),
@@ -387,7 +387,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
   Widget _card(Widget child) => Container(
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _kCard,
           borderRadius: BorderRadius.circular(14),
           boxShadow: const [
             BoxShadow(
@@ -414,7 +414,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
         padding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: sel ? active : Colors.white,
+          color: sel ? active : _kCard,
           border: Border.all(color: sel ? active : _kBorder, width: 2),
           borderRadius: BorderRadius.circular(9),
         ),

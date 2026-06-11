@@ -265,7 +265,7 @@ class _PersonRow extends StatelessWidget {
               decoration: BoxDecoration(
                 border: Border.all(color: kBorder, width: 2),
                 borderRadius: BorderRadius.circular(8),
-                color: Colors.white,
+                color: appC2.card,
               ),
               child: Center(
                 child: Text('×',
@@ -299,7 +299,7 @@ class _AddButton extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border.all(color: kBorder, width: 2),
           borderRadius: BorderRadius.circular(9),
-          color: Colors.white,
+          color: appC2.card,
         ),
         child: Text(
           label,

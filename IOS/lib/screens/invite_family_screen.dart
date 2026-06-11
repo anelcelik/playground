@@ -179,7 +179,7 @@ class _HeroCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: const Color(0xFFEDF7ED),
+          color: AppColors.of(context).greenTint,
           border: Border.all(color: kGreen.withAlpha(80), width: 2),
           borderRadius: BorderRadius.circular(16),
         ),
@@ -281,7 +281,7 @@ class _ParticipantTile extends StatelessWidget {
             padding:
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: const Color(0xFFEDF7ED),
+              color: AppColors.of(context).greenTint,
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Text('You',

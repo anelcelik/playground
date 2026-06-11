@@ -212,7 +212,7 @@ class _NotifCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: c2.card,
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [
           BoxShadow(
@@ -261,9 +261,7 @@ class _NotifCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: enabled
-                      ? const Color(0xFFEDF7ED)
-                      : const Color(0xFFF5F5F5),
+                  color: enabled ? c2.greenTint : c2.bg,
                   border: Border.all(
                       color: enabled ? _kGreen : kBorder, width: 2),
                   borderRadius: BorderRadius.circular(10),

@@ -36,6 +36,7 @@ class EntryScreenState extends State<EntryScreen> {
   Color get _kBorder => AppColors.of(context).border;
   Color get _kTxt    => AppColors.of(context).txt;
   Color get _kTxt2   => AppColors.of(context).txt2;
+  Color get _kTint   => AppColors.of(context).greenTint;
 
   DateTime _date = DateTime.now();
   bool _isVacation = false;
@@ -605,7 +606,7 @@ class EntryScreenState extends State<EntryScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: sel ? _kGreen : Colors.white,
+                  color: sel ? _kGreen : _kCard,
                   border: Border.all(color: sel ? _kGreen : _kBorder, width: 2),
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -629,7 +630,7 @@ class EntryScreenState extends State<EntryScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                 decoration: BoxDecoration(
-                  color: on ? const Color(0xFFEDF7ED) : Colors.white,
+                  color: on ? _kTint : _kCard,
                   border: Border.all(color: on ? _kGreen : _kBorder, width: 2),
                   borderRadius: BorderRadius.circular(9),
                 ),
@@ -639,11 +640,13 @@ class EntryScreenState extends State<EntryScreen> {
                     Container(
                       width: 18, height: 18,
                       decoration: BoxDecoration(
-                        color: on ? _kGreen : Colors.white,
+                        color: on ? _kGreen : _kCard,
                         border: Border.all(color: on ? _kGreen : _kBorder, width: 2),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: on ? Icon(Icons.check, size: 12, color: _kCard) : null,
+                      child: on
+                          ? const Icon(Icons.check, size: 12, color: Colors.white)
+                          : null,
                     ),
                     const SizedBox(width: 6),
                     Text('👧 $k', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
@@ -731,19 +734,18 @@ class EntryScreenState extends State<EntryScreen> {
         child: Container(
           width: 36, height: 36,
           decoration: BoxDecoration(
-            border: Border.all(
-                color: onTap != null ? _kBorder : const Color(0xFFE0E0E0), width: 2),
+            border: Border.all(color: _kBorder, width: 2),
             borderRadius: BorderRadius.circular(9),
             color: _kCard,
           ),
-          child: Icon(icon, color: onTap != null ? _kGreen : const Color(0xFFCCCCCC)),
+          child: Icon(icon, color: onTap != null ? _kGreen : _kTxt2),
         ),
       );
 
   Widget _togChip(String label, bool sel, Color activeColor) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: sel ? activeColor : Colors.white,
+          color: sel ? activeColor : _kCard,
           border: Border.all(color: sel ? activeColor : _kBorder, width: 2),
           borderRadius: BorderRadius.circular(9),
         ),
@@ -760,7 +762,7 @@ class EntryScreenState extends State<EntryScreen> {
   Widget _tagChip(String tag, bool on) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
         decoration: BoxDecoration(
-          color: on ? _kGreen : Colors.white,
+          color: on ? _kGreen : _kCard,
           border: Border.all(color: on ? _kGreen : _kBorder, width: 2),
           borderRadius: BorderRadius.circular(16),
         ),

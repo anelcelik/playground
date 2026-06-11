@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../models/recurring_activity.dart';
 
 const _kGreen = Color(0xFF2e7d32);
-// const _kTxt = Color(0xFF212121);
-const _kTxt2 = Color(0xFF6b6b6b);
 
 // ── Public card ───────────────────────────────────────────
 
@@ -58,7 +56,7 @@ class _SkipSheet extends StatelessWidget {
               width: 40, height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                  color: const Color(0xFFDDE2DD),
+                  color: AppColors.of(context).border,
                   borderRadius: BorderRadius.circular(2)),
             ),
             const Text('Why skipping?',
@@ -92,7 +90,8 @@ class _SheetOption extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFDDE2DD), width: 2),
+          border:
+              Border.all(color: AppColors.of(context).border, width: 2),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(label,
@@ -118,8 +117,8 @@ class _PendingCard extends StatelessWidget {
 
     final a = status.activity;
     return _CardShell(
-      border: const Color(0xFFDDE2DD),
-      background: const Color(0xFFF9FAF9),
+      border: appC2.border,
+      background: appC2.card,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -127,7 +126,7 @@ class _PendingCard extends StatelessWidget {
             icon: '🔁',
             title: a.title,
             badge: 'Planned',
-            badgeBg: const Color(0xFFEEEEEE),
+            badgeBg: appC2.bg,
             badgeFg: kTxt2,
           ),
           if (a.kidNames.isNotEmpty)
@@ -146,9 +145,9 @@ class _PendingCard extends StatelessWidget {
             Expanded(
               child: _ActionBtn(
                 label: '❌  Skip',
-                bg: Colors.white,
+                bg: appC2.card,
                 fg: kTxt2,
-                border: const Color(0xFFDDE2DD),
+                border: appC2.border,
                 onTap: onSkip,
               ),
             ),
@@ -166,14 +165,14 @@ class _ConfirmedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
+    final c = AppColors.of(context);
     final a = status.activity;
     final e = status.entry;
     return GestureDetector(
       onTap: onTap,
       child: _CardShell(
         border: const Color(0xFF66BB6A),
-        background: const Color(0xFFEDF7ED),
+        background: c.greenTint,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -189,12 +188,12 @@ class _ConfirmedCard extends StatelessWidget {
               if (e.kidList.isNotEmpty) _Detail('👧 ${e.kidList.join(' & ')}'),
             ],
             if (onTap != null)
-              const Padding(
-                padding: EdgeInsets.only(top: 6),
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
                 child: Text('Tap to edit',
                     style: TextStyle(
                         fontSize: 11,
-                        color: _kGreen,
+                        color: c.green,
                         fontStyle: FontStyle.italic)),
               ),
           ],
@@ -217,9 +216,10 @@ class _SkippedCard extends StatelessWidget {
       'cancelled' => '🚫 Cancelled',
       _ => '💬 Other',
     };
+    final c = AppColors.of(context);
     return _CardShell(
-      border: const Color(0xFFBBBBBB),
-      background: const Color(0xFFF5F5F5),
+      border: c.border,
+      background: c.bg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -246,7 +246,7 @@ class _MissedCard extends StatelessWidget {
 
     return _CardShell(
       border: const Color(0xFFEF9A9A),
-      background: const Color(0xFFFFF5F5),
+      background: AppColors.of(context).redTint,
       child: _Header(
         icon: '❗',
         title: status.activity.title,
@@ -324,7 +324,8 @@ class _Detail extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(top: 4),
         child: Text(text,
-            style: const TextStyle(fontSize: 13, color: _kTxt2)),
+            style: TextStyle(
+                fontSize: 13, color: AppColors.of(context).txt2)),
       );
 }
 

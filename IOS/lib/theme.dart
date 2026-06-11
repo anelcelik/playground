@@ -95,6 +95,12 @@ class AppColors {
   final Color txt2;
   final Color green;
 
+  /// Soft green surface for selected / highlighted rows and banners.
+  final Color greenTint;
+
+  /// Soft red surface for warning rows (missed activities, …).
+  final Color redTint;
+
   AppColors.of(BuildContext ctx)
       : bg     = Theme.of(ctx).scaffoldBackgroundColor,
         card   = Theme.of(ctx).cardColor,
@@ -103,5 +109,11 @@ class AppColors {
                    : const Color(0xFFDDE2DD),
         txt    = Theme.of(ctx).colorScheme.onSurface,
         txt2   = Theme.of(ctx).colorScheme.onSurfaceVariant,
-        green  = Theme.of(ctx).colorScheme.primary;
+        green  = Theme.of(ctx).colorScheme.primary,
+        greenTint = Theme.of(ctx).brightness == Brightness.dark
+                   ? const Color(0xFF1C2E1E)
+                   : const Color(0xFFEDF7ED),
+        redTint  = Theme.of(ctx).brightness == Brightness.dark
+                   ? const Color(0xFF2E1C1C)
+                   : const Color(0xFFFFF5F5);
 }
