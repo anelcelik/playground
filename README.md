@@ -34,10 +34,10 @@ A private family app to track daily playground outings — who went, when, how l
 playground/
 ├── IOS/                        Flutter iOS app (primary)
 │   ├── lib/                    Dart source — all screens & logic
+│   ├── ios/                    Committed Xcode project (CloudKitPlugin.swift,
+│   │                           AppDelegate, SceneDelegate, Runner.entitlements)
+│   ├── test/                   Unit + widget tests (merge rules, models, smoke)
 │   ├── assets/icon.png         1024×1024 app icon
-│   ├── swift/
-│   │   ├── CloudKitPlugin.swift   Native CloudKit sync (copy to ios/Runner/)
-│   │   └── AppDelegate.swift      Modified AppDelegate (copy to ios/Runner/)
 │   └── pubspec.yaml
 │
 ├── ANDROID/                    Flutter Android app (same Dart code, no sync)
@@ -70,21 +70,27 @@ playground/
 
 ### iOS — Mac required
 
-See **`todo#apple#mac.md`** for the full step-by-step guide. Summary:
+The `IOS/ios/` Xcode project is committed and fully wired: CloudKit plugin,
+entitlements (`iCloud.com.playground.tracker` + push), background mode for
+silent sync pushes, and minimum iOS 15.0. On the Mac:
 
-1. Mac + Xcode + CocoaPods
-2. `flutter create --platforms ios .` inside `IOS/`
-3. Copy `swift/CloudKitPlugin.swift` + `swift/AppDelegate.swift` → `ios/Runner/`
-4. Add CloudKit capability in Xcode (container: `iCloud.com.playground.tracker`)
-5. Set minimum iOS 15.0
-6. `flutter run -d YOUR_IPHONE` via USB — no TestFlight needed for personal use
+1. Install Xcode + Flutter
+2. `cd IOS && flutter pub get`
+3. Open `ios/Runner.xcworkspace`, select your development team under
+   **Signing & Capabilities** (Xcode auto-creates the CloudKit container on
+   first signed build)
+4. `flutter run -d YOUR_IPHONE` via USB — no TestFlight needed for personal use
+
+See **`todo#apple#mac.md`** for the long-form guide.
 
 ---
 
 ## What CloudKit sync does (iOS only)
 
 - Every save/delete pushes to your private CloudKit zone immediately
-- App fetches changes every 30 seconds and on foreground
+- Other devices are notified by CloudKit silent pushes; the app also syncs on
+  foreground and every 3 minutes as a fallback
+- Only records changed since the last successful push are uploaded (batched)
 - **Different Apple IDs supported** — owner taps ⚙️ → Family Sync → Invite Someone, sends a link, partner accepts → both sync automatically
 - Merge rule: `last_modified` timestamp wins; ties go to the local device
 - Soft deletes propagate across devices

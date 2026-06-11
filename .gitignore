@@ -12,3 +12,4 @@ IOS/build/
 IOS/.dart_tool/
 IOS/.flutter-plugins
 IOS/.flutter-plugins-dependencies
+*.zip
