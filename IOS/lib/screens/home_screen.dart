@@ -92,9 +92,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F4),
       appBar: AppBar(
-        backgroundColor: _kGreen,
         elevation: 2,
         shadowColor: Colors.black26,
         title: const Text(
@@ -221,16 +219,16 @@ class _InviteBanner extends StatelessWidget {
         child: Row(children: [
           const Text('👨‍👩‍👧', style: TextStyle(fontSize: 22)),
           const SizedBox(width: 10),
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Invite your partner',
+                Text('Invite your partner',
                     style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                         color: _kGreen)),
-                const Text(
+                Text(
                   'Share this journal across different Apple IDs',
                   style: TextStyle(fontSize: 12, color: Color(0xFF555555)),
                 ),

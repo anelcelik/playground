@@ -12,8 +12,6 @@ import '../theme.dart';
 // Brand accent colours — intentionally fixed in both light and dark mode
 const _kGreen   = kGreen;
 const _kGreenLt = kGreenLt;
-const _kAmber   = kAmber;
-const _kBlue    = kBlue;
 // _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
 
 
@@ -36,11 +34,9 @@ class RecurringActivityForm extends StatefulWidget {
 
 class _RecurringActivityFormState extends State<RecurringActivityForm> {
   // Theme-aware colour getters — readable from any method on this State
-  Color get _kCard   => AppColors.of(context).card;
   Color get _kBorder => AppColors.of(context).border;
   Color get _kTxt    => AppColors.of(context).txt;
   Color get _kTxt2   => AppColors.of(context).txt2;
-  Color get _kBg     => AppColors.of(context).bg;
 
   final _titleCtrl = TextEditingController();
   late Set<String> _selKids;
@@ -178,11 +174,9 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
 
     final isNew = widget.existing == null;
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F4),
       appBar: AppBar(
-        backgroundColor: _kGreen,
         title: Text(isNew ? 'New Recurring Activity' : 'Edit Activity',
-            style: TextStyle(
+            style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 17)),
@@ -195,7 +189,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                     width: 18, height: 18,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white))
-                : Text('Save',
+                : const Text('Save',
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -220,7 +214,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(9),
-                  borderSide: BorderSide(color: _kGreenLt, width: 2),
+                  borderSide: const BorderSide(color: _kGreenLt, width: 2),
                 ),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(9)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
@@ -305,12 +299,12 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: sel
-                              ? Icon(Icons.check, size: 12, color: Colors.white)
+                              ? const Icon(Icons.check, size: 12, color: Colors.white)
                               : null,
                         ),
                         const SizedBox(width: 6),
                         Text('👧 $k',
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontWeight: FontWeight.w600, fontSize: 14)),
                       ]),
                     ),
@@ -370,10 +364,10 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(children: [
-                    Icon(Icons.access_time_rounded, size: 18, color: _kGreen),
+                    const Icon(Icons.access_time_rounded, size: 18, color: _kGreen),
                     const SizedBox(width: 8),
                     Text('Notify at  ${_fmtTime()}',
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: _kGreen)),
@@ -399,14 +393,14 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(9),
-                    borderSide: BorderSide(color: _kGreenLt, width: 2),
+                    borderSide: const BorderSide(color: _kGreenLt, width: 2),
                   ),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(9)),
                 ),
               ),
               Padding(
-                padding: EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   'Leave empty to use the default message.',
                   style: TextStyle(fontSize: 11, color: _kTxt2),
@@ -421,7 +415,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Active',
+                  const Text('Active',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   Text('Inactive activities are hidden from the daily log',
                       style: TextStyle(fontSize: 12, color: _kTxt2)),

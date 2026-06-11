@@ -18,14 +18,23 @@ void main() {
   // complete. The app's own DB calls complete during pump, which flushes
   // microtasks.
 
-  testWidgets('fresh install shows the setup screen', (tester) async {
-    await tester.runAsync(DatabaseHelper.resetForTests);
+  testWidgets('existing family goes straight to home tabs', (tester) async {
+    await tester.runAsync(() async {
+      await DatabaseHelper.resetForTests();
+      await DatabaseHelper.instance.saveFamily(['Mom', 'Dad'], ['Kid']);
+    });
 
     await tester.pumpWidget(const PlaygroundTrackerApp());
-    await tester.pumpAndSettle();
+    // The DB lives in the real-async zone (opened via runAsync above), so
+    // give real time for queries to complete between frame pumps.
+    // pumpAndSettle can't be used — it spins forever on the loading spinner.
+    for (var i = 0; i < 10; i++) {
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 50)));
+      await tester.pump();
+    }
 
-    // No family configured yet → setup flow, not the home tabs
-    expect(find.textContaining('Playground Tracker'), findsWidgets);
-    expect(find.text('Dashboard'), findsNothing);
+    expect(find.text('Log Entry'), findsOneWidget);
+    expect(find.text('Dashboard'), findsOneWidget);
   });
 }

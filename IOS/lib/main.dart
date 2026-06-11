@@ -54,13 +54,15 @@ class PlaygroundTrackerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // ListenableBuilder rebuilds MaterialApp whenever AppSettings changes —
-    // this is how dark mode / theme switches propagate to the whole tree.
+    // this is how the theme-mode switch propagates to the whole tree.
     return ListenableBuilder(
       listenable: AppSettings.instance,
       builder: (_, __) => MaterialApp(
         title: 'Playground Tracker',
         debugShowCheckedModeBanner: false,
         theme: kLightTheme,
+        darkTheme: kDarkTheme,
+        themeMode: AppSettings.instance.themeMode,
         home: const _AppRouter(),
       ),
     );

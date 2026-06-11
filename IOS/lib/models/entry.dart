@@ -90,6 +90,7 @@ class Entry {
         shift: shift,
         user: user,
         vacation: vacation,
+        noPlayground: noPlayground,
         duration: duration,
         kids: kids,
         activities: activities,

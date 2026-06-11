@@ -5,14 +5,10 @@ import '../models/recurring_activity.dart';
 import '../notifications/notification_service.dart';
 import 'recurring_activity_form.dart';
 
-import '../settings/app_settings.dart';
 import '../theme.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
 const _kGreen   = kGreen;
-const _kGreenLt = kGreenLt;
-const _kAmber   = kAmber;
-const _kBlue    = kBlue;
 // _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
 
 
@@ -26,11 +22,6 @@ class ManageRecurringScreen extends StatefulWidget {
 
 class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
   // Theme-aware colour getters — readable from any method on this State
-  Color get _kCard   => AppColors.of(context).card;
-  Color get _kBorder => AppColors.of(context).border;
-  Color get _kTxt    => AppColors.of(context).txt;
-  Color get _kTxt2   => AppColors.of(context).txt2;
-  Color get _kBg     => AppColors.of(context).bg;
 
   List<RecurringActivity> _activities = [];
   Family _family = const Family(parents: [], kids: []);
@@ -71,16 +62,16 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Delete activity?'),
+        title: const Text('Delete activity?'),
         content: Text(
             '"${a.title}" and all its logs will be permanently deleted.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('Cancel')),
+              child: const Text('Cancel')),
           TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text('Delete',
+              child: const Text('Delete',
                   style: TextStyle(color: Colors.red))),
         ],
       ),
@@ -105,20 +96,15 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _appC = AppColors.of(context);
-    final _kCard   = _appC.card;
-    final _kBorder = _appC.border;
-    final _kTxt    = _appC.txt;
-    final _kTxt2   = _appC.txt2;
-    final _kBg     = _appC.bg;
+    final appC = AppColors.of(context);
+    final kBg     = appC.bg;
 
 
 
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: kBg,
       appBar: AppBar(
-        backgroundColor: _kGreen,
-        title: Text('🔁 Recurring Activities',
+        title: const Text('🔁 Recurring Activities',
             style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -126,13 +112,11 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: _kGreen,
-        foregroundColor: Colors.white,
         onPressed: () => _openForm(),
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
       body: _loading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : _activities.isEmpty
               ? _EmptyState(onAdd: () => _openForm())
               : ListView.builder(
@@ -166,12 +150,9 @@ class _ActivityTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _appC = AppColors.of(context);
-    final _kCard   = _appC.card;
-    final _kBorder = _appC.border;
-    final _kTxt    = _appC.txt;
-    final _kTxt2   = _appC.txt2;
-    final _kBg     = _appC.bg;
+    final appC = AppColors.of(context);
+    final kTxt    = appC.txt;
+    final kTxt2   = appC.txt2;
 
 
 
@@ -196,7 +177,7 @@ class _ActivityTile extends StatelessWidget {
                   style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
-                      color: a.isActive ? _kTxt : _kTxt2)),
+                      color: a.isActive ? kTxt : kTxt2)),
             ),
             Container(
               padding:
@@ -212,7 +193,7 @@ class _ActivityTile extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: a.isActive ? _kGreen : _kTxt2),
+                    color: a.isActive ? _kGreen : kTxt2),
               ),
             ),
           ]),
@@ -221,18 +202,18 @@ class _ActivityTile extends StatelessWidget {
             children: [
               const SizedBox(height: 4),
               Text('🔁 ${a.repeatDaysLabel}',
-                  style: TextStyle(fontSize: 13, color: _kTxt2)),
+                  style: TextStyle(fontSize: 13, color: kTxt2)),
               if (a.kidNames.isNotEmpty)
                 Text('👧 ${a.kidNames.join(', ')}',
-                    style: TextStyle(fontSize: 13, color: _kTxt2)),
+                    style: TextStyle(fontSize: 13, color: kTxt2)),
               if (a.dateFrom != null || a.dateTo != null)
                 Text(
                   '📅 ${a.dateFrom ?? '…'} → ${a.dateTo ?? '…'}',
-                  style: TextStyle(fontSize: 12, color: _kTxt2),
+                  style: TextStyle(fontSize: 12, color: kTxt2),
                 ),
               if (a.notifyEnabled && a.notifyHour != null)
                 Text('🔔 ${a.notifyTimeLabel}',
-                    style: TextStyle(fontSize: 12, color: _kTxt2)),
+                    style: TextStyle(fontSize: 12, color: kTxt2)),
             ],
           ),
           onTap: onEdit,
@@ -272,15 +253,15 @@ class _TileAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _kTxt2 = AppColors.of(context).txt2;
+    final kTxt2 = AppColors.of(context).txt2;
     return Expanded(
         child: TextButton.icon(
           onPressed: onTap,
-          icon: Icon(icon, size: 16, color: color ?? _kTxt2),
+          icon: Icon(icon, size: 16, color: color ?? kTxt2),
           label: Text(label,
               style: TextStyle(
                   fontSize: 12,
-                  color: color ?? _kTxt2,
+                  color: color ?? kTxt2,
                   fontWeight: FontWeight.w500)),
           style: TextButton.styleFrom(padding: const EdgeInsets.all(10)),
         ),
@@ -294,29 +275,29 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _kTxt  = AppColors.of(context).txt;
-    final _kTxt2 = AppColors.of(context).txt2;
+    final kTxt  = AppColors.of(context).txt;
+    final kTxt2 = AppColors.of(context).txt2;
     return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('🔁', style: TextStyle(fontSize: 48)),
+            const Text('🔁', style: TextStyle(fontSize: 48)),
             const SizedBox(height: 12),
             Text('No recurring activities yet',
                 style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
-                    color: _kTxt)),
+                    color: kTxt)),
             const SizedBox(height: 6),
             Text(
                 'Add activities that repeat on specific days\nand they\'ll appear in the daily log.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: _kTxt2)),
+                style: TextStyle(fontSize: 14, color: kTxt2)),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: onAdd,
-              icon: Icon(Icons.add),
-              label: Text('Add first activity'),
+              icon: const Icon(Icons.add),
+              label: const Text('Add first activity'),
               style: ElevatedButton.styleFrom(
                   backgroundColor: _kGreen,
                   foregroundColor: Colors.white,

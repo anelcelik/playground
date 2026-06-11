@@ -79,9 +79,9 @@ class DashboardPrefs extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Called by ReorderableListView's onReorder callback.
+  /// Called by ReorderableListView's onReorderItem callback,
+  /// which already adjusts newIndex for the removed item.
   void reorder(int oldIndex, int newIndex) {
-    if (newIndex > oldIndex) newIndex--;
     final item = _sections.removeAt(oldIndex);
     _sections.insert(newIndex, item);
     _persist();

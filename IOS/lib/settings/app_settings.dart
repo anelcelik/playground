@@ -8,14 +8,21 @@ class AppSettings extends ChangeNotifier {
 
   bool _use24h = false;
   bool _euDate = true; // true = European d MMM yyyy | false = US MMM d, yyyy
+  ThemeMode _themeMode = ThemeMode.system;
 
   bool get use24h => _use24h;
   bool get euDate => _euDate;
+  ThemeMode get themeMode => _themeMode;
 
   Future<void> load() async {
     _use24h   = await DatabaseHelper.instance.getMeta('setting_24h') == '1';
     final eu  = await DatabaseHelper.instance.getMeta('setting_eu_date');
     _euDate   = eu == null || eu == '1'; // default to European
+    _themeMode = switch (await DatabaseHelper.instance.getMeta('setting_theme')) {
+      'light' => ThemeMode.light,
+      'dark' => ThemeMode.dark,
+      _ => ThemeMode.system,
+    };
   }
 
   Future<void> setUse24h(bool v) async {
@@ -27,6 +34,12 @@ class AppSettings extends ChangeNotifier {
   Future<void> setEuDate(bool v) async {
     _euDate = v;
     await DatabaseHelper.instance.setMeta('setting_eu_date', v ? '1' : '0');
+    notifyListeners();
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    _themeMode = mode;
+    await DatabaseHelper.instance.setMeta('setting_theme', mode.name);
     notifyListeners();
   }
 

@@ -3,7 +3,6 @@ import '../db/database_helper.dart';
 import '../models/entry.dart';
 import '../models/family.dart';
 
-import '../settings/app_settings.dart';
 import '../theme.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
@@ -37,11 +36,9 @@ class EditEntryScreen extends StatefulWidget {
 
 class _EditEntryScreenState extends State<EditEntryScreen> {
   // Theme-aware colour getters — readable from any method on this State
-  Color get _kCard   => AppColors.of(context).card;
   Color get _kBorder => AppColors.of(context).border;
   Color get _kTxt    => AppColors.of(context).txt;
   Color get _kTxt2   => AppColors.of(context).txt2;
-  Color get _kBg     => AppColors.of(context).bg;
 
   late Set<String> _selUsers;
   late String _shift;
@@ -144,10 +141,8 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
 
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F4),
       appBar: AppBar(
-        backgroundColor: _kGreen,
-        title: Text('Edit Entry',
+        title: const Text('Edit Entry',
             style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -162,7 +157,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                     height: 18,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white))
-                : Text('Save',
+                : const Text('Save',
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -290,13 +285,13 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: on
-                                  ? Icon(Icons.check,
+                                  ? const Icon(Icons.check,
                                       size: 12, color: Colors.white)
                                   : null,
                             ),
                             const SizedBox(width: 6),
                             Text('👧 $k',
-                                style: TextStyle(
+                                style: const TextStyle(
                                     fontWeight: FontWeight.w600, fontSize: 14)),
                           ],
                         ),
@@ -355,7 +350,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(9),
                           borderSide:
-                              BorderSide(color: _kGreenLt, width: 2),
+                              const BorderSide(color: _kGreenLt, width: 2),
                         ),
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(9)),
@@ -374,7 +369,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(9)),
                     ),
-                    child: Text('+',
+                    child: const Text('+',
                         style: TextStyle(
                             fontSize: 22, fontWeight: FontWeight.bold)),
                   ),

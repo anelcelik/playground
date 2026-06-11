@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import '../db/database_helper.dart';
 
-import '../settings/app_settings.dart';
 import '../theme.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
 const _kGreen   = kGreen;
 const _kGreenLt = kGreenLt;
-const _kAmber   = kAmber;
-const _kBlue    = kBlue;
 // _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
 
 
@@ -33,11 +30,6 @@ class SetupScreen extends StatefulWidget {
 
 class _SetupScreenState extends State<SetupScreen> {
   // Theme-aware colour getters — readable from any method on this State
-  Color get _kCard   => AppColors.of(context).card;
-  Color get _kBorder => AppColors.of(context).border;
-  Color get _kTxt    => AppColors.of(context).txt;
-  Color get _kTxt2   => AppColors.of(context).txt2;
-  Color get _kBg     => AppColors.of(context).bg;
 
   final List<TextEditingController> _parents = [];
   final List<TextEditingController> _kids = [];
@@ -101,19 +93,15 @@ class _SetupScreenState extends State<SetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
+    final appC2 = AppColors.of(context);
+    final kTxt2   = appC2.txt2;
+    final kBg     = appC2.bg;
 
 
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: kBg,
       appBar: AppBar(
-        backgroundColor: _kGreen,
-        title: Text(
+        title: const Text(
           '🌳 Playground Tracker',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
         ),
@@ -131,7 +119,7 @@ class _SetupScreenState extends State<SetupScreen> {
               children: [
                 Text(
                   widget.isEditing ? 'Family Settings' : 'Welcome! 👋',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: _kGreen,
@@ -142,7 +130,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   widget.isEditing
                       ? 'Update your family members. Existing entries are not affected.'
                       : "Let's set up your family. You can always add more people later.",
-                  style: TextStyle(fontSize: 14, color: _kTxt2, height: 1.5),
+                  style: TextStyle(fontSize: 14, color: kTxt2, height: 1.5),
                 ),
                 const SizedBox(height: 18),
                 const _SectionLabel('Parents / Grandparents'),
@@ -190,7 +178,7 @@ class _SetupScreenState extends State<SetupScreen> {
                     ),
                     child: Text(
                       widget.isEditing ? 'Save Changes' : 'Save & Start 🌳',
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -210,12 +198,8 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
+    final appC2 = AppColors.of(context);
+    final kTxt2   = appC2.txt2;
 
 
     return Text(
@@ -223,7 +207,7 @@ class _SectionLabel extends StatelessWidget {
       style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: _kTxt2,
+          color: kTxt2,
           letterSpacing: 0.7),
     );
   }
@@ -243,12 +227,9 @@ class _PersonRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
+    final appC2 = AppColors.of(context);
+    final kBorder = appC2.border;
+    final kTxt2   = appC2.txt2;
 
 
     return Padding(
@@ -264,11 +245,11 @@ class _PersonRow extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(9),
-                  borderSide: BorderSide(color: _kBorder, width: 2),
+                  borderSide: BorderSide(color: kBorder, width: 2),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(9),
-                  borderSide: BorderSide(color: _kGreenLt, width: 2),
+                  borderSide: const BorderSide(color: _kGreenLt, width: 2),
                 ),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(9)),
@@ -282,13 +263,13 @@ class _PersonRow extends StatelessWidget {
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                border: Border.all(color: _kBorder, width: 2),
+                border: Border.all(color: kBorder, width: 2),
                 borderRadius: BorderRadius.circular(8),
                 color: Colors.white,
               ),
               child: Center(
                 child: Text('×',
-                    style: TextStyle(fontSize: 20, color: _kTxt2)),
+                    style: TextStyle(fontSize: 20, color: kTxt2)),
               ),
             ),
           ),
@@ -305,12 +286,9 @@ class _AddButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
+    final appC2 = AppColors.of(context);
+    final kBorder = appC2.border;
+    final kTxt2   = appC2.txt2;
 
 
     return GestureDetector(
@@ -319,7 +297,7 @@ class _AddButton extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          border: Border.all(color: _kBorder, width: 2),
+          border: Border.all(color: kBorder, width: 2),
           borderRadius: BorderRadius.circular(9),
           color: Colors.white,
         ),
@@ -327,7 +305,7 @@ class _AddButton extends StatelessWidget {
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-              color: _kTxt2, fontSize: 14, fontWeight: FontWeight.w600),
+              color: kTxt2, fontSize: 14, fontWeight: FontWeight.w600),
         ),
       ),
     );

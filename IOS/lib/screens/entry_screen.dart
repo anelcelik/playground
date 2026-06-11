@@ -36,7 +36,6 @@ class EntryScreenState extends State<EntryScreen> {
   Color get _kBorder => AppColors.of(context).border;
   Color get _kTxt    => AppColors.of(context).txt;
   Color get _kTxt2   => AppColors.of(context).txt2;
-  Color get _kBg     => AppColors.of(context).bg;
 
   DateTime _date = DateTime.now();
   bool _isVacation = false;
@@ -238,14 +237,14 @@ class EntryScreenState extends State<EntryScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Delete entry?'),
+        title: const Text('Delete entry?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('Cancel')),
+              child: const Text('Cancel')),
           TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text('Delete', style: TextStyle(color: Colors.red))),
+              child: const Text('Delete', style: TextStyle(color: Colors.red))),
         ],
       ),
     );
@@ -279,13 +278,11 @@ class EntryScreenState extends State<EntryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
-    final s = AppSettings.instance;
+    final appC2 = AppColors.of(context);
+    final kCard   = appC2.card;
+    final kBorder = appC2.border;
+    final kTxt    = appC2.txt;
+    final kTxt2   = appC2.txt2;
     final now = DateTime.now();
     final isToday = _date.year == now.year && _date.month == now.month && _date.day == now.day;
     final dayLabel = isToday ? 'Today' : DateFormat('EEEE').format(_date);
@@ -301,7 +298,7 @@ class EntryScreenState extends State<EntryScreen> {
               _clabel('Date'),
               Text(dayLabel,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.w700, color: _kGreen)),
               const SizedBox(height: 7),
               Row(children: [
@@ -312,14 +309,14 @@ class EntryScreenState extends State<EntryScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 11),
                       decoration: BoxDecoration(
-                        color: _kCard,
-                        border: Border.all(color: _kBorder, width: 2),
+                        color: kCard,
+                        border: Border.all(color: kBorder, width: 2),
                         borderRadius: BorderRadius.circular(9),
                       ),
                       child: Text(
                         AppSettings.instance.fmtDate(_fmt(_date)),
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                       ),
                     ),
                   ),
@@ -338,7 +335,7 @@ class EntryScreenState extends State<EntryScreen> {
                 border: Border.all(color: const Color(0xFFFFE082), width: 2),
                 borderRadius: BorderRadius.circular(9),
               ),
-              child: Text(
+              child: const Text(
                 '📅 Future date — only vacation entries can be logged.',
                 style: TextStyle(color: Color(0xFF8A6000), fontSize: 13, fontWeight: FontWeight.w500),
               ),
@@ -405,7 +402,7 @@ class EntryScreenState extends State<EntryScreen> {
           _card(Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('🏖️  Vacation',
+              const Text('🏖️  Vacation',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               Switch.adaptive(
                 value: _isVacation,
@@ -427,7 +424,7 @@ class EntryScreenState extends State<EntryScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('❌  No playground today',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _kTxt)),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: kTxt)),
                   Switch.adaptive(
                     value: _isNoPlayground,
                     activeThumbColor: const Color(0xFFE53935),
@@ -443,7 +440,7 @@ class EntryScreenState extends State<EntryScreen> {
                 const SizedBox(height: 10),
                 Text('Why? (optional)',
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                        color: _kTxt2, letterSpacing: 0.7)),
+                        color: kTxt2, letterSpacing: 0.7)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 6, runSpacing: 6,
@@ -479,7 +476,7 @@ class EntryScreenState extends State<EntryScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-              child: Text('Save Entry',
+              child: const Text('Save Entry',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ),
@@ -492,7 +489,7 @@ class EntryScreenState extends State<EntryScreen> {
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: _kTxt2,
+                  color: kTxt2,
                   letterSpacing: 0.6),
             ),
             const SizedBox(height: 6),
@@ -510,7 +507,7 @@ class EntryScreenState extends State<EntryScreen> {
           Text(
             isToday ? "Today's Log" : 'Log — ${AppSettings.instance.fmtDateFull(_fmt(_date))}',
             style: TextStyle(
-                fontSize: 11, fontWeight: FontWeight.w700, color: _kTxt2, letterSpacing: 0.6),
+                fontSize: 11, fontWeight: FontWeight.w700, color: kTxt2, letterSpacing: 0.6),
           ),
           const SizedBox(height: 6),
 
@@ -519,7 +516,7 @@ class EntryScreenState extends State<EntryScreen> {
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(vertical: 28),
               child: Text('No entries yet',
-                  style: TextStyle(color: _kTxt2, fontSize: 14)),
+                  style: TextStyle(color: kTxt2, fontSize: 14)),
             )
           else
             ..._dayEntries.map((e) => _EntryCard(
@@ -649,7 +646,7 @@ class EntryScreenState extends State<EntryScreen> {
                       child: on ? Icon(Icons.check, size: 12, color: _kCard) : null,
                     ),
                     const SizedBox(width: 6),
-                    Text('👧 $k', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    Text('👧 $k', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   ],
                 ),
               ),
@@ -789,7 +786,7 @@ class EntryScreenState extends State<EntryScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(9),
-                borderSide: BorderSide(color: _kGreenLt, width: 2),
+                borderSide: const BorderSide(color: _kGreenLt, width: 2),
               ),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(9)),
             ),
@@ -806,7 +803,7 @@ class EntryScreenState extends State<EntryScreen> {
             padding: EdgeInsets.zero,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
           ),
-          child: Text('+', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          child: const Text('+', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
         ),
       ]);
 }
@@ -826,12 +823,10 @@ class _EntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
+    final appC2 = AppColors.of(context);
+    final kCard   = appC2.card;
+    final kTxt    = appC2.txt;
+    final kTxt2   = appC2.txt2;
 
     final e = entry;
     final isM = e.shift == 'morning';
@@ -843,7 +838,7 @@ class _EntryCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 7),
       decoration: BoxDecoration(
-        color: _kCard,
+        color: kCard,
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [
           BoxShadow(color: Color(0x12000000), blurRadius: 3, offset: Offset(0, 1))
@@ -866,27 +861,27 @@ class _EntryCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(userDisplay,
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   ),
                 ]),
                 if (e.noPlayground && e.excuse != null && e.excuse!.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text('💬 ${e.excuse}',
-                        style: TextStyle(fontSize: 13, color: _kTxt2,
+                        style: TextStyle(fontSize: 13, color: kTxt2,
                             fontStyle: FontStyle.italic)),
                   ),
                 if (!e.vacation && !e.noPlayground) ...[
                   const SizedBox(height: 5),
                   RichText(
                     text: TextSpan(
-                      style: TextStyle(fontSize: 13, color: _kTxt2),
+                      style: TextStyle(fontSize: 13, color: kTxt2),
                       children: [
                         const TextSpan(text: '⏱ '),
                         TextSpan(
                           text: e.duration ?? 'NA',
                           style: TextStyle(
-                            color: e.duration != null ? _kTxt : const Color(0xFF999999),
+                            color: e.duration != null ? kTxt : const Color(0xFF999999),
                             fontWeight: e.duration != null ? FontWeight.w700 : FontWeight.normal,
                           ),
                         ),
@@ -894,7 +889,7 @@ class _EntryCard extends StatelessWidget {
                         TextSpan(
                           text: e.kidList.isEmpty ? 'NA' : e.kidList.join(' & '),
                           style: TextStyle(
-                            color: e.kidList.isNotEmpty ? _kTxt : const Color(0xFF999999),
+                            color: e.kidList.isNotEmpty ? kTxt : const Color(0xFF999999),
                             fontWeight: e.kidList.isNotEmpty ? FontWeight.w700 : FontWeight.normal,
                           ),
                         ),
@@ -913,7 +908,7 @@ class _EntryCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(t,
-                              style: TextStyle(
+                              style: const TextStyle(
                                   color: _kGreen, fontSize: 11, fontWeight: FontWeight.w600)),
                         )).toList(),
                       ),
@@ -923,7 +918,7 @@ class _EntryCard extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 4),
                       child: Text('💬 ${e.excuse}',
                           style: TextStyle(
-                              fontSize: 12, color: _kTxt2, fontStyle: FontStyle.italic)),
+                              fontSize: 12, color: kTxt2, fontStyle: FontStyle.italic)),
                     ),
                 ],
               ],
@@ -933,7 +928,7 @@ class _EntryCard extends StatelessWidget {
             top: 8, right: 8,
             child: GestureDetector(
               onTap: onDelete,
-              child: Padding(
+              child: const Padding(
                 padding: EdgeInsets.all(4),
                 child: Icon(Icons.close, size: 16, color: Color(0xFFCCCCCC)),
               ),

@@ -24,6 +24,36 @@ class DisplaySettingsScreen extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             children: [
 
+              // ── Theme ────────────────────────────────────────
+              _SectionHeader('Appearance', c),
+              _card(c, Column(children: [
+                _RadioRow(
+                  c: c,
+                  title: 'System',
+                  subtitle: 'Follow the device light/dark setting',
+                  selected: s.themeMode == ThemeMode.system,
+                  onTap: () => s.setThemeMode(ThemeMode.system),
+                ),
+                Divider(height: 1, color: c.border),
+                _RadioRow(
+                  c: c,
+                  title: 'Light',
+                  subtitle: 'Always use the light theme',
+                  selected: s.themeMode == ThemeMode.light,
+                  onTap: () => s.setThemeMode(ThemeMode.light),
+                ),
+                Divider(height: 1, color: c.border),
+                _RadioRow(
+                  c: c,
+                  title: 'Dark',
+                  subtitle: 'Always use the dark theme',
+                  selected: s.themeMode == ThemeMode.dark,
+                  onTap: () => s.setThemeMode(ThemeMode.dark),
+                ),
+              ])),
+
+              const SizedBox(height: 16),
+
               // ── Time ─────────────────────────────────────────
               _SectionHeader('Time format', c),
               _card(c, Column(children: [

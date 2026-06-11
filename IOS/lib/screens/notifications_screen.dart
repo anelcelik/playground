@@ -8,8 +8,6 @@ import '../theme.dart';
 // Brand accent colours — intentionally fixed in both light and dark mode
 const _kGreen   = kGreen;
 const _kGreenLt = kGreenLt;
-const _kAmber   = kAmber;
-const _kBlue    = kBlue;
 // _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
 
 
@@ -23,11 +21,6 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   // Theme-aware colour getters — readable from any method on this State
-  Color get _kCard   => AppColors.of(context).card;
-  Color get _kBorder => AppColors.of(context).border;
-  Color get _kTxt    => AppColors.of(context).txt;
-  Color get _kTxt2   => AppColors.of(context).txt2;
-  Color get _kBg     => AppColors.of(context).bg;
 
   NotifPrefs _prefs = const NotifPrefs();
   bool _loading = true;
@@ -88,20 +81,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _c2 = AppColors.of(context);
-    final _kCard   = _c2.card;
-    final _kBorder = _c2.border;
-    final _kTxt    = _c2.txt;
-    final _kTxt2   = _c2.txt2;
-    final _kBg     = _c2.bg;
+    final c2 = AppColors.of(context);
+    final kBg     = c2.bg;
 
 
 
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: kBg,
       appBar: AppBar(
-        backgroundColor: _kGreen,
-        title: Text(
+        title: const Text(
           '🔔 Notifications',
           style: TextStyle(
               color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
@@ -109,7 +97,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: _loading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(14),
               child: Column(
@@ -215,12 +203,10 @@ class _NotifCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _c2 = AppColors.of(context);
-    final _kCard   = _c2.card;
-    final _kBorder = _c2.border;
-    final _kTxt    = _c2.txt;
-    final _kTxt2   = _c2.txt2;
-    final _kBg     = _c2.bg;
+    final c2 = AppColors.of(context);
+    final kBorder = c2.border;
+    final kTxt    = c2.txt;
+    final kTxt2   = c2.txt2;
 
 
 
@@ -240,14 +226,14 @@ class _NotifCard extends StatelessWidget {
           // Header row
           Row(
             children: [
-              Text('$icon ', style: TextStyle(fontSize: 22)),
+              Text('$icon ', style: const TextStyle(fontSize: 22)),
               Expanded(
                 child: Text(
                   title,
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: _kTxt),
+                      color: kTxt),
                 ),
               ),
               Switch.adaptive(
@@ -261,7 +247,7 @@ class _NotifCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             description,
-            style: TextStyle(fontSize: 13, color: _kTxt2, height: 1.5),
+            style: TextStyle(fontSize: 13, color: kTxt2, height: 1.5),
           ),
           const SizedBox(height: 14),
 
@@ -279,21 +265,21 @@ class _NotifCard extends StatelessWidget {
                       ? const Color(0xFFEDF7ED)
                       : const Color(0xFFF5F5F5),
                   border: Border.all(
-                      color: enabled ? _kGreen : _kBorder, width: 2),
+                      color: enabled ? _kGreen : kBorder, width: 2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.access_time_rounded,
-                        size: 18, color: enabled ? _kGreen : _kTxt2),
+                        size: 18, color: enabled ? _kGreen : kTxt2),
                     const SizedBox(width: 8),
                     Text(
                       'Every day at  ${_fmt(time)}',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: enabled ? _kGreen : _kTxt2,
+                        color: enabled ? _kGreen : kTxt2,
                       ),
                     ),
                     if (enabled) ...[
@@ -301,7 +287,7 @@ class _NotifCard extends StatelessWidget {
                       Text('— tap to change',
                           style: TextStyle(
                               fontSize: 12,
-                              color: _kTxt2,
+                              color: kTxt2,
                               fontStyle: FontStyle.italic)),
                     ],
                   ],
@@ -323,12 +309,6 @@ class _PermissionBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _c2 = AppColors.of(context);
-    final _kCard   = _c2.card;
-    final _kBorder = _c2.border;
-    final _kTxt    = _c2.txt;
-    final _kTxt2   = _c2.txt2;
-    final _kBg     = _c2.bg;
 
 
 
@@ -342,7 +322,7 @@ class _PermissionBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text('⚠️ ', style: TextStyle(fontSize: 20)),
+          const Text('⚠️ ', style: TextStyle(fontSize: 20)),
           const Expanded(
             child: Text(
               'Notifications are blocked. Open Settings → Playground Tracker → Allow Notifications.',
@@ -354,7 +334,7 @@ class _PermissionBanner extends StatelessWidget {
           ),
           TextButton(
             onPressed: onRetry,
-            child: Text('Retry',
+            child: const Text('Retry',
                 style: TextStyle(
                     color: _kGreen, fontWeight: FontWeight.w700)),
           ),
@@ -371,12 +351,8 @@ class _InfoNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _c2 = AppColors.of(context);
-    final _kCard   = _c2.card;
-    final _kBorder = _c2.border;
-    final _kTxt    = _c2.txt;
-    final _kTxt2   = _c2.txt2;
-    final _kBg     = _c2.bg;
+    final c2 = AppColors.of(context);
+    final kTxt2   = c2.txt2;
 
 
 
@@ -389,12 +365,12 @@ class _InfoNote extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ℹ️  ', style: TextStyle(fontSize: 16)),
+          const Text('ℹ️  ', style: TextStyle(fontSize: 16)),
           Expanded(
             child: Text(
               'Notifications are local — no internet needed. '
               'Each person in the family sets their own reminder times on their own device.',
-              style: TextStyle(fontSize: 13, color: _kTxt2, height: 1.5),
+              style: TextStyle(fontSize: 13, color: kTxt2, height: 1.5),
             ),
           ),
         ],

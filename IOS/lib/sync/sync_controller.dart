@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 
 import 'sync_service.dart';
 
-/// Manages the 30-second polling timer and triggers sync on app-foreground.
+/// Triggers sync on app-foreground and keeps a slow polling timer as a
+/// fallback. Near-real-time updates come from CloudKit silent pushes
+/// (see CloudKitPlugin.ensureSubscription), not from this timer.
 class SyncController with WidgetsBindingObserver {
   SyncController._();
   static final SyncController instance = SyncController._();
@@ -21,7 +23,7 @@ class SyncController with WidgetsBindingObserver {
     _started = true;
     WidgetsBinding.instance.addObserver(this);
     _doSync();
-    _timer = Timer.periodic(const Duration(seconds: 30), (_) => _doSync());
+    _timer = Timer.periodic(const Duration(minutes: 3), (_) => _doSync());
   }
 
   void stop() {

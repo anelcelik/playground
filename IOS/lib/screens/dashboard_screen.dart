@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../db/database_helper.dart';
 import '../models/dashboard_prefs.dart';
 import '../models/family.dart';
@@ -12,7 +11,6 @@ import 'dashboard_customise_screen.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
 const _kGreen   = kGreen;
-const _kGreenLt = kGreenLt;
 const _kAmber   = kAmber;
 const _kBlue    = kBlue;
 // _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
@@ -40,11 +38,8 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   // Theme-aware colour getters — readable from any method on this State
-  Color get _kCard   => AppColors.of(context).card;
   Color get _kBorder => AppColors.of(context).border;
-  Color get _kTxt    => AppColors.of(context).txt;
   Color get _kTxt2   => AppColors.of(context).txt2;
-  Color get _kBg     => AppColors.of(context).bg;
 
   String _period = 'month';
   String _ref = '';
@@ -136,12 +131,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _c2 = AppColors.of(context);
-    final _kCard   = _c2.card;
-    final _kBorder = _c2.border;
-    final _kTxt    = _c2.txt;
-    final _kTxt2   = _c2.txt2;
-    final _kBg     = _c2.bg;
 
 
 
@@ -153,7 +142,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _buildPeriodTabs(),
           _buildPeriodNav(),
           if (_loading)
-            Center(
+            const Center(
                 child: Padding(
                     padding: EdgeInsets.all(32),
                     child: CircularProgressIndicator()))
@@ -220,7 +209,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
               ],
             ),
-            child: Icon(Icons.tune_rounded, color: _kGreen, size: 22),
+            child: const Icon(Icons.tune_rounded, color: _kGreen, size: 22),
           ),
         ),
       ]);
@@ -240,19 +229,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
             opacity: _period == 'all' ? 0.0 : 1.0,
             child: GestureDetector(
               onTap: _period == 'all' ? null : () => _bump(-1),
-              child: Icon(Icons.chevron_left, color: _kGreen, size: 28),
+              child: const Icon(Icons.chevron_left, color: _kGreen, size: 28),
             ),
           ),
           Expanded(
             child: Text(_periodLabel,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
           ),
           Opacity(
             opacity: _period == 'all' ? 0.0 : 1.0,
             child: GestureDetector(
               onTap: _period == 'all' ? null : () => _bump(1),
-              child: Icon(Icons.chevron_right, color: _kGreen, size: 28),
+              child: const Icon(Icons.chevron_right, color: _kGreen, size: 28),
             ),
           ),
         ]),
@@ -413,7 +402,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (counts.isEmpty) {
       return Center(
         child: Padding(
-          padding: EdgeInsets.all(12),
+          padding: const EdgeInsets.all(12),
           child: Text(
             totalMissed == 0
                 ? 'No missed days this period'
@@ -473,7 +462,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (counts.isEmpty) {
       return Center(
         child: Padding(
-          padding: EdgeInsets.all(12),
+          padding: const EdgeInsets.all(12),
           child: Text('No activities logged yet', style: TextStyle(color: _kTxt2, fontSize: 13)),
         ),
       );
@@ -634,12 +623,8 @@ class DonutChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _c2 = AppColors.of(context);
-    final _kCard   = _c2.card;
-    final _kBorder = _c2.border;
-    final _kTxt    = _c2.txt;
-    final _kTxt2   = _c2.txt2;
-    final _kBg     = _c2.bg;
+    final c2 = AppColors.of(context);
+    final kTxt    = c2.txt;
 
 
 
@@ -657,7 +642,7 @@ class DonutChart extends StatelessWidget {
             child: Text(
               total == 0 ? '–' : center,
               style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w800, color: _kTxt),
+                  fontSize: 18, fontWeight: FontWeight.w800, color: kTxt),
             ),
           ),
         ],
@@ -711,12 +696,8 @@ class _DashEntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _c2 = AppColors.of(context);
-    final _kCard   = _c2.card;
-    final _kBorder = _c2.border;
-    final _kTxt    = _c2.txt;
-    final _kTxt2   = _c2.txt2;
-    final _kBg     = _c2.bg;
+    final c2 = AppColors.of(context);
+    final kTxt2   = c2.txt2;
 
 
 
@@ -746,9 +727,9 @@ class _DashEntryCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 decoration: BoxDecoration(
                     color: const Color(0xFFFFEBEE), borderRadius: BorderRadius.circular(11)),
-                child: Text('❌ No playground',
+                child: const Text('❌ No playground',
                     style: TextStyle(
-                        color: const Color(0xFFB71C1C), fontSize: 11, fontWeight: FontWeight.w700)),
+                        color: Color(0xFFB71C1C), fontSize: 11, fontWeight: FontWeight.w700)),
               )
             else if (!e.vacation)
               Container(
@@ -763,27 +744,27 @@ class _DashEntryCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 decoration: BoxDecoration(
                     color: const Color(0xFFFCE4EC), borderRadius: BorderRadius.circular(11)),
-                child: Text('🏖️ Vacation',
+                child: const Text('🏖️ Vacation',
                     style: TextStyle(
                         color: Color(0xFFB71C1C), fontSize: 11, fontWeight: FontWeight.w700)),
               ),
             const SizedBox(width: 8),
             Flexible(
               child: Text(userDisplay,
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
             ),
           ]),
           if (e.noPlayground && e.excuse != null && e.excuse!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text('💬 ${e.excuse}',
-                  style: TextStyle(fontSize: 13, color: _kTxt2, fontStyle: FontStyle.italic)),
+                  style: TextStyle(fontSize: 13, color: kTxt2, fontStyle: FontStyle.italic)),
             ),
           if (!e.vacation && !e.noPlayground) ...[
             const SizedBox(height: 5),
             Text(
               '⏱ ${e.duration ?? 'NA'}   ·   👧 ${e.kidList.isEmpty ? 'NA' : e.kidList.join(' & ')}',
-              style: TextStyle(fontSize: 13, color: _kTxt2),
+              style: TextStyle(fontSize: 13, color: kTxt2),
             ),
             if (e.activityList.isNotEmpty)
               Padding(
@@ -796,7 +777,7 @@ class _DashEntryCard extends StatelessWidget {
                         color: const Color(0xFFEDF7ED),
                         borderRadius: BorderRadius.circular(10)),
                     child: Text(t,
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: _kGreen, fontSize: 11, fontWeight: FontWeight.w600)),
                   )).toList(),
                 ),

@@ -10,11 +10,21 @@ import '../models/entry.dart';
 // Matches the channel name registered in CloudKitPlugin.swift
 const _kChannel = MethodChannel('com.playground.tracker/cloudkit');
 
+// A hung native call must never wedge the sync state machine.
+const _kCallTimeout = Duration(seconds: 90);
+
 enum SyncStatus { idle, syncing, synced, error, unavailable }
 
 class SyncService {
   static final SyncService instance = SyncService._();
-  SyncService._();
+
+  SyncService._() {
+    // Native side calls 'remoteChange' when a CloudKit silent push arrives
+    // or right after this device accepts a share — sync immediately.
+    _kChannel.setMethodCallHandler((call) async {
+      if (call.method == 'remoteChange') sync();
+    });
+  }
 
   final ValueNotifier<SyncStatus> status =
       ValueNotifier(SyncStatus.unavailable);
@@ -27,10 +37,11 @@ class SyncService {
 
   // ── Full sync cycle ───────────────────────────────────
 
-  /// Called every 30 s and on app foreground.
-  /// 1. Pushes all local data to CloudKit (idempotent — CloudKit ignores unchanged records).
-  /// 2. Fetches delta changes (records modified since last CKServerChangeToken).
-  /// 3. Merges into local SQLite using last_modified tie-breaking.
+  /// Called periodically, on app foreground, and on remote-change pushes.
+  /// 1. Fetches delta changes from CloudKit and merges them into SQLite
+  ///    (merge first, so we never overwrite newer remote data with stale local).
+  /// 2. Pushes only records modified since the last successful push
+  ///    (needs_push flag), batched into a single native call.
   Future<void> sync() async {
     if (!_isIos) {
       status.value = SyncStatus.unavailable;
@@ -40,10 +51,11 @@ class SyncService {
     status.value = SyncStatus.syncing;
 
     try {
-      await _push();
-      await _fetchAndMerge();
+      await _fetchAndMerge().timeout(_kCallTimeout);
+      await _push().timeout(_kCallTimeout);
       _lastSyncedAt = DateTime.now();
       status.value = SyncStatus.synced;
+      _ensureSubscriptions();
     } catch (e, st) {
       debugPrint('[CloudKit] sync error: $e\n$st');
       status.value = SyncStatus.error;
@@ -51,17 +63,20 @@ class SyncService {
   }
 
   /// Push a single entry immediately after save / soft-delete.
-  /// Silent — does not change status dot.
+  /// Silent — does not change the status dot. On failure the entry keeps its
+  /// needs_push flag and is retried on the next sync cycle.
   Future<void> pushEntry(Entry entry) async {
     if (!_isIos) return;
     try {
-      await _kChannel.invokeMethod<void>('saveEntry', entry.toJsonMap());
+      await _kChannel
+          .invokeMethod<void>('saveEntry', entry.toJsonMap())
+          .timeout(_kCallTimeout);
+      await DatabaseHelper.instance
+          .markEntriesPushed([(uuid: entry.uuid, lastModified: entry.lastModified)]);
     } catch (e) {
       debugPrint('[CloudKit] pushEntry error: $e');
     }
   }
-
-  // ── Share link (owner creates, partner taps) ──────────
 
   // ── Family sharing ───────────────────────────────────
 
@@ -123,22 +138,25 @@ class SyncService {
   // ── Private helpers ───────────────────────────────────
 
   Future<void> _push() async {
-    final export = await DatabaseHelper.instance.exportToJson();
+    final db = DatabaseHelper.instance;
 
-    // Push family config
-    await _kChannel.invokeMethod<void>('saveConfig', {
-      'parents': export['parents'],
-      'kids': export['kids'],
-      'activity_tags': export['activity_tags'],
-      'excuse_tags': export['excuse_tags'],
-      'family_updated_at': export['family_updated_at'],
-    });
-
-    // Push every entry (CloudKit is idempotent; unchanged records cost one read op)
-    final entries = (export['entries'] as List).cast<Map<String, dynamic>>();
-    for (final e in entries) {
-      await _kChannel.invokeMethod<void>('saveEntry', e);
+    // Family config + tags — only when changed since the last push
+    if (await db.isConfigDirty()) {
+      final config = await db.exportConfig();
+      await _kChannel.invokeMethod<void>('saveConfig', config);
+      await db.markConfigPushed();
     }
+
+    // Entries — only the ones modified since their last successful push,
+    // all in one batched native call (one CKModifyRecordsOperation).
+    final dirty = await db.getDirtyEntries();
+    if (dirty.isEmpty) return;
+
+    await _kChannel.invokeMethod<void>(
+        'saveEntries', dirty.map((e) => e.toJsonMap()).toList());
+    await db.markEntriesPushed([
+      for (final e in dirty) (uuid: e.uuid, lastModified: e.lastModified),
+    ]);
   }
 
   Future<void> _fetchAndMerge() async {
@@ -150,11 +168,19 @@ class SyncService {
 
     // Only merge if there are actual changes
     final entries = data['entries'] as List?;
-    if (entries != null && entries.isNotEmpty) {
-      await DatabaseHelper.instance.mergeFromJson(data);
-    } else if (data['parents'] != null) {
-      // Config-only change (no entries changed)
+    final deleted = data['deleted_uuids'] as List?;
+    if ((entries != null && entries.isNotEmpty) ||
+        (deleted != null && deleted.isNotEmpty) ||
+        data['parents'] != null) {
       await DatabaseHelper.instance.mergeFromJson(data);
     }
+  }
+
+  /// Registers the CKDatabaseSubscription so the other device's changes
+  /// arrive as silent pushes. Best-effort; polling remains the fallback.
+  void _ensureSubscriptions() {
+    _kChannel.invokeMethod<void>('ensureSubscriptions').catchError((e) {
+      debugPrint('[CloudKit] ensureSubscriptions error: $e');
+    });
   }
 }

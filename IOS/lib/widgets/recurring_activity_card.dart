@@ -1,4 +1,3 @@
-import '../settings/app_settings.dart';
 import '../theme.dart';
 import 'package:flutter/material.dart';
 import '../models/recurring_activity.dart';
@@ -25,12 +24,6 @@ class RecurringActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
 
     if (status.isPending) return _PendingCard(status: status, onConfirm: onConfirm, onSkip: onSkip);
     if (status.isConfirmed) return _ConfirmedCard(status: status, onTap: onTapConfirmed);
@@ -43,7 +36,7 @@ class RecurringActivityCard extends StatelessWidget {
 
 Future<String?> showSkipSheet(BuildContext context) => showModalBottomSheet<String>(
       context: context,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => const _SkipSheet(),
     );
@@ -53,12 +46,6 @@ class _SkipSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
 
     return SafeArea(
       child: Padding(
@@ -74,7 +61,7 @@ class _SkipSheet extends StatelessWidget {
                   color: const Color(0xFFDDE2DD),
                   borderRadius: BorderRadius.circular(2)),
             ),
-            Text('Why skipping?',
+            const Text('Why skipping?',
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
             const SizedBox(height: 16),
             ...[
@@ -96,12 +83,6 @@ class _SheetOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
 
     return InkWell(
       onTap: () => Navigator.pop(context, value),
@@ -115,7 +96,7 @@ class _SheetOption extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(label,
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
       ),
     );
   }
@@ -132,12 +113,8 @@ class _PendingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
+    final appC2 = AppColors.of(context);
+    final kTxt2   = appC2.txt2;
 
     final a = status.activity;
     return _CardShell(
@@ -151,7 +128,7 @@ class _PendingCard extends StatelessWidget {
             title: a.title,
             badge: 'Planned',
             badgeBg: const Color(0xFFEEEEEE),
-            badgeFg: _kTxt2,
+            badgeFg: kTxt2,
           ),
           if (a.kidNames.isNotEmpty)
             _Detail('👧 ${a.kidNames.join(' & ')}'),
@@ -170,7 +147,7 @@ class _PendingCard extends StatelessWidget {
               child: _ActionBtn(
                 label: '❌  Skip',
                 bg: Colors.white,
-                fg: _kTxt2,
+                fg: kTxt2,
                 border: const Color(0xFFDDE2DD),
                 onTap: onSkip,
               ),
@@ -189,12 +166,6 @@ class _ConfirmedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
 
     final a = status.activity;
     final e = status.entry;
@@ -218,7 +189,7 @@ class _ConfirmedCard extends StatelessWidget {
               if (e.kidList.isNotEmpty) _Detail('👧 ${e.kidList.join(' & ')}'),
             ],
             if (onTap != null)
-              Padding(
+              const Padding(
                 padding: EdgeInsets.only(top: 6),
                 child: Text('Tap to edit',
                     style: TextStyle(
@@ -239,12 +210,6 @@ class _SkippedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
 
     final a = status.activity;
     final reason = switch (status.log?.skipReason) {
@@ -278,12 +243,6 @@ class _MissedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _appC2 = AppColors.of(context);
-    final _kCard   = _appC2.card;
-    final _kBorder = _appC2.border;
-    final _kTxt    = _appC2.txt;
-    final _kTxt2   = _appC2.txt2;
-    final _kBg     = _appC2.bg;
 
     return _CardShell(
       border: const Color(0xFFEF9A9A),
@@ -337,10 +296,10 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
         children: [
-          Text('$icon ', style: TextStyle(fontSize: 16)),
+          Text('$icon ', style: const TextStyle(fontSize: 16)),
           Expanded(
               child: Text(title,
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontWeight: FontWeight.w700, fontSize: 15))),
           Container(
             padding:
@@ -365,7 +324,7 @@ class _Detail extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(top: 4),
         child: Text(text,
-            style: TextStyle(fontSize: 13, color: _kTxt2)),
+            style: const TextStyle(fontSize: 13, color: _kTxt2)),
       );
 }
 

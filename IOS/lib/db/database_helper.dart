@@ -6,21 +6,31 @@ import '../models/recurring_activity.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._();
-  static Database? _db;
+
+  /// Tests override this to use an in-memory database.
+  static String? databasePathOverride;
+
+  // Cache the Future (not the Database) so two concurrent first calls
+  // can't open the database twice.
+  static Future<Database>? _dbFuture;
 
   DatabaseHelper._();
 
-  Future<Database> get database async {
-    _db ??= await _initDB();
-    return _db!;
+  Future<Database> get database => _dbFuture ??= _initDB();
+
+  /// Test-only: closes the database so the next access reopens it.
+  static Future<void> resetForTests() async {
+    final future = _dbFuture;
+    _dbFuture = null;
+    if (future != null) await (await future).close();
   }
 
   Future<Database> _initDB() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'playground.db');
+    final path = databasePathOverride ??
+        join(await getDatabasesPath(), 'playground.db');
     return openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -58,6 +68,7 @@ class DatabaseHelper {
         excuse        TEXT,
         last_modified INTEGER NOT NULL,
         is_deleted    INTEGER DEFAULT 0,
+        needs_push    INTEGER DEFAULT 1,
         created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     ''');
@@ -111,30 +122,41 @@ class DatabaseHelper {
     ''');
   }
 
+  /// True if [column] exists on [table] — lets migrations be idempotent
+  /// without swallowing real errors (disk full, corruption, …).
+  Future<bool> _columnExists(Database db, String table, String column) async {
+    final info = await db.rawQuery('PRAGMA table_info($table)');
+    return info.any((row) => row['name'] == column);
+  }
+
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 6) {
-      try {
-        await db.execute(
-            'ALTER TABLE entries ADD COLUMN no_playground INTEGER DEFAULT 0');
-      } catch (_) {}
-    }
-    if (oldVersion < 5) {
-      try {
-        await db.execute(
-            'ALTER TABLE recurring_activities ADD COLUMN notify_message TEXT');
-      } catch (_) {}
-    }
-    if (oldVersion < 4) {
-      // Add shift column to existing recurring_activities (safe — adds with default)
-      try {
-        await db.execute(
-            "ALTER TABLE recurring_activities ADD COLUMN shift TEXT NOT NULL DEFAULT 'morning'");
-      } catch (_) {
-        // Column may already exist if table was freshly created at v3
-      }
-    }
+    // Recurring tables must exist before the column checks below touch them.
+    // _createRecurringTables uses IF NOT EXISTS and already includes the
+    // columns added in v4/v5, so the PRAGMA checks then skip those ALTERs.
     if (oldVersion < 3) {
       await _createRecurringTables(db);
+    }
+    if (oldVersion < 4 &&
+        !await _columnExists(db, 'recurring_activities', 'shift')) {
+      await db.execute(
+          "ALTER TABLE recurring_activities ADD COLUMN shift TEXT NOT NULL DEFAULT 'morning'");
+    }
+    if (oldVersion < 5 &&
+        !await _columnExists(db, 'recurring_activities', 'notify_message')) {
+      await db.execute(
+          'ALTER TABLE recurring_activities ADD COLUMN notify_message TEXT');
+    }
+    if (oldVersion < 6 &&
+        !await _columnExists(db, 'entries', 'no_playground')) {
+      await db.execute(
+          'ALTER TABLE entries ADD COLUMN no_playground INTEGER DEFAULT 0');
+    }
+    if (oldVersion < 7 &&
+        !await _columnExists(db, 'entries', 'needs_push')) {
+      // Dirty flag for incremental sync. DEFAULT 1 → every pre-existing row
+      // is pushed once on the first sync after upgrading, then only changes.
+      await db.execute(
+          'ALTER TABLE entries ADD COLUMN needs_push INTEGER DEFAULT 1');
     }
     if (oldVersion < 2) {
       // Add sync columns to existing entries table
@@ -175,23 +197,38 @@ class DatabaseHelper {
     );
   }
 
+  /// Names and tags are stored in comma-separated entry fields, so a comma
+  /// inside a name would corrupt parsing — replace it on the way in.
+  static String sanitizeName(String name) =>
+      name.replaceAll(',', ' ').trim().replaceAll(RegExp(r'\s+'), ' ');
+
   Future<void> saveFamily(List<String> parents, List<String> kids) async {
     final db = await database;
+    final cleanParents =
+        parents.map(sanitizeName).where((n) => n.isNotEmpty).toList();
+    final cleanKids =
+        kids.map(sanitizeName).where((n) => n.isNotEmpty).toList();
     await db.transaction((txn) async {
       await txn.delete('parents');
       await txn.delete('kids');
-      for (var i = 0; i < parents.length; i++) {
-        await txn.insert('parents', {'name': parents[i], 'sort_order': i},
+      for (var i = 0; i < cleanParents.length; i++) {
+        await txn.insert('parents', {'name': cleanParents[i], 'sort_order': i},
             conflictAlgorithm: ConflictAlgorithm.ignore);
       }
-      for (var i = 0; i < kids.length; i++) {
-        await txn.insert('kids', {'name': kids[i], 'sort_order': i},
+      for (var i = 0; i < cleanKids.length; i++) {
+        await txn.insert('kids', {'name': cleanKids[i], 'sort_order': i},
             conflictAlgorithm: ConflictAlgorithm.ignore);
       }
-      // Record when family config last changed — used by sync merge
+      // Record when family config last changed — used by sync merge,
+      // and mark the config for push on the next sync cycle.
       await txn.insert(
         'sync_meta',
         {'key': 'family_updated_at', 'value': '${DateTime.now().millisecondsSinceEpoch}'},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      await txn.insert(
+        'sync_meta',
+        {'key': 'config_needs_push', 'value': '1'},
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     });
@@ -207,9 +244,13 @@ class DatabaseHelper {
   }
 
   Future<void> addTag(String type, String name) async {
+    final clean = sanitizeName(name);
+    if (clean.isEmpty) return;
     final db = await database;
-    await db.insert('tags', {'type': type, 'name': name.trim()},
+    await db.insert('tags', {'type': type, 'name': clean},
         conflictAlgorithm: ConflictAlgorithm.ignore);
+    // Tags travel inside the config record — flag it for the next push
+    await setMeta('config_needs_push', '1');
   }
 
   // ── Entries ───────────────────────────────────────────────
@@ -230,7 +271,8 @@ class DatabaseHelper {
     final now = DateTime.now().millisecondsSinceEpoch;
     final map = entry.toMap()
       ..['uuid'] = entry.uuid.isEmpty ? Entry.generateUuid() : entry.uuid
-      ..['last_modified'] = entry.lastModified == 0 ? now : entry.lastModified;
+      ..['last_modified'] = entry.lastModified == 0 ? now : entry.lastModified
+      ..['needs_push'] = 1;
     final id = await db.insert('entries', map);
     final rows = await db.query('entries', where: 'id = ?', whereArgs: [id]);
     return Entry.fromMap(rows.first);
@@ -241,7 +283,11 @@ class DatabaseHelper {
     final db = await database;
     await db.update(
       'entries',
-      {'is_deleted': 1, 'last_modified': DateTime.now().millisecondsSinceEpoch},
+      {
+        'is_deleted': 1,
+        'last_modified': DateTime.now().millisecondsSinceEpoch,
+        'needs_push': 1,
+      },
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -375,6 +421,54 @@ class DatabaseHelper {
     return id;
   }
 
+  // ── Incremental push helpers ──────────────────────────────
+
+  /// Entries modified since their last successful push to CloudKit.
+  Future<List<Entry>> getDirtyEntries() async {
+    final db = await database;
+    final rows = await db.query('entries',
+        where: 'needs_push = 1', orderBy: 'last_modified');
+    return rows.map(Entry.fromMap).toList();
+  }
+
+  /// Clears the dirty flag after a successful push. Guarded by last_modified
+  /// so an edit made while the push was in flight stays dirty.
+  Future<void> markEntriesPushed(
+      List<({String uuid, int lastModified})> pushed) async {
+    if (pushed.isEmpty) return;
+    final db = await database;
+    final batch = db.batch();
+    for (final p in pushed) {
+      batch.update(
+        'entries',
+        {'needs_push': 0},
+        where: 'uuid = ? AND last_modified = ?',
+        whereArgs: [p.uuid, p.lastModified],
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
+  /// True when family/tags changed since the last config push.
+  /// Defaults to true so a fresh install pushes its config once.
+  Future<bool> isConfigDirty() async =>
+      (await getMeta('config_needs_push')) != '0';
+
+  Future<void> markConfigPushed() => setMeta('config_needs_push', '0');
+
+  /// Family + tags payload for the CloudKit FamilyConfig record.
+  Future<Map<String, dynamic>> exportConfig() async {
+    final family = await getFamily();
+    return {
+      'parents': family.parents,
+      'kids': family.kids,
+      'activity_tags': await getTags('activity'),
+      'excuse_tags': await getTags('excuse'),
+      'family_updated_at':
+          int.parse(await getMeta('family_updated_at') ?? '0'),
+    };
+  }
+
   /// Exports all local data (including soft-deleted entries) as a JSON snapshot.
   Future<Map<String, dynamic>> exportToJson() async {
     final db = await database;
@@ -401,7 +495,9 @@ class DatabaseHelper {
   ///   • New UUID on remote  → insert locally (unless is_deleted)
   ///   • Same UUID, remote newer → overwrite local
   ///   • Same UUID, same timestamp → keep local (local device wins tie)
+  ///   • deleted_uuids (hard-deleted on server) → soft-delete locally
   ///   • Family/tags: remote wins only if its family_updated_at > ours
+  /// Rows written here come FROM the server, so needs_push stays 0.
   Future<void> mergeFromJson(Map<String, dynamic> remote) async {
     final db = await database;
 
@@ -433,6 +529,7 @@ class DatabaseHelper {
             'excuse': r['excuse'] as String?,
             'last_modified': remoteTs,
             'is_deleted': remoteDeleted ? 1 : 0,
+            'needs_push': 0,
             'created_at': r['created_at'] as String?,
           }, conflictAlgorithm: ConflictAlgorithm.ignore);
         } else {
@@ -453,6 +550,7 @@ class DatabaseHelper {
                 'excuse': r['excuse'] as String?,
                 'last_modified': remoteTs,
                 'is_deleted': remoteDeleted ? 1 : 0,
+                'needs_push': 0,
               },
               where: 'uuid = ?',
               whereArgs: [uuid],
@@ -462,10 +560,26 @@ class DatabaseHelper {
         }
       }
 
+      // ── Records hard-deleted on the server ───────────────
+      for (final uuid
+          in (remote['deleted_uuids'] as List? ?? []).cast<String>()) {
+        await txn.update(
+          'entries',
+          {'is_deleted': 1, 'needs_push': 0},
+          where: 'uuid = ?',
+          whereArgs: [uuid],
+        );
+      }
+
       // ── Family config & tags ──────────────────────────────
-      // Only overwrite if remote was updated more recently than our local config
-      final localFamilyTs =
-          int.tryParse(await _getMeta('family_updated_at') ?? '0') ?? 0;
+      // Only overwrite if remote was updated more recently than our local
+      // config. Must read through txn — using the db handle here would
+      // deadlock behind this very transaction.
+      final metaRows = await txn.query('sync_meta',
+          where: 'key = ?', whereArgs: ['family_updated_at']);
+      final localFamilyTs = metaRows.isEmpty
+          ? 0
+          : int.tryParse(metaRows.first['value'] as String) ?? 0;
       final remoteFamilyTs = remote['family_updated_at'] as int? ?? 0;
 
       if (remoteFamilyTs > localFamilyTs) {
@@ -505,7 +619,8 @@ class DatabaseHelper {
   Future<Entry> updateEntry(Entry entry) async {
     final db = await database;
     final map = entry.toMap()
-      ..['last_modified'] = DateTime.now().millisecondsSinceEpoch;
+      ..['last_modified'] = DateTime.now().millisecondsSinceEpoch
+      ..['needs_push'] = 1;
     await db.update('entries', map, where: 'uuid = ?', whereArgs: [entry.uuid]);
     final rows = await db.query('entries', where: 'uuid = ?', whereArgs: [entry.uuid]);
     return Entry.fromMap(rows.first);

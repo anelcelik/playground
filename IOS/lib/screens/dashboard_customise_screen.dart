@@ -42,7 +42,7 @@ class _DashboardCustomiseScreenState
             onPressed: () {
               // Reset to defaults
               DashboardPrefs.instance
-                ..reorder(0, 0) // no-op to trigger rebuild
+                .reorder(0, 0) // no-op to trigger rebuild
                 ;
               // Actually reset properly:
               for (final s in DashboardPrefs.instance.sections) {
@@ -86,7 +86,7 @@ class _DashboardCustomiseScreenState
             child: ReorderableListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: _prefs.sections.length,
-              onReorder: _prefs.reorder,
+              onReorderItem: _prefs.reorder,
               itemBuilder: (_, i) {
                 final section = _prefs.sections[i];
                 return _SectionTile(
