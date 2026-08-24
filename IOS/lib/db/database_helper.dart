@@ -266,6 +266,28 @@ class DatabaseHelper {
     return rows.map(Entry.fromMap).toList();
   }
 
+  // Most recent real visit (excludes vacation / no-playground, which have
+  // nothing worth copying) — powers "Copy last visit" on the entry screen.
+  // Returns every shift logged for that date, so a two-shift day copies
+  // whole.
+  Future<List<Entry>> getMostRecentVisitEntries() async {
+    final db = await database;
+    final dateRows = await db.rawQuery(
+      'SELECT date FROM entries '
+      'WHERE is_deleted = 0 AND vacation = 0 AND no_playground = 0 '
+      'ORDER BY date DESC LIMIT 1',
+    );
+    if (dateRows.isEmpty) return [];
+    final date = dateRows.first['date'] as String;
+    final rows = await db.query(
+      'entries',
+      where: 'date = ? AND is_deleted = 0 AND vacation = 0 AND no_playground = 0',
+      whereArgs: [date],
+      orderBy: 'shift',
+    );
+    return rows.map(Entry.fromMap).toList();
+  }
+
   Future<Entry> insertEntry(Entry entry) async {
     final db = await database;
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -285,6 +307,23 @@ class DatabaseHelper {
       'entries',
       {
         'is_deleted': 1,
+        'last_modified': DateTime.now().millisecondsSinceEpoch,
+        'needs_push': 1,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // Undo — flips a soft-deleted entry back to present. Bumping
+  // last_modified/needs_push means the restore propagates via sync too,
+  // same as the delete it's reversing.
+  Future<void> restoreEntry(int id) async {
+    final db = await database;
+    await db.update(
+      'entries',
+      {
+        'is_deleted': 0,
         'last_modified': DateTime.now().millisecondsSinceEpoch,
         'needs_push': 1,
       },

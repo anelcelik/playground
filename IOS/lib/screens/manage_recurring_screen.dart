@@ -113,6 +113,7 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openForm(),
+        tooltip: 'New recurring activity',
         child: const Icon(Icons.add),
       ),
       body: _loading

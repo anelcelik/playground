@@ -5,6 +5,7 @@ import '../models/family.dart';
 import '../sync/sync_controller.dart';
 import '../sync/sync_service.dart';
 import '../services/recurring_service.dart';
+import '../services/quick_action_service.dart';
 import 'setup_screen.dart';
 import 'entry_screen.dart';
 import 'dashboard_screen.dart';
@@ -12,6 +13,7 @@ import 'notifications_screen.dart';
 import 'manage_recurring_screen.dart';
 import 'display_settings_screen.dart';
 import 'invite_family_screen.dart';
+import 'recap_screen.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -30,16 +32,43 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 2, vsync: this);
+    // A shortcut tap can race main()'s init — it may already be sitting on
+    // the notifier by the time we mount. Fold that into the controller's
+    // starting index directly, rather than animating a tab view that
+    // doesn't exist yet.
+    final pending = QuickActionService.instance.lastAction.value;
+    _tabs = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: pending == QuickActionService.dashboardType ? 1 : 0,
+    );
+    if (pending != null) QuickActionService.instance.lastAction.value = null;
+
     _loadFamily();
     RecurringService.instance.autoMarkMissed();
     _checkInviteBanner();
+
+    // Any shortcut tapped while the app is already running arrives here.
+    QuickActionService.instance.lastAction.addListener(_onQuickAction);
   }
 
   @override
   void dispose() {
+    QuickActionService.instance.lastAction.removeListener(_onQuickAction);
     _tabs.dispose();
     super.dispose();
+  }
+
+  void _onQuickAction() {
+    final type = QuickActionService.instance.lastAction.value;
+    if (type == null) return;
+    switch (type) {
+      case QuickActionService.logEntryType:
+        _tabs.animateTo(0);
+      case QuickActionService.dashboardType:
+        _tabs.animateTo(1);
+    }
+    QuickActionService.instance.lastAction.value = null; // consumed
   }
 
   Future<void> _loadFamily() async {
@@ -128,8 +157,19 @@ class _HomeScreenState extends State<HomeScreen>
                 Navigator.push(context, MaterialPageRoute(
                     builder: (_) => const DisplaySettingsScreen()));
               }
+              if (v == 'recap') {
+                Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => const RecapScreen()));
+              }
             },
             itemBuilder: (_) => const [
+              PopupMenuItem(
+                  value: 'recap',
+                  child: Row(children: [
+                    Icon(Icons.auto_awesome_rounded),
+                    SizedBox(width: 10),
+                    Text('Recap'),
+                  ])),
               PopupMenuItem(
                   value: 'family',
                   child: Row(children: [
@@ -255,15 +295,27 @@ class _InviteBanner extends StatelessWidget {
 
 // ── Sync status dot ───────────────────────────────────────
 
+/// "just now" / "3m ago" / "2h ago" / "5d ago" — good enough for a tooltip,
+/// no need for anything fancier than coarse buckets.
+String _relTime(DateTime t) {
+  final diff = DateTime.now().difference(t);
+  if (diff.inSeconds < 60) return 'just now';
+  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+  if (diff.inHours < 24) return '${diff.inHours}h ago';
+  return '${diff.inDays}d ago';
+}
+
 class _SyncDot extends StatelessWidget {
   final SyncStatus status;
   const _SyncDot({required this.status});
 
   @override
   Widget build(BuildContext context) {
-    const tooltip = {
+    final last = SyncController.instance.lastSyncedAt;
+    final tooltip = {
       SyncStatus.syncing: 'Syncing…',
-      SyncStatus.synced: 'CloudKit synced',
+      SyncStatus.synced:
+          last != null ? 'CloudKit synced — ${_relTime(last)}' : 'CloudKit synced',
       SyncStatus.error: 'Sync error — will retry',
       SyncStatus.unavailable: 'Sync not available',
       SyncStatus.idle: 'Waiting to sync',

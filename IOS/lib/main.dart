@@ -8,8 +8,11 @@ import 'package:timezone/timezone.dart' as tz_local;
 import 'db/database_helper.dart';
 import 'models/dashboard_prefs.dart';
 import 'notifications/notification_service.dart';
+import 'purchase/purchase_service.dart';
+import 'screens/paywall_screen.dart';
 import 'screens/setup_screen.dart';
 import 'screens/home_screen.dart';
+import 'services/quick_action_service.dart';
 import 'settings/app_settings.dart';
 import 'sync/sync_controller.dart';
 import 'theme.dart';
@@ -42,8 +45,14 @@ Future<void> main() async {
   // Local notifications (no-op on unsupported platforms)
   await NotificationService.instance.init();
 
+  // One-time $0.99 unlock (no-op / always-unlocked on non-iOS platforms)
+  await PurchaseService.instance.init();
+
   // iCloud sync (no-op on non-iOS platforms)
   SyncController.instance.start();
+
+  // Home Screen long-press shortcuts ("Log a Visit" / "View Dashboard")
+  await QuickActionService.instance.init();
 
   runApp(const PlaygroundTrackerApp());
 }
@@ -83,7 +92,18 @@ class _AppRouterState extends State<_AppRouter> {
   @override
   void initState() {
     super.initState();
+    PurchaseService.instance.addListener(_onPurchaseChanged);
     _check();
+  }
+
+  @override
+  void dispose() {
+    PurchaseService.instance.removeListener(_onPurchaseChanged);
+    super.dispose();
+  }
+
+  void _onPurchaseChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _check() async {
@@ -100,6 +120,10 @@ class _AppRouterState extends State<_AppRouter> {
   Widget build(BuildContext context) {
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    // Paywall comes first — nothing past this point without the $0.99 unlock.
+    if (!PurchaseService.instance.isPurchased) {
+      return const PaywallScreen();
     }
     if (!_hasFamily) {
       return SetupScreen(

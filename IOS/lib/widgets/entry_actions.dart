@@ -83,4 +83,18 @@ Future<void> showEntryActions(
   if (ok != true || entry.id == null) return;
   await DatabaseHelper.instance.deleteEntry(entry.id!);
   onChanged();
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    content: const Text('Entry deleted'),
+    behavior: SnackBarBehavior.floating,
+    duration: const Duration(seconds: 4),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+    action: SnackBarAction(
+      label: 'Undo',
+      onPressed: () async {
+        await DatabaseHelper.instance.restoreEntry(entry.id!);
+        onChanged();
+      },
+    ),
+  ));
 }

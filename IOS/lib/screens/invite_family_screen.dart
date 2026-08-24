@@ -2,6 +2,15 @@ import 'package:flutter/material.dart';
 import '../sync/sync_service.dart';
 import '../theme.dart';
 
+/// "just now" / "3m ago" / "2h ago" / "5d ago".
+String _relTime(DateTime t) {
+  final diff = DateTime.now().difference(t);
+  if (diff.inSeconds < 60) return 'just now';
+  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+  if (diff.inHours < 24) return '${diff.inHours}h ago';
+  return '${diff.inDays}d ago';
+}
+
 class InviteFamilyScreen extends StatefulWidget {
   const InviteFamilyScreen({super.key});
 
@@ -157,6 +166,16 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
                       ? () => _revoke(p)
                       : null,
                 )),
+
+          if (!_loading && SyncService.instance.lastSyncedAt != null) ...[
+            const SizedBox(height: 10),
+            Center(
+              child: Text(
+                'Last synced ${_relTime(SyncService.instance.lastSyncedAt!)}',
+                style: TextStyle(fontSize: 12, color: c.txt2),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 24),
 
