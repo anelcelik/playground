@@ -361,11 +361,11 @@ class EntryScreenState extends State<EntryScreen> {
               padding: const EdgeInsets.only(bottom: 10),
               child: GestureDetector(
                 onTap: _copyLastEntry,
-                child: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.replay_rounded, size: 16, color: _kGreen),
-                    const SizedBox(width: 6),
+                    SizedBox(width: 6),
                     Text('Copy last visit',
                         style: TextStyle(
                             fontSize: 13, fontWeight: FontWeight.w600, color: _kGreen)),
