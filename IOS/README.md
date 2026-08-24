@@ -12,7 +12,7 @@ feature matrix.
 | Path | What it is |
 |------|------------|
 | `lib/` | All Dart code (screens, models, db, sync, notifications) |
-| `ios/` | Committed Xcode project — includes `CloudKitPlugin.swift`, CloudKit-aware `AppDelegate`/`SceneDelegate`, `Runner.entitlements` |
+| `ios/` | Committed Xcode project — includes `CloudKitPlugin.swift`, CloudKit-aware `AppDelegate`/`SceneDelegate`, `Runner.entitlements` (dev push env, used for Debug/Profile) + `Runner-Release.entitlements` (production push env, used for Release/App Store), `PrivacyInfo.xcprivacy` (declares `UserDefaults` usage per Apple's May 2024 policy) |
 | `test/` | Unit tests (sync merge rules, models) + widget smoke tests |
 | `assets/icon.png` | 1024×1024 source icon (`dart run flutter_launcher_icons`) |
 

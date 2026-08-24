@@ -32,3 +32,11 @@ Runner/GeneratedPluginRegistrant.*
 !default.mode2v3
 !default.pbxuser
 !default.perspectivev3
+
+# Signing material — never commit these once CI signing is set up.
+# (Secrets belong in GitHub Actions Secrets, base64-encoded, not in the repo.)
+*.p12
+*.cer
+*.mobileprovision
+*.certSigningRequest
+ExportOptions.plist
