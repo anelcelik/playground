@@ -25,7 +25,14 @@ class PurchaseService extends ChangeNotifier {
 
   static const _metaKey = 'purchase_unlocked';
 
-  final _iap = InAppPurchase.instance;
+  // Set inside init(), after the _isIOS check — merely accessing
+  // InAppPurchase.instance triggers the platform plugin's registration,
+  // which on Android eagerly opens a billing-client connection over a
+  // platform channel. Under flutter_test (default platform: Android)
+  // nothing answers that channel, so touching this as a field initializer
+  // (i.e. on every construction of PurchaseService, iOS or not) crashes
+  // widget tests with a PlatformException before init() even runs.
+  late final InAppPurchase _iap;
   StreamSubscription<List<PurchaseDetails>>? _sub;
 
   // Unlocked by default — flipped to a real (possibly locked) value inside
@@ -49,6 +56,7 @@ class PurchaseService extends ChangeNotifier {
       _isPurchased = true;
       return;
     }
+    _iap = InAppPurchase.instance;
 
     // Load cached entitlement first so the router can decide instantly,
     // without waiting on a network round-trip.
