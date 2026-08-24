@@ -42,6 +42,11 @@ class EntryScreenState extends State<EntryScreen> {
   DateTime _date = DateTime.now();
   bool _isVacation = false;
   bool _isNoPlayground = false;
+  // Vacation / no-playground are edge cases most days don't need — collapsed
+  // by default so the fast path isn't buried under them. Manually expanded
+  // via the toggle, or automatically once either is actually switched on
+  // (see _moreOptionsExpanded) so an active toggle is never hidden.
+  bool _showMoreOptions = false;
   final Set<String> _selUsers = {};
   final Set<String> _selShifts = {};
   final Map<String, String?> _dur = {'morning': null, 'evening': null};
@@ -130,6 +135,8 @@ class EntryScreenState extends State<EntryScreen> {
         (_date.year == now.year && _date.month < now.month) ||
         (_date.year == now.year && _date.month == now.month && _date.day < now.day);
   }
+
+  bool get _moreOptionsExpanded => _showMoreOptions || _isVacation || _isNoPlayground;
 
   bool get _showExcuseCard {
     if (_isVacation || _isNoPlayground) return false;
@@ -223,6 +230,7 @@ class EntryScreenState extends State<EntryScreen> {
     setState(() {
       _isVacation = false;
       _isNoPlayground = false;
+      _showMoreOptions = false;
       _missedReasonSel.clear();
       _selUsers.clear();
       _selShifts.clear();
@@ -233,6 +241,33 @@ class EntryScreenState extends State<EntryScreen> {
       _excuseSel.clear();
       _resetKids();
     });
+  }
+
+  /// Pre-fills the form from the most recently logged real visit (any
+  /// date), so a repeat day doesn't mean re-picking everything from
+  /// scratch. Everything it fills stays editable before Save.
+  Future<void> _copyLastEntry() async {
+    final last = await DatabaseHelper.instance.getMostRecentVisitEntries();
+    if (last.isEmpty) {
+      _toast('No previous visit to copy yet');
+      return;
+    }
+    setState(() {
+      _isVacation = false;
+      _isNoPlayground = false;
+      _selUsers
+        ..clear()
+        ..addAll(last.first.userList.where(widget.family.parents.contains));
+      _selShifts
+        ..clear()
+        ..addAll(last.map((e) => e.shift).where((s) => s == 'morning' || s == 'evening'));
+      for (final e in last) {
+        _dur[e.shift] = e.duration;
+        _kids[e.shift] = {for (final k in widget.family.kids) k: e.kidList.contains(k)};
+        _acts[e.shift] = e.activityList.toSet();
+      }
+    });
+    _toast('Copied from your last visit — tweak anything before saving');
   }
 
   Future<void> _addTag(
@@ -282,7 +317,7 @@ class EntryScreenState extends State<EntryScreen> {
                       fontSize: 16, fontWeight: FontWeight.w700, color: _kGreen)),
               const SizedBox(height: 7),
               Row(children: [
-                _arrowBtn(() => _shiftDate(-1), Icons.chevron_left),
+                _arrowBtn(() => _shiftDate(-1), Icons.chevron_left, 'Previous day'),
                 Expanded(
                   child: GestureDetector(
                     onTap: _pickDate,
@@ -301,7 +336,7 @@ class EntryScreenState extends State<EntryScreen> {
                     ),
                   ),
                 ),
-                _arrowBtn(_canGoForward ? () => _shiftDate(1) : null, Icons.chevron_right),
+                _arrowBtn(_canGoForward ? () => _shiftDate(1) : null, Icons.chevron_right, 'Next day'),
               ]),
             ],
           )),
@@ -318,6 +353,24 @@ class EntryScreenState extends State<EntryScreen> {
               child: const Text(
                 '📅 Future date — only vacation entries can be logged.',
                 style: TextStyle(color: Color(0xFF8A6000), fontSize: 13, fontWeight: FontWeight.w500),
+              ),
+            ),
+
+          if (!_isFuture)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: GestureDetector(
+                onTap: _copyLastEntry,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.replay_rounded, size: 16, color: _kGreen),
+                    const SizedBox(width: 6),
+                    Text('Copy last visit',
+                        style: TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w600, color: _kGreen)),
+                  ],
+                ),
               ),
             ),
 
@@ -378,67 +431,103 @@ class EntryScreenState extends State<EntryScreen> {
             )),
           ),
 
-          // Vacation
-          _card(Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('🏖️  Vacation',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              Switch.adaptive(
-                value: _isVacation,
-                activeThumbColor: _kAmber,
-                activeTrackColor: _kAmber.withAlpha(100),
-                onChanged: (v) => setState(() {
-                  _isVacation = v;
-                  if (v) { _selShifts.clear(); _isNoPlayground = false; }
-                }),
+          // More options — vacation / no playground today. Collapsed by
+          // default: these are edge cases, not the every-day path, and
+          // shouldn't cost a scroll on the days you don't need them.
+          GestureDetector(
+            onTap: () => setState(() => _showMoreOptions = !_showMoreOptions),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                border: Border.all(color: kBorder, width: 1.5),
+                borderRadius: BorderRadius.circular(12),
               ),
-            ],
-          )),
-
-          // No playground today
-          _card(Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('❌  No playground today',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: kTxt)),
-                  Switch.adaptive(
-                    value: _isNoPlayground,
-                    activeThumbColor: const Color(0xFFE53935),
-                    activeTrackColor: const Color(0xFFE53935).withAlpha(100),
-                    onChanged: (v) => setState(() {
-                      _isNoPlayground = v;
-                      if (v) { _selShifts.clear(); _isVacation = false; _missedReasonSel.clear(); }
-                    }),
+                  Text(
+                    _moreOptionsExpanded
+                        ? 'Hide options'
+                        : 'More options — vacation, no playground',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kTxt2),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(
+                    _moreOptionsExpanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    size: 18,
+                    color: kTxt2,
                   ),
                 ],
               ),
-              if (_isNoPlayground) ...[
-                const SizedBox(height: 10),
-                Text('Why? (optional)',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                        color: kTxt2, letterSpacing: 0.7)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6, runSpacing: 6,
-                  children: _missedReasonTags.map((tag) {
-                    final on = _missedReasonSel.contains(tag);
-                    return GestureDetector(
-                      onTap: () => setState(() =>
-                          on ? _missedReasonSel.remove(tag) : _missedReasonSel.add(tag)),
-                      child: _tagChip(tag, on),
-                    );
-                  }).toList(),
+            ),
+          ),
+
+          if (_moreOptionsExpanded) ...[
+            // Vacation
+            _card(Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('🏖️  Vacation',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                Switch.adaptive(
+                  value: _isVacation,
+                  activeThumbColor: _kAmber,
+                  activeTrackColor: _kAmber.withAlpha(100),
+                  onChanged: (v) => setState(() {
+                    _isVacation = v;
+                    if (v) { _selShifts.clear(); _isNoPlayground = false; }
+                  }),
                 ),
-                const SizedBox(height: 7),
-                _tagInput('Add reason...', _missedReasonCtrl,
-                    () => _addTag('missed_reason', _missedReasonTags, _missedReasonSel, _missedReasonCtrl)),
               ],
-            ],
-          )),
+            )),
+
+            // No playground today
+            _card(Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('❌  No playground today',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: kTxt)),
+                    Switch.adaptive(
+                      value: _isNoPlayground,
+                      activeThumbColor: const Color(0xFFE53935),
+                      activeTrackColor: const Color(0xFFE53935).withAlpha(100),
+                      onChanged: (v) => setState(() {
+                        _isNoPlayground = v;
+                        if (v) { _selShifts.clear(); _isVacation = false; _missedReasonSel.clear(); }
+                      }),
+                    ),
+                  ],
+                ),
+                if (_isNoPlayground) ...[
+                  const SizedBox(height: 10),
+                  Text('Why? (optional)',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+                          color: kTxt2, letterSpacing: 0.7)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6, runSpacing: 6,
+                    children: _missedReasonTags.map((tag) {
+                      final on = _missedReasonSel.contains(tag);
+                      return GestureDetector(
+                        onTap: () => setState(() =>
+                            on ? _missedReasonSel.remove(tag) : _missedReasonSel.add(tag)),
+                        child: _tagChip(tag, on),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 7),
+                  _tagInput('Add reason...', _missedReasonCtrl,
+                      () => _addTag('missed_reason', _missedReasonTags, _missedReasonSel, _missedReasonCtrl)),
+                ],
+              ],
+            )),
+          ],
 
           if (_selShifts.contains('morning') && !_isVacation && !_isNoPlayground)
             _buildShiftCard('morning'),
@@ -715,16 +804,19 @@ class EntryScreenState extends State<EntryScreen> {
                 fontSize: 11, fontWeight: FontWeight.w700, color: _kTxt2, letterSpacing: 0.7)),
       );
 
-  Widget _arrowBtn(VoidCallback? onTap, IconData icon) => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 36, height: 36,
-          decoration: BoxDecoration(
-            border: Border.all(color: _kBorder, width: 2),
-            borderRadius: BorderRadius.circular(9),
-            color: _kCard,
+  Widget _arrowBtn(VoidCallback? onTap, IconData icon, String label) => Tooltip(
+        message: label,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 36, height: 36,
+            decoration: BoxDecoration(
+              border: Border.all(color: _kBorder, width: 2),
+              borderRadius: BorderRadius.circular(9),
+              color: _kCard,
+            ),
+            child: Icon(icon, color: onTap != null ? _kGreen : _kTxt2),
           ),
-          child: Icon(icon, color: onTap != null ? _kGreen : _kTxt2),
         ),
       );
 

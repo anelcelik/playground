@@ -46,8 +46,15 @@ class DashboardPrefs extends ChangeNotifier {
   static final DashboardPrefs instance = DashboardPrefs._();
   DashboardPrefs._();
 
+  // Deeper analytics (charts / top activities / missed-reasons breakdown)
+  // start hidden so a fresh dashboard leads with the glanceable numbers and
+  // the log, not seven equal-weight cards. Still one tap away via the tune
+  // button — nothing here is removed, just not competing for attention by
+  // default.
+  static const _kDefaultHidden = {'charts', 'activities', 'missed_reasons'};
+
   List<SectionConfig> _sections = _kDefaultOrder
-      .map((id) => SectionConfig(id: id))
+      .map((id) => SectionConfig(id: id, visible: !_kDefaultHidden.contains(id)))
       .toList();
 
   List<SectionConfig> get sections => _sections;

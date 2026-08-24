@@ -43,6 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Color get _kCard   => AppColors.of(context).card;
   Color get _kBorder => AppColors.of(context).border;
   Color get _kTxt2   => AppColors.of(context).txt2;
+  Color get _kTxt    => AppColors.of(context).txt;
 
   String _period = 'month';
   String _ref = '';
@@ -197,22 +198,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildPeriodNav() => Row(children: [
         Expanded(child: _buildPeriodNavCard()),
         const SizedBox(width: 8),
-        GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const DashboardCustomiseScreen()),
-          ),
-          child: Container(
-            height: 48,
-            width: 48,
-            decoration: BoxDecoration(
-              color: _kCard,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: const [
-                BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
-              ],
+        Tooltip(
+          message: 'Customize dashboard',
+          child: GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const DashboardCustomiseScreen()),
             ),
-            child: const Icon(Icons.tune_rounded, color: _kGreen, size: 22),
+            child: Container(
+              height: 48,
+              width: 48,
+              decoration: BoxDecoration(
+                color: _kCard,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: const [
+                  BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
+                ],
+              ),
+              child: const Icon(Icons.tune_rounded, color: _kGreen, size: 22),
+            ),
           ),
         ),
       ]);
@@ -230,9 +234,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Row(children: [
           Opacity(
             opacity: _period == 'all' ? 0.0 : 1.0,
-            child: GestureDetector(
-              onTap: _period == 'all' ? null : () => _bump(-1),
-              child: const Icon(Icons.chevron_left, color: _kGreen, size: 28),
+            child: Tooltip(
+              message: 'Previous period',
+              child: GestureDetector(
+                onTap: _period == 'all' ? null : () => _bump(-1),
+                child: const Icon(Icons.chevron_left, color: _kGreen, size: 28),
+              ),
             ),
           ),
           Expanded(
@@ -242,9 +249,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           Opacity(
             opacity: _period == 'all' ? 0.0 : 1.0,
-            child: GestureDetector(
-              onTap: _period == 'all' ? null : () => _bump(1),
-              child: const Icon(Icons.chevron_right, color: _kGreen, size: 28),
+            child: Tooltip(
+              message: 'Next period',
+              child: GestureDetector(
+                onTap: _period == 'all' ? null : () => _bump(1),
+                child: const Icon(Icons.chevron_right, color: _kGreen, size: 28),
+              ),
             ),
           ),
         ]),
@@ -562,7 +572,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: TextStyle(
                     fontSize: small ? 22 : 34,
                     fontWeight: FontWeight.w800,
-                    color: accent ?? _kGreen,
+                    // Data reads as data, not as a call to action — green is
+                    // reserved for things you can tap/select.
+                    color: accent ?? _kTxt,
                     height: 1)),
             const SizedBox(height: 3),
             Text(label,
