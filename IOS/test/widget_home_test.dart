@@ -34,7 +34,10 @@ void main() {
       await tester.pump();
     }
 
-    expect(find.text('Log Entry'), findsOneWidget);
-    expect(find.text('Dashboard'), findsOneWidget);
+    // The bottom tab bar renders its labels uppercased.
+    expect(find.text('TODAY'), findsOneWidget);
+    expect(find.text('HISTORY'), findsOneWidget);
+    expect(find.text('PLANS'), findsOneWidget);
+    expect(find.text('SETTINGS'), findsOneWidget);
   });
 }

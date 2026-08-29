@@ -1,0 +1,72 @@
+name: iOS → TestFlight
+
+# Only on a version tag. macOS runners bill at 10× the Linux rate on
+# private repos, so you don't want this on every push to main.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  testflight:
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: IOS
+
+    env:
+      BUNDLE_ID: com.playground.tracker.playgroundTracker   # matches ios/Runner.xcodeproj
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # Codemagic's CLI tools are free and open source. They talk to the
+      # App Store Connect API directly, so you never hand-manage a .p12
+      # or a provisioning profile — no Mac, no Xcode UI, no fastlane match
+      # repo to keep in sync.
+      - name: Install Codemagic CLI tools
+        run: pip3 install --break-system-packages codemagic-cli-tools
+
+      - name: Fetch signing certificate & profile
+        env:
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          CERTIFICATE_PRIVATE_KEY: ${{ secrets.CERTIFICATE_PRIVATE_KEY }}
+        run: |
+          # --create makes the cert and profile on first run, then reuses them.
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          keychain initialize
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - run: flutter pub get
+
+      - name: Build IPA
+        run: |
+          flutter build ipa \
+            --release \
+            --export-options-plist=$HOME/export_options.plist
+
+      - name: Upload to TestFlight
+        env:
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: app-store-connect publish --path build/ios/ipa/*.ipa
+
+      # Keeps the build inspectable when the upload is what failed.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ipa
+          path: IOS/build/ios/ipa/*.ipa
+          if-no-files-found: warn

@@ -86,7 +86,7 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
       content: Text(msg),
       behavior: SnackBarBehavior.floating,
       duration: const Duration(seconds: 2),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
     ));
   }
 
@@ -123,8 +123,8 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
                   backgroundColor: kGreen,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                  shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.zero),
                 ),
               ),
             ),
@@ -200,10 +200,10 @@ class _HeroCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.of(context).greenTint,
           border: Border.all(color: kGreen.withAlpha(80), width: 2),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.zero,
         ),
         child: Row(children: [
-          const Text('👨‍👩‍👧', style: TextStyle(fontSize: 36)),
+          Icon(Icons.people_outline, size: 32, color: AppColors.of(context).green),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -252,7 +252,7 @@ class _ParticipantTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: c.card,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.zero,
         boxShadow: [
           BoxShadow(
               color: Colors.black.withAlpha(15),
@@ -261,15 +261,21 @@ class _ParticipantTile extends StatelessWidget {
         ],
       ),
       child: Row(children: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor:
-              isOwner ? kGreen.withAlpha(30) : const Color(0xFFE3F2FD),
+        Container(
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isOwner ? kGreen : Colors.transparent,
+            border: Border.all(
+                color: isOwner ? kGreen : AppColors.of(context).border,
+                width: 2),
+          ),
           child: Text(
             displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isOwner ? kGreen : const Color(0xFF1565C0)),
+            style: AppType.heading.copyWith(
+                fontSize: 16,
+                color: isOwner ? Colors.white : AppColors.of(context).txt),
           ),
         ),
         const SizedBox(width: 12),
@@ -301,7 +307,7 @@ class _ParticipantTile extends StatelessWidget {
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
               color: AppColors.of(context).greenTint,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.zero,
             ),
             child: const Text('You',
                 style: TextStyle(
@@ -334,7 +340,7 @@ class _EmptyParticipants extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: c.card,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.zero,
         ),
         child: Column(children: [
           Text('No one connected yet',
@@ -359,9 +365,9 @@ class _HowItWorks extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF0F4F0),
-          borderRadius: BorderRadius.circular(12),
+        decoration: const BoxDecoration(
+          color: Color(0xFFF0F4F0),
+          borderRadius: BorderRadius.zero,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,9 +389,9 @@ class _HowItWorks extends StatelessWidget {
                     Container(
                       width: 22,
                       height: 22,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                           color: kGreen,
-                          borderRadius: BorderRadius.circular(11)),
+                          borderRadius: BorderRadius.zero),
                       child: Center(
                         child: Text(e.$1,
                             style: const TextStyle(

@@ -104,7 +104,7 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
-        title: const Text('🔁 Recurring Activities',
+        title: const Text('Recurring Activities',
             style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -162,7 +162,7 @@ class _ActivityTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: appC.card,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.zero,
         boxShadow: const [
           BoxShadow(
               color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
@@ -185,7 +185,7 @@ class _ActivityTile extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: a.isActive ? appC.greenTint : appC.bg,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.zero,
               ),
               child: Text(
                 a.isActive ? 'Active' : 'Inactive',
@@ -200,18 +200,18 @@ class _ActivityTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 4),
-              Text('🔁 ${a.repeatDaysLabel}',
+              Text(a.repeatDaysLabel,
                   style: TextStyle(fontSize: 13, color: kTxt2)),
               if (a.kidNames.isNotEmpty)
-                Text('👧 ${a.kidNames.join(', ')}',
+                Text(a.kidNames.join(', '),
                     style: TextStyle(fontSize: 13, color: kTxt2)),
               if (a.dateFrom != null || a.dateTo != null)
                 Text(
-                  '📅 ${a.dateFrom ?? '…'} → ${a.dateTo ?? '…'}',
+                  '${a.dateFrom ?? '…'} → ${a.dateTo ?? '…'}',
                   style: TextStyle(fontSize: 12, color: kTxt2),
                 ),
               if (a.notifyEnabled && a.notifyHour != null)
-                Text('🔔 ${a.notifyTimeLabel}',
+                Text(a.notifyTimeLabel,
                     style: TextStyle(fontSize: 12, color: kTxt2)),
             ],
           ),
@@ -280,7 +280,7 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('🔁', style: TextStyle(fontSize: 48)),
+            Icon(Icons.repeat_rounded, size: 40, color: kTxt2),
             const SizedBox(height: 12),
             Text('No recurring activities yet',
                 style: TextStyle(
@@ -302,8 +302,8 @@ class _EmptyState extends StatelessWidget {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                       horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12))),
+                  shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.zero)),
             ),
           ],
         ),

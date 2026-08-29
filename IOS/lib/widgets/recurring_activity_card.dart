@@ -57,15 +57,15 @@ class _SkipSheet extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
                   color: AppColors.of(context).border,
-                  borderRadius: BorderRadius.circular(2)),
+                  borderRadius: BorderRadius.zero),
             ),
             const Text('Why skipping?',
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
             const SizedBox(height: 16),
             ...[
-              ('sick', '🤒  Sick'),
-              ('cancelled', '🚫  Cancelled'),
-              ('other', '💬  Other'),
+              ('sick', 'Sick'),
+              ('cancelled', 'Cancelled'),
+              ('other', 'Other'),
             ].map((e) => _SheetOption(value: e.$1, label: e.$2)),
           ],
         ),
@@ -84,7 +84,7 @@ class _SheetOption extends StatelessWidget {
 
     return InkWell(
       onTap: () => Navigator.pop(context, value),
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.zero,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
@@ -92,7 +92,7 @@ class _SheetOption extends StatelessWidget {
         decoration: BoxDecoration(
           border:
               Border.all(color: AppColors.of(context).border, width: 2),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.zero,
         ),
         child: Text(label,
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
@@ -123,19 +123,19 @@ class _PendingCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _Header(
-            icon: '🔁',
+            icon: Icons.repeat_rounded,
             title: a.title,
             badge: 'Planned',
             badgeBg: appC2.bg,
             badgeFg: kTxt2,
           ),
           if (a.kidNames.isNotEmpty)
-            _Detail('👧 ${a.kidNames.join(' & ')}'),
+            _Detail(a.kidNames.join(' & ')),
           const SizedBox(height: 12),
           Row(children: [
             Expanded(
               child: _ActionBtn(
-                label: '✅  Confirm',
+                label: 'Confirm',
                 bg: _kGreen,
                 fg: Colors.white,
                 onTap: onConfirm,
@@ -144,7 +144,7 @@ class _PendingCard extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: _ActionBtn(
-                label: '❌  Skip',
+                label: 'Skip',
                 bg: appC2.card,
                 fg: kTxt2,
                 border: appC2.border,
@@ -177,15 +177,15 @@ class _ConfirmedCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _Header(
-              icon: '✅',
+              icon: Icons.check_rounded,
               title: a.title,
               badge: 'Done',
               badgeBg: const Color(0xFF66BB6A),
               badgeFg: Colors.white,
             ),
             if (e != null) ...[
-              if (e.duration != null) _Detail('⏱ ${e.duration}'),
-              if (e.kidList.isNotEmpty) _Detail('👧 ${e.kidList.join(' & ')}'),
+              if (e.duration != null) _Detail(e.duration!),
+              if (e.kidList.isNotEmpty) _Detail(e.kidList.join(' & ')),
             ],
             if (onTap != null)
               Padding(
@@ -212,9 +212,9 @@ class _SkippedCard extends StatelessWidget {
 
     final a = status.activity;
     final reason = switch (status.log?.skipReason) {
-      'sick' => '🤒 Sick',
-      'cancelled' => '🚫 Cancelled',
-      _ => '💬 Other',
+      'sick' => 'Sick',
+      'cancelled' => 'Cancelled',
+      _ => 'Other',
     };
     final c = AppColors.of(context);
     return _CardShell(
@@ -224,7 +224,7 @@ class _SkippedCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _Header(
-            icon: '⏭️',
+            icon: Icons.skip_next_rounded,
             title: a.title,
             badge: 'Skipped',
             badgeBg: const Color(0xFFBBBBBB),
@@ -248,7 +248,7 @@ class _MissedCard extends StatelessWidget {
       border: const Color(0xFFEF9A9A),
       background: AppColors.of(context).redTint,
       child: _Header(
-        icon: '❗',
+        icon: Icons.priority_high_rounded,
         title: status.activity.title,
         badge: 'Missed',
         badgeBg: const Color(0xFFEF9A9A),
@@ -274,14 +274,14 @@ class _CardShell extends StatelessWidget {
         decoration: BoxDecoration(
           color: background,
           border: Border.all(color: border, width: 2),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.zero,
         ),
         child: child,
       );
 }
 
 class _Header extends StatelessWidget {
-  final String icon;
+  final IconData icon;
   final String title;
   final String badge;
   final Color badgeBg;
@@ -296,7 +296,8 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
         children: [
-          Text('$icon ', style: const TextStyle(fontSize: 16)),
+          Icon(icon, size: 16, color: badgeFg),
+          const SizedBox(width: 8),
           Expanded(
               child: Text(title,
                   style: const TextStyle(
@@ -305,7 +306,7 @@ class _Header extends StatelessWidget {
             padding:
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-                color: badgeBg, borderRadius: BorderRadius.circular(8)),
+                color: badgeBg, borderRadius: BorderRadius.zero),
             child: Text(badge,
                 style: TextStyle(
                     fontSize: 11,
@@ -350,7 +351,7 @@ class _ActionBtn extends StatelessWidget {
           decoration: BoxDecoration(
             color: bg,
             border: border != null ? Border.all(color: border!, width: 2) : null,
-            borderRadius: BorderRadius.circular(9),
+            borderRadius: BorderRadius.zero,
           ),
           child: Text(label,
               textAlign: TextAlign.center,

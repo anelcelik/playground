@@ -4,10 +4,10 @@ import '../notifications/notification_service.dart';
 
 import '../settings/app_settings.dart';
 import '../theme.dart';
+import '../widgets/modernist.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
 const _kGreen   = kGreen;
-const _kGreenLt = kGreenLt;
 // _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
 
 
@@ -90,7 +90,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       backgroundColor: kBg,
       appBar: AppBar(
         title: const Text(
-          '🔔 Notifications',
+          'Notifications',
           style: TextStyle(
               color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
         ),
@@ -116,7 +116,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
                   // ── Outdoor reminder ──────────────────────
                   _NotifCard(
-                    icon: '🌳',
+                    icon: Icons.park_outlined,
                     title: 'Outdoor reminder',
                     description:
                         'Did you take the kids outside today? Fires once a day at the time you choose.',
@@ -143,7 +143,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
                   // ── Log reminder ──────────────────────────
                   _NotifCard(
-                    icon: '📝',
+                    icon: Icons.edit_note_rounded,
                     title: 'Log entry reminder',
                     description:
                         "Don't forget to log today's playground visit. Fires once a day at the time you choose.",
@@ -176,7 +176,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 // ── Notification card ─────────────────────────────────────
 
 class _NotifCard extends StatelessWidget {
-  final String icon;
+  final IconData icon;
   final String title;
   final String description;
   final bool enabled;
@@ -213,7 +213,7 @@ class _NotifCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: c2.card,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.zero,
         boxShadow: const [
           BoxShadow(
               color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
@@ -226,7 +226,8 @@ class _NotifCard extends StatelessWidget {
           // Header row
           Row(
             children: [
-              Text('$icon ', style: const TextStyle(fontSize: 22)),
+              Icon(icon, size: 20, color: _kGreen),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   title,
@@ -236,12 +237,7 @@ class _NotifCard extends StatelessWidget {
                       color: kTxt),
                 ),
               ),
-              Switch.adaptive(
-                value: enabled,
-                activeThumbColor: _kGreen,
-                activeTrackColor: _kGreenLt.withAlpha(120),
-                onChanged: onToggle,
-              ),
+              SquareSwitch(value: enabled, onChanged: onToggle),
             ],
           ),
           const SizedBox(height: 6),
@@ -264,7 +260,7 @@ class _NotifCard extends StatelessWidget {
                   color: enabled ? c2.greenTint : c2.bg,
                   border: Border.all(
                       color: enabled ? _kGreen : kBorder, width: 2),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.zero,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -316,11 +312,11 @@ class _PermissionBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFFFF3E0),
         border: Border.all(color: const Color(0xFFFFCC80), width: 2),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.zero,
       ),
       child: Row(
         children: [
-          const Text('⚠️ ', style: TextStyle(fontSize: 20)),
+          const Icon(Icons.warning_amber_rounded, size: 18, color: _kGreen),
           const Expanded(
             child: Text(
               'Notifications are blocked. Open Settings → Playground Tracker → Allow Notifications.',
@@ -356,9 +352,9 @@ class _InfoNote extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F4F0),
-        borderRadius: BorderRadius.circular(12),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF0F4F0),
+        borderRadius: BorderRadius.zero,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

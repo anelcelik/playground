@@ -39,6 +39,41 @@ jobs:
         working-directory: IOS
         run: dart run flutter_launcher_icons
 
+      # The Modernist system has no radii, no emoji and one toggle widget.
+      # These are cheap to reintroduce by accident and invisible in review,
+      # so the build fails on them rather than letting the UI drift back.
+      # Python, not grep -P: the macOS runner ships BSD grep, which has no -P.
+      - name: Check design-system invariants
+        working-directory: IOS
+        run: |
+          python3 - <<'EOF'
+          import pathlib, re, sys
+
+          CHECKS = [
+              ("rounded corner", r"BorderRadius\.circular",
+               "use BorderRadius.zero — the system has no radii"),
+              ("emoji in source",
+               "[\U0001F300-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF]",
+               "use a Material icon instead"),
+              ("capsule toggle", r"Switch\.adaptive|(?<!Square)\bSwitch\(",
+               "use SquareSwitch from widgets/modernist.dart"),
+              ("circular avatar", r"CircleAvatar|BoxShape\.circle",
+               "use a square Container"),
+          ]
+
+          failed = False
+          for path in sorted(pathlib.Path("lib").rglob("*.dart")):
+              for lineno, line in enumerate(
+                      path.read_text(encoding="utf-8").splitlines(), 1):
+                  for name, pattern, hint in CHECKS:
+                      if re.search(pattern, line):
+                          print(f"::error file={path},line={lineno}::"
+                                f"{name} — {hint}")
+                          print(f"  {path}:{lineno}: {line.strip()}")
+                          failed = True
+          sys.exit(1 if failed else 0)
+          EOF
+
       - name: Analyze Dart code
         working-directory: IOS
         run: flutter analyze

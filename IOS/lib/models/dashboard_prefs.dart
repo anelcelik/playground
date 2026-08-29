@@ -5,7 +5,8 @@ import '../db/database_helper.dart';
 // ── Section metadata (label + icon, never persisted) ─────
 
 const kSectionMeta = <String, ({String label, IconData icon})>{
-  'parent_stats':    (label: 'Who went',                  icon: Icons.people_outline),
+  'parent_stats':    (label: 'Who took them',              icon: Icons.people_outline),
+  'calendar':        (label: 'One square per day',        icon: Icons.grid_on_rounded),
   'kid_stats':       (label: 'Kids outside',              icon: Icons.child_care_rounded),
   'time_stats':      (label: 'Time & missed days',        icon: Icons.timer_outlined),
   'charts':          (label: 'Charts',                    icon: Icons.pie_chart_outline),
@@ -16,8 +17,8 @@ const kSectionMeta = <String, ({String label, IconData icon})>{
 
 // Default order (shown when no prefs are saved yet)
 const _kDefaultOrder = [
-  'parent_stats', 'kid_stats', 'time_stats',
-  'charts', 'activities', 'missed_reasons', 'log',
+  'calendar', 'parent_stats', 'missed_reasons',
+  'kid_stats', 'time_stats', 'charts', 'activities', 'log',
 ];
 
 // ── SectionConfig ─────────────────────────────────────────
@@ -46,12 +47,11 @@ class DashboardPrefs extends ChangeNotifier {
   static final DashboardPrefs instance = DashboardPrefs._();
   DashboardPrefs._();
 
-  // Deeper analytics (charts / top activities / missed-reasons breakdown)
-  // start hidden so a fresh dashboard leads with the glanceable numbers and
-  // the log, not seven equal-weight cards. Still one tap away via the tune
-  // button — nothing here is removed, just not competing for attention by
-  // default.
-  static const _kDefaultHidden = {'charts', 'activities', 'missed_reasons'};
+  // The calendar, who-took-them and why-nobody-went blocks are what the
+  // History design leads with, so they start visible. The remaining
+  // breakdowns start hidden rather than competing for attention — nothing is
+  // removed, they are one tap away via the tune button.
+  static const _kDefaultHidden = {'charts', 'activities'};
 
   List<SectionConfig> _sections = _kDefaultOrder
       .map((id) => SectionConfig(id: id, visible: !_kDefaultHidden.contains(id)))

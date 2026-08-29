@@ -8,6 +8,7 @@ import '../notifications/notification_service.dart';
 
 import '../settings/app_settings.dart';
 import '../theme.dart';
+import '../widgets/modernist.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
 const _kGreen   = kGreen;
@@ -156,7 +157,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
     ));
   }
 
@@ -211,14 +212,14 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
               decoration: InputDecoration(
                 hintText: 'e.g. Recurring activity',
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(9),
+                  borderRadius: BorderRadius.zero,
                   borderSide: BorderSide(color: _kBorder, width: 2),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(9),
-                  borderSide: const BorderSide(color: _kGreenLt, width: 2),
+                focusedBorder: const OutlineInputBorder(
+                  borderRadius: BorderRadius.zero,
+                  borderSide: BorderSide(color: _kGreenLt, width: 2),
                 ),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(9)),
+                border: const OutlineInputBorder(borderRadius: BorderRadius.zero),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
               ),
             ),
@@ -239,7 +240,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                     decoration: BoxDecoration(
                       color: sel ? _kGreen : _kCard,
                       border: Border.all(color: sel ? _kGreen : _kBorder, width: 2),
-                      borderRadius: BorderRadius.circular(9),
+                      borderRadius: BorderRadius.zero,
                     ),
                     child: Text(_dayLabels[i],
                         style: TextStyle(
@@ -259,7 +260,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
               Expanded(
                 child: GestureDetector(
                   onTap: () => setState(() => _shift = 'morning'),
-                  child: _shiftChip('☀️  Morning', _shift == 'morning',
+                  child: _shiftChip('Morning', _shift == 'morning',
                       const Color(0xFFf57f17)),
                 ),
               ),
@@ -267,7 +268,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
               Expanded(
                 child: GestureDetector(
                   onTap: () => setState(() => _shift = 'evening'),
-                  child: _shiftChip('🌙  Evening', _shift == 'evening',
+                  child: _shiftChip('Evening', _shift == 'evening',
                       const Color(0xFF1565c0)),
                 ),
               ),
@@ -290,7 +291,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                       decoration: BoxDecoration(
                         color: sel ? _kTint : _kCard,
                         border: Border.all(color: sel ? _kGreen : _kBorder, width: 2),
-                        borderRadius: BorderRadius.circular(9),
+                        borderRadius: BorderRadius.zero,
                       ),
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         Container(
@@ -298,14 +299,14 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                           decoration: BoxDecoration(
                             color: sel ? _kGreen : _kCard,
                             border: Border.all(color: sel ? _kGreen : _kBorder, width: 2),
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.zero,
                           ),
                           child: sel
                               ? const Icon(Icons.check, size: 12, color: Colors.white)
                               : null,
                         ),
                         const SizedBox(width: 6),
-                        Text('👧 $k',
+                        Text(k,
                             style: const TextStyle(
                                 fontWeight: FontWeight.w600, fontSize: 14)),
                       ]),
@@ -347,10 +348,8 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                       style: TextStyle(fontSize: 13, color: _kTxt2)),
                 ]),
               ),
-              Switch.adaptive(
+              SquareSwitch(
                 value: _notifyEnabled,
-                activeThumbColor: _kGreen,
-                activeTrackColor: _kGreenLt.withAlpha(120),
                 onChanged: (v) => setState(() => _notifyEnabled = v),
               ),
             ]),
@@ -363,7 +362,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                   decoration: BoxDecoration(
                     color: _kTint,
                     border: Border.all(color: _kGreen, width: 2),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.zero,
                   ),
                   child: Row(children: [
                     const Icon(Icons.access_time_rounded, size: 18, color: _kGreen),
@@ -390,15 +389,15 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                   contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 10),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(9),
+                    borderRadius: BorderRadius.zero,
                     borderSide: BorderSide(color: _kBorder, width: 2),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(9),
-                    borderSide: const BorderSide(color: _kGreenLt, width: 2),
+                  focusedBorder: const OutlineInputBorder(
+                    borderRadius: BorderRadius.zero,
+                    borderSide: BorderSide(color: _kGreenLt, width: 2),
                   ),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(9)),
+                  border: const OutlineInputBorder(
+                      borderRadius: BorderRadius.zero),
                 ),
               ),
               Padding(
@@ -422,10 +421,8 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                   Text('Inactive activities are hidden from the daily log',
                       style: TextStyle(fontSize: 12, color: _kTxt2)),
                 ]),
-                Switch.adaptive(
+                SquareSwitch(
                   value: _isActive,
-                  activeThumbColor: _kGreen,
-                  activeTrackColor: _kGreenLt.withAlpha(120),
                   onChanged: (v) => setState(() => _isActive = v),
                 ),
               ],
@@ -441,7 +438,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: _kCard,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.zero,
           boxShadow: const [
             BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
           ],
@@ -465,7 +462,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
         decoration: BoxDecoration(
           color: sel ? activeColor : _kCard,
           border: Border.all(color: sel ? activeColor : _kBorder, width: 2),
-          borderRadius: BorderRadius.circular(9),
+          borderRadius: BorderRadius.zero,
         ),
         child: Text(label,
             textAlign: TextAlign.center,
@@ -481,7 +478,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             border: Border.all(color: _kBorder, width: 2),
-            borderRadius: BorderRadius.circular(9),
+            borderRadius: BorderRadius.zero,
             color: _kCard,
           ),
           child: Text(label,

@@ -49,7 +49,7 @@ class NotificationService {
     if (p.outdoorEnabled) {
       await _schedule(
         id: _kIdOutdoor,
-        title: '🌳 Playground reminder',
+        title: 'Playground reminder',
         body: 'Did you take the kids outside today?',
         hour: p.outdoorHour,
         minute: p.outdoorMinute,
@@ -58,7 +58,7 @@ class NotificationService {
     if (p.logEnabled) {
       await _schedule(
         id: _kIdLog,
-        title: '📝 Log your outdoor time',
+        title: 'Log your outdoor time',
         body: "Don't forget to log today's playground visit",
         hour: p.logHour,
         minute: p.logMinute,
@@ -71,7 +71,7 @@ class NotificationService {
 
   Future<void> scheduleOutdoor(int hour, int minute) => _schedule(
         id: _kIdOutdoor,
-        title: '🌳 Playground reminder',
+        title: 'Playground reminder',
         body: 'Did you take the kids outside today?',
         hour: hour,
         minute: minute,
@@ -79,7 +79,7 @@ class NotificationService {
 
   Future<void> scheduleLog(int hour, int minute) => _schedule(
         id: _kIdLog,
-        title: '📝 Log your outdoor time',
+        title: 'Log your outdoor time',
         body: "Don't forget to log today's playground visit",
         hour: hour,
         minute: minute,
@@ -102,7 +102,7 @@ class NotificationService {
 
     final body = (activity.notifyMessage?.trim().isNotEmpty == true)
         ? activity.notifyMessage!.trim()
-        : '🔁 Time for your recurring activity';
+        : 'Time for your recurring activity';
 
     for (final day in activity.repeatDays) {
       await _scheduleWeekly(

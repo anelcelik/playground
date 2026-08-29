@@ -115,7 +115,7 @@ class DisplaySettingsScreen extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 0),
         decoration: BoxDecoration(
           color: c.card,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.zero,
           boxShadow: [
             BoxShadow(
                 color: Colors.black.withAlpha(18),
@@ -124,7 +124,7 @@ class DisplaySettingsScreen extends StatelessWidget {
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.zero,
           child: child,
         ),
       );

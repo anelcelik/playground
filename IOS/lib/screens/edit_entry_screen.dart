@@ -134,7 +134,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
       content: Text(msg),
       behavior: SnackBarBehavior.floating,
       duration: const Duration(seconds: 2),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
     ));
   }
 
@@ -202,7 +202,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                     child: GestureDetector(
                       onTap: () => setState(() => _shift = 'morning'),
                       child: _togChip(
-                          '☀️  Morning', _shift == 'morning', _kAmber),
+                          'Morning', _shift == 'morning', _kAmber),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -210,7 +210,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                     child: GestureDetector(
                       onTap: () => setState(() => _shift = 'evening'),
                       child: _togChip(
-                          '🌙  Evening', _shift == 'evening', _kBlue),
+                          'Evening', _shift == 'evening', _kBlue),
                     ),
                   ),
                 ]),
@@ -237,7 +237,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                           color: sel ? _kGreen : _kCard,
                           border: Border.all(
                               color: sel ? _kGreen : _kBorder, width: 2),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.zero,
                         ),
                         child: Text(d,
                             style: TextStyle(
@@ -270,7 +270,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                           color: on ? _kTint : _kCard,
                           border: Border.all(
                               color: on ? _kGreen : _kBorder, width: 2),
-                          borderRadius: BorderRadius.circular(9),
+                          borderRadius: BorderRadius.zero,
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -282,7 +282,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                                 color: on ? _kGreen : _kCard,
                                 border: Border.all(
                                     color: on ? _kGreen : _kBorder, width: 2),
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.zero,
                               ),
                               child: on
                                   ? const Icon(Icons.check,
@@ -290,7 +290,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                                   : null,
                             ),
                             const SizedBox(width: 6),
-                            Text('👧 $k',
+                            Text(k,
                                 style: const TextStyle(
                                     fontWeight: FontWeight.w600, fontSize: 14)),
                           ],
@@ -322,7 +322,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                           color: on ? _kGreen : _kCard,
                           border: Border.all(
                               color: on ? _kGreen : _kBorder, width: 2),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.zero,
                         ),
                         child: Text(tag,
                             style: TextStyle(
@@ -343,17 +343,17 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 11, vertical: 8),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(9),
+                          borderRadius: BorderRadius.zero,
                           borderSide:
                               BorderSide(color: _kBorder, width: 2),
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(9),
+                        focusedBorder: const OutlineInputBorder(
+                          borderRadius: BorderRadius.zero,
                           borderSide:
-                              const BorderSide(color: _kGreenLt, width: 2),
+                              BorderSide(color: _kGreenLt, width: 2),
                         ),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(9)),
+                        border: const OutlineInputBorder(
+                            borderRadius: BorderRadius.zero),
                       ),
                       onSubmitted: _addTag,
                     ),
@@ -366,8 +366,8 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                       foregroundColor: Colors.white,
                       minimumSize: const Size(44, 44),
                       padding: EdgeInsets.zero,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(9)),
+                      shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero),
                     ),
                     child: const Text('+',
                         style: TextStyle(
@@ -388,7 +388,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: _kCard,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.zero,
           boxShadow: const [
             BoxShadow(
                 color: Color(0x14000000),
@@ -416,7 +416,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
         decoration: BoxDecoration(
           color: sel ? active : _kCard,
           border: Border.all(color: sel ? active : _kBorder, width: 2),
-          borderRadius: BorderRadius.circular(9),
+          borderRadius: BorderRadius.zero,
         ),
         child: Text(label,
             textAlign: TextAlign.center,

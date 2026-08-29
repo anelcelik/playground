@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/dashboard_prefs.dart';
 import '../theme.dart';
+import '../widgets/modernist.dart';
 
 class DashboardCustomiseScreen extends StatefulWidget {
   const DashboardCustomiseScreen({super.key});
@@ -77,7 +78,7 @@ class _DashboardCustomiseScreenState
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             color: c.card,
             child: Text(
-              'Drag ☰ to reorder  ·  toggle to show/hide',
+              'Drag to reorder  ·  toggle to show/hide',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: c.txt2),
             ),
@@ -122,7 +123,7 @@ class _SectionTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       decoration: BoxDecoration(
         color: c.card,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.zero,
         boxShadow: [
           BoxShadow(
               color: Colors.black.withAlpha(15),
@@ -146,10 +147,7 @@ class _SectionTile extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Switch.adaptive(
-              value: section.visible,
-              onChanged: (_) => onToggle(),
-            ),
+            SquareSwitch(value: section.visible, onChanged: (_) => onToggle()),
             const SizedBox(width: 4),
             Icon(Icons.drag_handle_rounded, color: c.txt2, size: 22),
           ],

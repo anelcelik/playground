@@ -56,7 +56,7 @@ class _RecapScreenState extends State<RecapScreen> {
     return Scaffold(
       backgroundColor: c.bg,
       appBar: AppBar(
-        title: const Text('🎉 Recap',
+        title: const Text('Recap',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
       ),
       body: _loading
@@ -92,7 +92,7 @@ class _RecapScreenState extends State<RecapScreen> {
         decoration: BoxDecoration(
           color: sel ? c.green : c.card,
           border: Border.all(color: sel ? c.green : c.border, width: 2),
-          borderRadius: BorderRadius.circular(9),
+          borderRadius: BorderRadius.zero,
         ),
         child: Text(label,
             textAlign: TextAlign.center,
@@ -138,7 +138,7 @@ class _RecapBody extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
           decoration: BoxDecoration(
             color: c.green,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.zero,
           ),
           child: Column(children: [
             Text(periodLabel.toUpperCase(),
@@ -189,10 +189,10 @@ class _RecapBody extends StatelessWidget {
             decoration: BoxDecoration(
               color: c.card,
               border: Border.all(color: c.border),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.zero,
             ),
             child: Row(children: [
-              const Text('👧', style: TextStyle(fontSize: 24)),
+              Icon(Icons.emoji_people_outlined, size: 20, color: c.green),
               const SizedBox(width: 10),
               Expanded(
                 child: Text('$topKid got outside the most',
@@ -220,7 +220,7 @@ class _RecapBody extends StatelessWidget {
         decoration: BoxDecoration(
           color: c.card,
           border: Border.all(color: c.border),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.zero,
         ),
         child: Column(children: [
           Text(value,
@@ -278,7 +278,7 @@ class _RecapBody extends StatelessWidget {
   }
 
   String _tagline(int visits, String period) {
-    if (visits >= 20) return "That's a lot of fresh air — well done. 🌳";
+    if (visits >= 20) return "That's a lot of fresh air — well done.";
     if (visits >= 8) return 'A solid $period outside. Keep it up.';
     return 'Every visit counts — here\'s to more of them.';
   }
@@ -293,7 +293,7 @@ class _EmptyRecap extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 60),
         child: Column(children: [
-          const Text('🌳', style: TextStyle(fontSize: 48)),
+          Icon(Icons.park_outlined, size: 40, color: c.txt2),
           const SizedBox(height: 16),
           Text('Nothing logged yet for $periodLabel',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: c.txt)),

@@ -18,12 +18,29 @@ feature matrix.
 
 ## Develop on Linux (no Mac needed)
 
+One-time setup, if the Flutter SDK isn't already on your machine:
+
+```bash
+git clone --depth 1 -b stable https://github.com/flutter/flutter.git ~/development/flutter
+echo 'export PATH="$PATH:$HOME/development/flutter/bin"' >> ~/.bashrc && source ~/.bashrc
+flutter config --enable-linux-desktop
+# Arch: pacman -S clang cmake ninja gtk3 pkgconf
+# Debian/Ubuntu: apt install clang cmake ninja-build libgtk-3-dev pkg-config
+```
+
+Then, from `IOS/`:
+
 ```bash
 flutter pub get
-flutter run -d linux       # full app; CloudKit sync shows as unavailable
+flutter run -d linux       # full app as a native Linux desktop window
 flutter test               # merge rules, models, widget smoke tests
 flutter analyze
 ```
+
+On Linux, iOS/Apple-only features are no-ops rather than errors: CloudKit
+sync shows as unavailable, and Home Screen quick actions don't register
+(no `quick_actions` plugin implementation on Linux — see
+`QuickActionService._isSupported`).
 
 ## Build for iPhone (Mac + Xcode)
 

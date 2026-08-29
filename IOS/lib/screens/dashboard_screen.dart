@@ -1,35 +1,31 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
+
 import '../db/database_helper.dart';
 import '../models/dashboard_prefs.dart';
-import '../models/family.dart';
 import '../models/entry.dart';
-
+import '../models/family.dart';
 import '../settings/app_settings.dart';
 import '../sync/sync_service.dart';
 import '../theme.dart';
 import '../widgets/entry_actions.dart';
+import '../widgets/modernist.dart';
 import 'dashboard_customise_screen.dart';
-
-// Brand accent colours — intentionally fixed in both light and dark mode
-const _kGreen   = kGreen;
-const _kAmber   = kAmber;
-const _kBlue    = kBlue;
-// _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
-
-
-
-const _colors = [
-  Color(0xFF2e7d32), Color(0xFFc62828), Color(0xFF1565c0),
-  Color(0xFFf57f17), Color(0xFF6a1b9a), Color(0xFF00838f),
-  Color(0xFF558b2f), Color(0xFFad1457),
-];
 
 const _durMap = {
   '15 min': 15, '30 min': 30, '45 min': 45, '1 hour': 60,
   '1.5 hours': 90, '2 hours': 120, '2+ hours': 150,
 };
 
+const _monthNames = [
+  'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+];
+
+/// The History tab.
+///
+/// One square per day is the centrepiece: a month reads as a block of colour
+/// before you read a single number. Everything else is a labelled block with
+/// a rule under it — no cards, no shadows, no donuts.
 class DashboardScreen extends StatefulWidget {
   final Family family;
   const DashboardScreen({super.key, required this.family});
@@ -39,12 +35,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  // Theme-aware colour getters — readable from any method on this State
-  Color get _kCard   => AppColors.of(context).card;
-  Color get _kBorder => AppColors.of(context).border;
-  Color get _kTxt2   => AppColors.of(context).txt2;
-  Color get _kTxt    => AppColors.of(context).txt;
-
   String _period = 'month';
   String _ref = '';
   Map<String, dynamic>? _data;
@@ -68,6 +58,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _onSettingsChanged() => setState(() {});
 
+  // ── Period bookkeeping ──────────────────────────────────
+
   void _resetRef() {
     final t = DateTime.now();
     switch (_period) {
@@ -82,11 +74,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  DateTime _monday(DateTime d) => DateTime(d.year, d.month, d.day - (d.weekday - 1));
-  String _ds(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  DateTime _monday(DateTime d) =>
+      DateTime(d.year, d.month, d.day - (d.weekday - 1));
 
-  String _weekEnd(String start) => _ds(DateTime.parse(start).add(const Duration(days: 6)));
+  String _ds(DateTime d) => '${d.year}-'
+      '${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
+
+  String _weekEnd(String start) =>
+      _ds(DateTime.parse(start).add(const Duration(days: 6)));
 
   void _bump(int dir) {
     setState(() {
@@ -106,20 +102,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _load();
   }
 
-  String get _periodLabel {
-    switch (_period) {
-      case 'all':
-        return 'All Time';
-      case 'year':
-        return _ref;
-      case 'month':
-        return AppSettings.instance.fmtMonth(_ref);
-      case 'week':
-        return AppSettings.instance.fmtWeekRange(_ref, _weekEnd(_ref));
-      default:
-        return '';
-    }
-  }
+  String get _periodLabel => switch (_period) {
+        'all' => 'All time',
+        'year' => _ref,
+        'month' => AppSettings.instance.fmtMonth(_ref),
+        'week' => AppSettings.instance.fmtWeekRange(_ref, _weekEnd(_ref)),
+        _ => '',
+      };
 
   Future<void> _load() async {
     setState(() => _loading = true);
@@ -133,484 +122,690 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (mounted) setState(() { _data = data; _loading = false; });
   }
 
+  // ── Chrome ──────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
 
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 6, 12, 14),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text('History',
+                    style: AppType.title.copyWith(color: c.txt)),
+              ),
+              Semantics(
+                button: true,
+                label: 'Customise dashboard',
+                child: InkWell(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const DashboardCustomiseScreen()),
+                  ),
+                  child: SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: Icon(Icons.tune_rounded, size: 20, color: c.txt2),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Rule(),
+        _segmented(c),
+        const Rule(),
+        _navStrip(c),
+        const Rule(),
+        Expanded(
+          child: _loading
+              ? Center(
+                  child: SizedBox(
+                    width: 120,
+                    child: LinearProgressIndicator(
+                        minHeight: 2,
+                        backgroundColor: c.hairline,
+                        color: c.green),
+                  ),
+                )
+              : _data == null
+                  ? const SizedBox.shrink()
+                  : ListView(
+                      padding: const EdgeInsets.only(bottom: 28),
+                      children: _content(c, _data!),
+                    ),
+        ),
+      ],
+    );
+  }
 
+  /// WEEK · MONTH · YEAR · ALL — selected cell fills solid ink.
+  Widget _segmented(AppColors c) {
+    const labels = {
+      'week': 'Week',
+      'month': 'Month',
+      'year': 'Year',
+      'all': 'All',
+    };
+    final keys = labels.keys.toList();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return SizedBox(
+      height: 42,
+      child: Row(
         children: [
-          _buildPeriodTabs(),
-          _buildPeriodNav(),
-          if (_loading)
-            const Center(
-                child: Padding(
-                    padding: EdgeInsets.all(32),
-                    child: CircularProgressIndicator()))
-          else if (_data != null)
-            _buildContent(_data!),
+          for (var i = 0; i < keys.length; i++)
+            Expanded(
+              child: Semantics(
+                button: true,
+                selected: keys[i] == _period,
+                child: InkWell(
+                  onTap: () {
+                    setState(() => _period = keys[i]);
+                    _resetRef();
+                    _load();
+                  },
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: keys[i] == _period ? c.txt : Colors.transparent,
+                      border: i == 0
+                          ? null
+                          : Border(
+                              left: BorderSide(color: c.hairline, width: 1)),
+                    ),
+                    child: Text(
+                      labels[keys[i]]!.toUpperCase(),
+                      style: AppType.label.copyWith(
+                          color: keys[i] == _period ? c.bg : c.txt2,
+                          fontSize: 11),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildPeriodTabs() {
-    const labels = {'week': 'Week', 'month': 'Month', 'year': 'Year', 'all': 'All Time'};
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+  Widget _navStrip(AppColors c) {
+    final locked = _period == 'all';
+    return SizedBox(
+      height: 40,
       child: Row(
-        children: ['week', 'month', 'year', 'all'].map((p) {
-          final sel = p == _period;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () {
-                setState(() => _period = p);
-                _resetRef();
-                _load();
-              },
-              child: Container(
-                margin: EdgeInsets.only(right: p != 'all' ? 5 : 0),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: sel ? _kGreen : _kCard,
-                  border: Border.all(color: sel ? _kGreen : _kBorder, width: 2),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Text(
-                  labels[p]!,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: sel ? Colors.white : _kTxt2,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600),
-                ),
+        children: [
+          _navArrow(c, Icons.chevron_left, locked ? null : () => _bump(-1)),
+          Expanded(
+            child: Center(
+              child: Text(
+                _periodLabel.toUpperCase(),
+                style: AppType.label
+                    .copyWith(color: c.txt, fontSize: 11, letterSpacing: 1.2),
               ),
             ),
-          );
-        }).toList(),
+          ),
+          _navArrow(c, Icons.chevron_right, locked ? null : () => _bump(1)),
+        ],
       ),
     );
   }
 
-  Widget _buildPeriodNav() => Row(children: [
-        Expanded(child: _buildPeriodNavCard()),
-        const SizedBox(width: 8),
-        Tooltip(
-          message: 'Customize dashboard',
-          child: GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const DashboardCustomiseScreen()),
-            ),
-            child: Container(
-              height: 48,
-              width: 48,
-              decoration: BoxDecoration(
-                color: _kCard,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: const [
-                  BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
-                ],
-              ),
-              child: const Icon(Icons.tune_rounded, color: _kGreen, size: 22),
-            ),
+  Widget _navArrow(AppColors c, IconData icon, VoidCallback? onTap) => Opacity(
+        opacity: onTap == null ? 0 : 1,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            width: 52,
+            height: 40,
+            child: Icon(icon, size: 24, color: c.txt),
           ),
         ),
-      ]);
-
-  Widget _buildPeriodNavCard() => Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: _kCard,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
-          ],
-        ),
-        child: Row(children: [
-          Opacity(
-            opacity: _period == 'all' ? 0.0 : 1.0,
-            child: Tooltip(
-              message: 'Previous period',
-              child: GestureDetector(
-                onTap: _period == 'all' ? null : () => _bump(-1),
-                child: const Icon(Icons.chevron_left, color: _kGreen, size: 28),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(_periodLabel,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-          ),
-          Opacity(
-            opacity: _period == 'all' ? 0.0 : 1.0,
-            child: Tooltip(
-              message: 'Next period',
-              child: GestureDetector(
-                onTap: _period == 'all' ? null : () => _bump(1),
-                child: const Icon(Icons.chevron_right, color: _kGreen, size: 28),
-              ),
-            ),
-          ),
-        ]),
       );
 
-  Widget _buildContent(Map<String, dynamic> data) {
+  // ── Content ─────────────────────────────────────────────
+
+  List<Widget> _content(AppColors c, Map<String, dynamic> data) {
+    final entries = (data['entries'] as List?)?.cast<Entry>() ?? [];
     final byUser = (data['by_user'] as Map?)?.cast<String, int>() ?? {};
     final byKid = (data['kids'] as Map?)?.cast<String, int>() ?? {};
     final shifts = (data['shifts'] as Map?)?.cast<String, int>() ?? {};
-    final entries = (data['entries'] as List?)?.cast<Entry>() ?? [];
-    final parents = (data['parents'] as List?)?.cast<String>() ?? widget.family.parents;
-    final kids = (data['kids_list'] as List?)?.cast<String>() ?? widget.family.kids;
+    final parents =
+        (data['parents'] as List?)?.cast<String>() ?? widget.family.parents;
+    final kids =
+        (data['kids_list'] as List?)?.cast<String>() ?? widget.family.kids;
+    final missed = data['missed'] as int? ?? 0;
     final durStats = _calcDurStats(entries);
-    final missed   = data['missed'] as int? ?? 0;
 
-    // Map section ID → its widget
-    final sectionWidgets = <String, Widget>{
-      'parent_stats': _statsGrid(
-          parents.map((p) => _statCard('${byUser[p] ?? 0}', p)).toList()),
-      'kid_stats': _statsGrid(
-          kids.map((k) => _statCard('${byKid[k] ?? 0}', '$k outside')).toList()),
-      'time_stats': Row(children: [
-        Expanded(child: _statCard(_fmtMins(durStats['avg']!), 'Avg duration', small: true)),
-        const SizedBox(width: 8),
-        Expanded(child: _statCard(_fmtMins(durStats['total']!), 'Total time', small: true)),
-        const SizedBox(width: 8),
-        Expanded(child: _statCard('$missed', 'No playground', small: true, accent: const Color(0xFFE53935))),
-      ]),
-      'charts': IntrinsicHeight(
+    final sections = <String, Widget?>{
+      'parent_stats': _barBlock(
+        c,
+        'Who took them',
+        [for (final p in parents) (p, byUser[p] ?? 0)],
+        emptyNote: 'Nobody logged yet',
+      ),
+      'calendar': _calendarBlock(c, entries),
+      'kid_stats': _barBlock(
+        c,
+        'Kids outside',
+        [for (final k in kids) (k, byKid[k] ?? 0)],
+        emptyNote: 'No kids logged yet',
+      ),
+      'time_stats': _timeBlock(c, durStats['avg']!, missed),
+      'charts': _barBlock(
+        c,
+        'Morning / evening',
+        [
+          ('Morning', shifts['morning'] ?? 0),
+          ('Evening', shifts['evening'] ?? 0),
+        ],
+        emptyNote: 'No visits this period',
+      ),
+      'activities': _activitiesBlock(c, entries),
+      'missed_reasons': _reasonsBlock(c, entries, missed),
+      'log': _logBlock(c, entries),
+    };
+
+    final out = <Widget>[
+      _hero(c, _countVisitDays(entries), durStats['total']!),
+      const Rule(),
+    ];
+
+    for (final section in DashboardPrefs.instance.sections) {
+      if (!section.visible) continue;
+      final w = sections[section.id];
+      if (w == null) continue;
+      out.add(w);
+      out.add(const Rule());
+    }
+    return out;
+  }
+
+  /// The headline pair — visit count in accent, time outside in ink.
+  Widget _hero(AppColors c, int visits, int totalMins) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Expanded(
-              child: _chartCard(
-                title: 'Morning / Evening',
-                child: Column(children: [
-                  DonutChart(
-                    segments: [
-                      DonutSegment(value: shifts['morning'] ?? 0, color: _kAmber),
-                      DonutSegment(value: shifts['evening'] ?? 0, color: _kBlue),
-                    ],
-                    center: '${(shifts['morning'] ?? 0) + (shifts['evening'] ?? 0)}',
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(alignment: WrapAlignment.center, spacing: 8, children: [
-                    _legend(_kAmber, 'Morning'),
-                    _legend(_kBlue, 'Evening'),
-                  ]),
-                ]),
-              ),
+              flex: 4,
+              child: _figure(c, '$visits', 'Visits in $_periodLabel',
+                  size: 58, color: c.green),
             ),
-            const SizedBox(width: 8),
             Expanded(
-              child: _chartCard(
-                title: 'Who Went',
-                child: Column(children: [
-                  DonutChart(
-                    segments: parents.asMap().entries.map((e) => DonutSegment(
-                          value: byUser[e.value] ?? 0,
-                          color: _colors[e.key % _colors.length],
-                        )).toList(),
-                    center: '${byUser.values.fold(0, (a, b) => a + b)}',
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 6, runSpacing: 4,
-                    children: parents.asMap().entries
-                        .map((e) => _legend(_colors[e.key % _colors.length], e.value))
-                        .toList(),
-                  ),
-                ]),
-              ),
+              flex: 5,
+              child: _figure(c, _fmtMins(totalMins), 'Outside',
+                  size: 28, color: c.txt),
             ),
           ],
         ),
-      ),
-      'activities': _chartCard(
-          title: 'Top Activities', child: _buildActivityBars(entries)),
-      'missed_reasons': _chartCard(
-        title: 'No Playground — Reasons',
-        accent: const Color(0xFFE53935),
-        child: _buildMissedReasonBars(entries, missed),
-      ),
-      'log': _buildLogSection(entries),
-    };
+      );
 
-    // Render visible sections in user-configured order
-    final widgets = <Widget>[];
-    for (final section in DashboardPrefs.instance.sections) {
-      if (!section.visible) continue;
-      final w = sectionWidgets[section.id];
-      if (w != null) {
-        widgets.add(w);
-        widgets.add(const SizedBox(height: 8));
+  Widget _figure(AppColors c, String value, String label,
+          {required double size, required Color color}) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppType.figure.copyWith(
+                  fontSize: size,
+                  color: color,
+                  letterSpacing: size > 40 ? -2.4 : -0.8)),
+          const SizedBox(height: 8),
+          Text(label.toUpperCase(),
+              style: AppType.label.copyWith(color: c.txt2)),
+        ],
+      );
+
+  // ── One square per day ──────────────────────────────────
+
+  /// Per-date state for the grid. Vacation wins over everything, then the
+  /// number of distinct parents who went that day.
+  static const _dayNone = 0;
+  static const _dayOne = 1;
+  static const _dayBoth = 2;
+  static const _dayVacation = 3;
+
+  Map<String, int> _dayStates(List<Entry> entries) {
+    final parentsByDate = <String, Set<String>>{};
+    final vacationDates = <String>{};
+
+    for (final e in entries) {
+      if (e.vacation) {
+        vacationDates.add(e.date);
+        continue;
       }
+      if (e.noPlayground) continue;
+      final who = e.userList.isEmpty ? [e.user] : e.userList;
+      parentsByDate.putIfAbsent(e.date, () => <String>{}).addAll(who);
     }
-    if (widgets.isNotEmpty) widgets.removeLast();
-    widgets.add(const SizedBox(height: 20));
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: widgets,
-    );
+    final out = <String, int>{};
+    for (final entry in parentsByDate.entries) {
+      out[entry.key] = entry.value.length >= 2 ? _dayBoth : _dayOne;
+    }
+    for (final d in vacationDates) {
+      out[d] = _dayVacation;
+    }
+    return out;
   }
 
-  Widget _buildLogSection(List<Entry> entries) {
+  int _countVisitDays(List<Entry> entries) => _dayStates(entries)
+      .values
+      .where((s) => s == _dayOne || s == _dayBoth)
+      .length;
+
+  Color? _squareFill(AppColors c, int state) => switch (state) {
+        _dayBoth => c.green,
+        _dayOne => c.accentLt,
+        _dayVacation => c.txt,
+        _ => null,
+      };
+
+  Widget? _calendarBlock(AppColors c, List<Entry> entries) {
+    if (_period == 'all') return null;
+
+    final states = _dayStates(entries);
+    final List<(String, int)> cells; // (tooltip, state)
+    final int columns;
+    final String label;
+
+    switch (_period) {
+      case 'week':
+        final start = DateTime.parse(_ref);
+        cells = [
+          for (var i = 0; i < 7; i++)
+            () {
+              final d = start.add(Duration(days: i));
+              return (_ds(d), states[_ds(d)] ?? _dayNone);
+            }()
+        ];
+        columns = 7;
+        label = 'This week  ·  one square per day';
+
+      case 'year':
+        // A year of days is unreadable at this size — one square per month,
+        // shaded by how full the month was.
+        final byMonth = <int, int>{};
+        for (final e in states.entries) {
+          if (e.value == _dayNone) continue;
+          final m = int.parse(e.key.split('-')[1]);
+          byMonth[m] = (byMonth[m] ?? 0) + 1;
+        }
+        final peak = byMonth.values.fold(0, (a, b) => a > b ? a : b);
+        cells = [
+          for (var m = 1; m <= 12; m++)
+            (
+              _monthNames[m - 1],
+              switch (byMonth[m] ?? 0) {
+                0 => _dayNone,
+                final v when peak > 0 && v >= peak * 0.6 => _dayBoth,
+                _ => _dayOne,
+              }
+            )
+        ];
+        columns = 6;
+        label = '$_ref  ·  one square per month';
+
+      default: // month
+        final parts = _ref.split('-').map(int.parse).toList();
+        final first = DateTime(parts[0], parts[1], 1);
+        final days = DateTime(parts[0], parts[1] + 1, 0).day;
+        final pad = first.weekday - 1; // Monday-first
+        cells = [
+          for (var i = 0; i < pad; i++) ('', -1),
+          for (var d = 1; d <= days; d++)
+            () {
+              final ds = _ds(DateTime(parts[0], parts[1], d));
+              return ('$d', states[ds] ?? _dayNone);
+            }()
+        ];
+        columns = 7;
+        label = '${AppSettings.instance.fmtMonth(_ref)}  ·  one square per day';
+    }
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('LOG',
-            style: TextStyle(
-                fontSize: 11, fontWeight: FontWeight.w700,
-                color: _kTxt2, letterSpacing: 0.6)),
-        const SizedBox(height: 6),
-        if (entries.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(28),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-                color: _kCard, borderRadius: BorderRadius.circular(14)),
-            child: Text('No entries this period',
-                style: TextStyle(color: _kTxt2, fontSize: 14)),
-          )
-        else
-          ..._buildGroupedLog(entries),
+        SectionLabel(label),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+          child: GridView.count(
+            crossAxisCount: columns,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 4,
+            crossAxisSpacing: 4,
+            children: [
+              for (final (tip, state) in cells)
+                if (state < 0)
+                  const SizedBox.shrink()
+                else
+                  Tooltip(
+                    message: tip,
+                    waitDuration: const Duration(milliseconds: 400),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: _squareFill(c, state),
+                        border: state == _dayNone
+                            ? Border.all(color: c.hairline, width: 1)
+                            : null,
+                      ),
+                    ),
+                  ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          child: Wrap(
+            spacing: 14,
+            runSpacing: 6,
+            children: [
+              _legend(c, _dayBoth, _period == 'year' ? 'Busy' : 'Both'),
+              _legend(c, _dayOne, _period == 'year' ? 'Some' : 'One'),
+              _legend(c, _dayNone, 'None'),
+              if (_period != 'year') _legend(c, _dayVacation, 'Vacation'),
+            ],
+          ),
+        ),
       ],
     );
   }
 
-  Widget _statsGrid(List<Widget> children) {
-    if (children.isEmpty) return const SizedBox.shrink();
-    // Pair items into rows of 2
-    final rows = <Widget>[];
-    for (var i = 0; i < children.length; i += 2) {
-      rows.add(Row(children: [
-        Expanded(child: children[i]),
-        if (i + 1 < children.length) ...[
-          const SizedBox(width: 8),
-          Expanded(child: children[i + 1]),
-        ] else
-          const Expanded(child: SizedBox()),
-      ]));
-      if (i + 2 < children.length) rows.add(const SizedBox(height: 8));
-    }
-    return Column(children: rows);
-  }
-
-  Widget _buildMissedReasonBars(List<Entry> entries, int totalMissed) {
-    final counts = <String, int>{};
-    for (final e in entries) {
-      if (e.noPlayground && e.excuse != null) {
-        for (final t in e.excuse!.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty)) {
-          counts[t] = (counts[t] ?? 0) + 1;
-        }
-      }
-    }
-    if (counts.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Text(
-            totalMissed == 0
-                ? 'No missed days this period'
-                : 'No reasons logged yet',
-            style: TextStyle(color: _kTxt2, fontSize: 13)),
-        ),
+  Widget _legend(AppColors c, int state, String label) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 9,
+            height: 9,
+            decoration: BoxDecoration(
+              color: _squareFill(c, state),
+              border: state == _dayNone
+                  ? Border.all(color: c.hairline, width: 1)
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(label.toUpperCase(),
+              style: AppType.label
+                  .copyWith(color: c.txt2, fontSize: 9, letterSpacing: 0.9)),
+        ],
       );
-    }
-    final sorted = counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-    final maxVal = sorted.first.value;
+
+  // ── Bar blocks ──────────────────────────────────────────
+
+  Widget _barBlock(AppColors c, String title, List<(String, int)> rows,
+      {required String emptyNote}) {
+    final shown = rows.where((r) => r.$2 > 0).toList();
+    final peak = rows.fold(0, (a, r) => r.$2 > a ? r.$2 : a);
+
     return Column(
-      children: sorted.map((kv) {
-        final pct = (kv.value / maxVal).clamp(0.03, 1.0);
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 5),
-          child: Row(children: [
-            SizedBox(
-              width: 68,
-              child: Text(kv.key,
-                  textAlign: TextAlign.right,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11, color: _kTxt2)),
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: pct,
-                  minHeight: 16,
-                  backgroundColor: const Color(0xFFF0F0F0),
-                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFE53935)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            SizedBox(
-              width: 24,
-              child: Text('${kv.value}',
-                  style: TextStyle(fontSize: 11, color: _kTxt2, fontWeight: FontWeight.w600)),
-            ),
-          ]),
-        );
-      }).toList(),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionLabel(title),
+        if (shown.isEmpty)
+          _note(c, emptyNote)
+        else
+          for (final (label, value) in rows)
+            _bar(c, label, value, peak),
+        const SizedBox(height: 4),
+      ],
     );
   }
 
-  Widget _buildActivityBars(List<Entry> entries) {
-    final counts = <String, int>{};
-    for (final e in entries) {
-      if (!e.vacation && !e.noPlayground) {
-        for (final t in e.activityList) {
-          counts[t] = (counts[t] ?? 0) + 1;
-        }
-      }
-    }
-    if (counts.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Text('No activities logged yet', style: TextStyle(color: _kTxt2, fontSize: 13)),
-        ),
-      );
-    }
-    final sorted = counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-    final top = sorted.take(6).toList();
-    final maxVal = top.first.value;
-    return Column(
-      children: top.map((kv) {
-        final pct = (kv.value / maxVal).clamp(0.03, 1.0);
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 5),
-          child: Row(children: [
-            SizedBox(
-              width: 68,
-              child: Text(kv.key,
-                  textAlign: TextAlign.right,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11, color: _kTxt2)),
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: pct,
-                  minHeight: 16,
-                  backgroundColor: const Color(0xFFF0F0F0),
-                  valueColor: const AlwaysStoppedAnimation<Color>(_kGreen),
+  Widget _bar(AppColors c, String label, int value, int peak) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 13),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppType.heading.copyWith(color: c.txt, fontSize: 14)),
                 ),
+                const SizedBox(width: 10),
+                Text('$value',
+                    style:
+                        AppType.heading.copyWith(color: c.txt, fontSize: 14)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            LayoutBuilder(
+              builder: (_, cs) => Stack(
+                children: [
+                  Container(
+                      height: 8, color: c.isDark ? kInkD2 : kPaper2),
+                  Container(
+                    height: 8,
+                    width: peak == 0 ? 0 : cs.maxWidth * (value / peak),
+                    color: c.green,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 4),
-            SizedBox(
-              width: 24,
-              child: Text('${kv.value}',
-                  style: TextStyle(
-                      fontSize: 11, color: _kTxt2, fontWeight: FontWeight.w600)),
-            ),
-          ]),
-        );
-      }).toList(),
+          ],
+        ),
+      );
+
+  Widget _activitiesBlock(AppColors c, List<Entry> entries) {
+    final counts = <String, int>{};
+    for (final e in entries) {
+      if (e.vacation || e.noPlayground) continue;
+      for (final t in e.activityList) {
+        counts[t] = (counts[t] ?? 0) + 1;
+      }
+    }
+    final sorted = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return _barBlock(
+      c,
+      'Most played',
+      [for (final kv in sorted.take(6)) (kv.key, kv.value)],
+      emptyNote: 'No activities logged yet',
     );
   }
 
-  List<Widget> _buildGroupedLog(List<Entry> entries) {
+  Widget _timeBlock(AppColors c, int avgMins, int missed) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SectionLabel('Time & missed days'),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: _figure(c, _fmtMins(avgMins), 'Average visit',
+                      size: 28, color: c.txt),
+                ),
+                Expanded(
+                  child: _figure(c, '$missed', 'Nobody went',
+                      size: 28, color: missed == 0 ? c.txt : c.green),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+
+  /// Reasons as chips — "RAIN · 4" — rather than a second bar chart.
+  Widget _reasonsBlock(AppColors c, List<Entry> entries, int missed) {
+    final counts = <String, int>{};
+    for (final e in entries) {
+      if (!e.noPlayground || e.excuse == null) continue;
+      for (final t in e.excuse!
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)) {
+        counts[t] = (counts[t] ?? 0) + 1;
+      }
+    }
+    final sorted = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SectionLabel('Why nobody went'),
+        if (sorted.isEmpty)
+          _note(
+              c,
+              missed == 0
+                  ? 'No missed days this period'
+                  : 'No reasons logged yet')
+        else
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final kv in sorted)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    decoration:
+                        Border.all(color: c.hairline, width: 2).toBoxDecoration(),
+                    child: Text('${kv.key.toUpperCase()}  ·  ${kv.value}',
+                        style: AppType.label
+                            .copyWith(color: c.txt, fontSize: 10)),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  // ── Log ─────────────────────────────────────────────────
+
+  Widget _logBlock(AppColors c, List<Entry> entries) {
+    if (entries.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SectionLabel('Log'),
+          _note(c, 'No entries this period'),
+        ],
+      );
+    }
+
     final grouped = <String, List<Entry>>{};
     for (final e in entries) {
       grouped.putIfAbsent(e.date, () => []).add(e);
     }
     final dates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
-    return dates.map((date) {
-      final label = AppSettings.instance.fmtDateFull(date);
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 3),
-            child: Text(label.toUpperCase(),
-                style: TextStyle(
-                    fontSize: 11, fontWeight: FontWeight.w700,
-                    color: _kTxt2, letterSpacing: 0.5)),
-          ),
-          ...grouped[date]!.map((e) => _DashEntryCard(
-                entry: e,
-                onTap: () => showEntryActions(
-                  context,
-                  entry: e,
-                  family: widget.family,
-                  onChanged: () {
-                    _load();
-                    SyncService.instance.sync();
-                  },
-                ),
-              )),
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SectionLabel('Log'),
+        for (final date in dates) ...[
+          SectionLabel(AppSettings.instance.fmtDateFull(date),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 6)),
+          for (final e in grouped[date]!) ...[
+            const Hairline(),
+            _logRow(c, e),
+          ],
         ],
-      );
-    }).toList();
+        const SizedBox(height: 8),
+      ],
+    );
   }
 
-  Widget _statCard(String num, String label, {bool small = false, Color? accent}) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        decoration: BoxDecoration(
-          color: _kCard,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+  Widget _logRow(AppColors c, Entry e) {
+    final who = e.userList.isEmpty ? e.user : e.userList.join(' & ');
+    final String tag;
+    if (e.noPlayground) {
+      tag = 'Nobody went';
+    } else if (e.vacation) {
+      tag = 'Vacation';
+    } else {
+      tag = e.shift == 'morning' ? 'Morning' : 'Evening';
+    }
+
+    final detail = <String>[
+      if (!e.vacation && !e.noPlayground && e.duration != null) e.duration!,
+      if (!e.vacation && !e.noPlayground && e.kidList.isNotEmpty)
+        e.kidList.join(' & '),
+      if (e.noPlayground && (e.excuse?.isNotEmpty ?? false)) e.excuse!,
+    ];
+
+    return InkWell(
+      onTap: () => showEntryActions(
+        context,
+        entry: e,
+        family: widget.family,
+        onChanged: () {
+          _load();
+          SyncService.instance.sync();
+        },
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(num,
-                style: TextStyle(
-                    fontSize: small ? 22 : 34,
-                    fontWeight: FontWeight.w800,
-                    // Data reads as data, not as a call to action — green is
-                    // reserved for things you can tap/select.
-                    color: accent ?? _kTxt,
-                    height: 1)),
-            const SizedBox(height: 3),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 12, color: _kTxt2, fontWeight: FontWeight.w500)),
+            Container(
+              width: 3,
+              height: 34,
+              margin: const EdgeInsets.only(right: 12, top: 2),
+              color: e.noPlayground || e.vacation ? c.hairline : c.green,
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(who,
+                      style:
+                          AppType.heading.copyWith(color: c.txt, fontSize: 15)),
+                  const SizedBox(height: 3),
+                  Text(
+                    [tag, ...detail].join('  ·  '),
+                    style: AppType.bodySm.copyWith(color: c.txt2),
+                  ),
+                  if (e.activityList.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final a in e.activityList)
+                          Text(a.toUpperCase(),
+                              style: AppType.label.copyWith(
+                                  color: c.accentTxt,
+                                  fontSize: 9,
+                                  letterSpacing: 0.9)),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 18, color: c.txt2),
           ],
         ),
-      );
+      ),
+    );
+  }
 
-  Widget _chartCard({required String title, required Widget child, Color? accent}) => Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: _kCard,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
-          ],
-        ),
-        child: Column(children: [
-          Text(title.toUpperCase(),
-              style: TextStyle(
-                  fontSize: 10, fontWeight: FontWeight.w700,
-                  color: accent ?? _kTxt2, letterSpacing: 0.6)),
-          const SizedBox(height: 10),
-          child,
-        ]),
-      );
+  // ── Small shared pieces ─────────────────────────────────
 
-  Widget _legend(Color c, String label) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(width: 8, height: 8, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
-          const SizedBox(width: 4),
-          Text(label, style: TextStyle(fontSize: 11, color: _kTxt2)),
-        ],
+  Widget _note(AppColors c, String text) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+        child: Text(text, style: AppType.body.copyWith(color: c.txt2)),
       );
 
   Map<String, int> _calcDurStats(List<Entry> entries) {
@@ -633,196 +828,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// ── Donut chart ───────────────────────────────────────────
-
-class DonutSegment {
-  final int value;
-  final Color color;
-  const DonutSegment({required this.value, required this.color});
-}
-
-class DonutChart extends StatelessWidget {
-  final List<DonutSegment> segments;
-  final String center;
-
-  const DonutChart({super.key, required this.segments, required this.center});
-
-  @override
-  Widget build(BuildContext context) {
-    final c2 = AppColors.of(context);
-    final kTxt    = c2.txt;
-
-
-
-    final total = segments.fold<int>(0, (s, e) => s + e.value);
-    return SizedBox(
-      width: 110,
-      height: 110,
-      child: Stack(
-        children: [
-          CustomPaint(
-            size: const Size(110, 110),
-            painter: _DonutPainter(segments: segments, total: total),
-          ),
-          Center(
-            child: Text(
-              total == 0 ? '–' : center,
-              style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w800, color: kTxt),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DonutPainter extends CustomPainter {
-  final List<DonutSegment> segments;
-  final int total;
-  const _DonutPainter({required this.segments, required this.total});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final strokeW = size.width * 0.22;
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - strokeW / 2;
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeW
-      ..strokeCap = StrokeCap.butt;
-
-    if (total == 0) {
-      paint.color = const Color(0xFFE0E0E0);
-      canvas.drawCircle(center, radius, paint);
-      return;
-    }
-
-    double start = -math.pi / 2;
-    for (final seg in segments) {
-      if (seg.value == 0) continue;
-      final sweep = (seg.value / total) * 2 * math.pi;
-      paint.color = seg.color;
-      canvas.drawArc(rect, start, sweep, false, paint);
-      start += sweep;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DonutPainter old) =>
-      old.total != total || old.segments.length != segments.length;
-}
-
-// ── Dashboard log entry card (no delete) ─────────────────
-
-class _DashEntryCard extends StatelessWidget {
-  final Entry entry;
-  final VoidCallback? onTap;
-  const _DashEntryCard({required this.entry, this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final c2 = AppColors.of(context);
-    final kTxt2   = c2.txt2;
-
-
-
-    final e = entry;
-    final isM = e.shift == 'morning';
-    final shiftBg = isM ? const Color(0xFFFFF3E0) : const Color(0xFFE3F2FD);
-    final shiftColor = isM ? const Color(0xFFBF360C) : const Color(0xFF0D47A1);
-    final shiftLabel = isM ? '☀️ Morning' : '🌙 Evening';
-    final userDisplay = e.userList.isEmpty ? e.user : e.userList.join(' & ');
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 7),
-      decoration: BoxDecoration(
-        color: c2.card,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(color: Color(0x10000000), blurRadius: 3, offset: Offset(0, 1))
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(13),
-            child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            if (e.noPlayground)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                decoration: BoxDecoration(
-                    color: const Color(0xFFFFEBEE), borderRadius: BorderRadius.circular(11)),
-                child: const Text('❌ No playground',
-                    style: TextStyle(
-                        color: Color(0xFFB71C1C), fontSize: 11, fontWeight: FontWeight.w700)),
-              )
-            else if (!e.vacation)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                decoration: BoxDecoration(color: shiftBg, borderRadius: BorderRadius.circular(11)),
-                child: Text(shiftLabel,
-                    style: TextStyle(
-                        color: shiftColor, fontSize: 11, fontWeight: FontWeight.w700)),
-              ),
-            if (e.vacation)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                decoration: BoxDecoration(
-                    color: const Color(0xFFFCE4EC), borderRadius: BorderRadius.circular(11)),
-                child: const Text('🏖️ Vacation',
-                    style: TextStyle(
-                        color: Color(0xFFB71C1C), fontSize: 11, fontWeight: FontWeight.w700)),
-              ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(userDisplay,
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-            ),
-          ]),
-          if (e.noPlayground && e.excuse != null && e.excuse!.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text('💬 ${e.excuse}',
-                  style: TextStyle(fontSize: 13, color: kTxt2, fontStyle: FontStyle.italic)),
-            ),
-          if (!e.vacation && !e.noPlayground) ...[
-            const SizedBox(height: 5),
-            Text(
-              '⏱ ${e.duration ?? 'NA'}   ·   👧 ${e.kidList.isEmpty ? 'NA' : e.kidList.join(' & ')}',
-              style: TextStyle(fontSize: 13, color: kTxt2),
-            ),
-            if (e.activityList.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 5),
-                child: Wrap(
-                  spacing: 4, runSpacing: 4,
-                  children: e.activityList.map((t) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                        color: c2.greenTint,
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Text(t,
-                        style: TextStyle(
-                            color: c2.green,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600)),
-                  )).toList(),
-                ),
-              ),
-          ],
-        ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+extension on Border {
+  BoxDecoration toBoxDecoration() => BoxDecoration(border: this);
 }

@@ -79,7 +79,7 @@ class _SetupScreenState extends State<SetupScreen> {
       SnackBar(
         content: Text(msg),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       ),
     );
   }
@@ -102,7 +102,7 @@ class _SetupScreenState extends State<SetupScreen> {
       backgroundColor: kBg,
       appBar: AppBar(
         title: const Text(
-          '🌳 Playground Tracker',
+          'Playground Tracker',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
@@ -110,7 +110,7 @@ class _SetupScreenState extends State<SetupScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(14),
         child: Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
           elevation: 1,
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -118,7 +118,7 @@ class _SetupScreenState extends State<SetupScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.isEditing ? 'Family Settings' : 'Welcome! 👋',
+                  widget.isEditing ? 'Family Settings' : 'Welcome',
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
@@ -173,11 +173,11 @@ class _SetupScreenState extends State<SetupScreen> {
                       backgroundColor: _kGreen,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                      shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero),
                     ),
                     child: Text(
-                      widget.isEditing ? 'Save Changes' : 'Save & Start 🌳',
+                      widget.isEditing ? 'Save Changes' : 'Save & Start',
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold),
                     ),
@@ -244,15 +244,15 @@ class _PersonRow extends StatelessWidget {
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(9),
+                  borderRadius: BorderRadius.zero,
                   borderSide: BorderSide(color: kBorder, width: 2),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(9),
-                  borderSide: const BorderSide(color: _kGreenLt, width: 2),
+                focusedBorder: const OutlineInputBorder(
+                  borderRadius: BorderRadius.zero,
+                  borderSide: BorderSide(color: _kGreenLt, width: 2),
                 ),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(9)),
+                border: const OutlineInputBorder(
+                    borderRadius: BorderRadius.zero),
               ),
             ),
           ),
@@ -264,7 +264,7 @@ class _PersonRow extends StatelessWidget {
               height: 34,
               decoration: BoxDecoration(
                 border: Border.all(color: kBorder, width: 2),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.zero,
                 color: appC2.card,
               ),
               child: Center(
@@ -298,7 +298,7 @@ class _AddButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           border: Border.all(color: kBorder, width: 2),
-          borderRadius: BorderRadius.circular(9),
+          borderRadius: BorderRadius.zero,
           color: appC2.card,
         ),
         child: Text(

@@ -88,7 +88,7 @@ Future<void> showEntryActions(
     content: const Text('Entry deleted'),
     behavior: SnackBarBehavior.floating,
     duration: const Duration(seconds: 4),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
     action: SnackBarAction(
       label: 'Undo',
       onPressed: () async {
