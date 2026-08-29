@@ -10,12 +10,21 @@ import 'package:quick_actions/quick_actions.dart';
 /// that would need an icon asset bundled into the iOS project, and a
 /// missing one fails silently to a blank glyph rather than an error, so
 /// it's not worth the risk for a text-only shortcut list.
+///
+/// No-op on non-iOS/Android platforms (Linux dev, etc.) — quick_actions has
+/// no plugin implementation there, so calling into it throws
+/// MissingPluginException, which would otherwise hang `main()` since it's
+/// awaited before `runApp()`. See [PurchaseService] for the same pattern.
 class QuickActionService {
   static final QuickActionService instance = QuickActionService._();
   QuickActionService._();
 
   static const logEntryType = 'log_entry';
   static const dashboardType = 'dashboard';
+
+  bool get _isSupported =>
+      defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.android;
 
   final _plugin = const QuickActions();
 
@@ -26,6 +35,7 @@ class QuickActionService {
   final ValueNotifier<String?> lastAction = ValueNotifier(null);
 
   Future<void> init() async {
+    if (!_isSupported) return;
     _plugin.initialize((type) => lastAction.value = type);
     await _plugin.setShortcutItems(const [
       ShortcutItem(type: logEntryType, localizedTitle: 'Log a Visit'),
