@@ -48,6 +48,27 @@ import UIKit
         super.init()
     }
 
+    // MARK: - Availability
+
+    /// False when this build was signed without the iCloud entitlement — e.g. a
+    /// free-Apple-ID sideload (xtool install), which strips CloudKit. CKContainer
+    /// traps (SIGTRAP) on init in that case, so AppDelegate skips registration and
+    /// the Dart side sees MissingPluginException → SyncStatus.unavailable.
+    /// App Store / TestFlight builds carry no embedded profile: treat as available.
+    static var isAvailable: Bool {
+        guard let url = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision"),
+              let data = try? Data(contentsOf: url),
+              // The profile is a CMS envelope around a plain XML plist.
+              let start = data.range(of: Data("<?xml".utf8)),
+              let end = data.range(of: Data("</plist>".utf8), in: start.lowerBound..<data.endIndex),
+              let plist = try? PropertyListSerialization.propertyList(
+                  from: data.subdata(in: start.lowerBound..<end.upperBound), format: nil
+              ) as? [String: Any],
+              let entitlements = plist["Entitlements"] as? [String: Any]
+        else { return true }
+        return entitlements["com.apple.developer.icloud-services"] != nil
+    }
+
     // MARK: - FlutterPlugin registration
 
     /// The registered instance — AppDelegate / SceneDelegate use this for

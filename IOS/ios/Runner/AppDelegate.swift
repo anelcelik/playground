@@ -16,7 +16,8 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
-    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "CloudKitPlugin") {
+    if CloudKitPlugin.isAvailable,
+       let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "CloudKitPlugin") {
       CloudKitPlugin.register(with: registrar)
     }
   }
