@@ -741,6 +741,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (!e.vacation && !e.noPlayground && e.kidList.isNotEmpty)
         e.kidList.join(' & '),
       if (e.noPlayground && (e.excuse?.isNotEmpty ?? false)) e.excuse!,
+      if (e.absentNote(widget.family.parents).isNotEmpty)
+        e.absentNote(widget.family.parents),
     ];
 
     return InkWell(

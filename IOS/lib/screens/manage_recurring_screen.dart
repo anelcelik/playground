@@ -3,6 +3,7 @@ import '../db/database_helper.dart';
 import '../models/family.dart';
 import '../models/recurring_activity.dart';
 import '../notifications/notification_service.dart';
+import 'plan_history_screen.dart';
 import 'recurring_activity_form.dart';
 
 import '../theme.dart';
@@ -56,6 +57,17 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
       ),
     );
     if (result == true) _load();
+  }
+
+  /// Tapping a plan shows its history and "Add to Calendar".
+  Future<void> _openPlan(RecurringActivity a) async {
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PlanHistoryScreen(activity: a, family: _family),
+      ),
+    );
+    if (changed == true) _load();
   }
 
   Future<void> _delete(RecurringActivity a) async {
@@ -125,6 +137,7 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
                   itemCount: _activities.length,
                   itemBuilder: (_, i) => _ActivityTile(
                     activity: _activities[i],
+                    onOpen: () => _openPlan(_activities[i]),
                     onEdit: () => _openForm(_activities[i]),
                     onDelete: () => _delete(_activities[i]),
                     onToggleActive: () => _toggleActive(_activities[i]),
@@ -138,12 +151,14 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
 
 class _ActivityTile extends StatelessWidget {
   final RecurringActivity activity;
+  final VoidCallback onOpen;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onToggleActive;
 
   const _ActivityTile({
     required this.activity,
+    required this.onOpen,
     required this.onEdit,
     required this.onDelete,
     required this.onToggleActive,
@@ -205,7 +220,7 @@ class _ActivityTile extends StatelessWidget {
               if (a.kidNames.isNotEmpty)
                 Text(a.kidNames.join(', '),
                     style: TextStyle(fontSize: 13, color: kTxt2)),
-              if (a.dateFrom != null || a.dateTo != null)
+              if (!a.isOneTime && (a.dateFrom != null || a.dateTo != null))
                 Text(
                   '${a.dateFrom ?? '…'} → ${a.dateTo ?? '…'}',
                   style: TextStyle(fontSize: 12, color: kTxt2),
@@ -213,9 +228,11 @@ class _ActivityTile extends StatelessWidget {
               if (a.notifyEnabled && a.notifyHour != null)
                 Text(a.notifyTimeLabel,
                     style: TextStyle(fontSize: 12, color: kTxt2)),
+              Text('Tap for history & calendar',
+                  style: TextStyle(fontSize: 11, color: kTxt2)),
             ],
           ),
-          onTap: onEdit,
+          onTap: onOpen,
         ),
         const Divider(height: 1, indent: 16, endIndent: 16),
         Row(children: [

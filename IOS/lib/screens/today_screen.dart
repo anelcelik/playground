@@ -597,8 +597,12 @@ class _TodayScreenState extends State<TodayScreen> {
           }),
           const SizedBox(width: 6),
           _pill(c, 'SKIP', onTap: () async {
+            final reason = await showReasonSheet(context,
+                title: 'Why skip?',
+                hint: 'Pick or write why “${a.title}” didn’t happen.');
+            if (reason == null) return;
             await RecurringService.instance
-                .skip(activity: a, date: _date, reason: 'other');
+                .skip(activity: a, date: _date, reason: reason);
             await _refresh();
           }),
         ],
@@ -677,6 +681,12 @@ class _TodayScreenState extends State<TodayScreen> {
                                     if (e.activityList.isNotEmpty)
                                       e.activityList.join(', ')
                                   ].join(' · '),
+                                  style:
+                                      AppType.bodySm.copyWith(color: c.txt2)),
+                            ],
+                            if (e.absentNote(widget.family.parents).isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(e.absentNote(widget.family.parents),
                                   style:
                                       AppType.bodySm.copyWith(color: c.txt2)),
                             ],

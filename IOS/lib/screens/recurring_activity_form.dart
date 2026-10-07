@@ -46,6 +46,9 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
   late Set<int> _selDays;
   String? _dateFrom;
   String? _dateTo;
+  // One-time plan: a single date, saved as From = To on that weekday.
+  late bool _oneTime;
+  String? _onDate;
   late String _shift;
   late bool _isActive;
   late bool _notifyEnabled;
@@ -63,6 +66,8 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
     _selDays = Set.from(a?.repeatDays ?? []);
     _dateFrom = a?.dateFrom;
     _dateTo = a?.dateTo;
+    _oneTime = a?.isOneTime ?? false;
+    _onDate = _oneTime ? a!.dateFrom : null;
     _shift = a?.shift ?? 'morning';
     _isActive = a?.isActive ?? true;
     _notifyEnabled = a?.notifyEnabled ?? false;
@@ -81,16 +86,19 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
   Future<void> _save() async {
     final title = _titleCtrl.text.trim();
     if (title.isEmpty) { _toast('Enter a title'); return; }
-    if (_selDays.isEmpty) { _toast('Select at least one day'); return; }
+    if (_oneTime && _onDate == null) { _toast('Pick a date'); return; }
+    if (!_oneTime && _selDays.isEmpty) { _toast('Select at least one day'); return; }
     setState(() => _saving = true);
 
     final activity = RecurringActivity(
       id: widget.existing?.id ?? Entry.generateUuid(),
       title: title,
       kidNames: widget.family.kids.where(_selKids.contains).toList(),
-      repeatDays: ([..._selDays]..sort()),
-      dateFrom: _dateFrom,
-      dateTo: _dateTo,
+      repeatDays: _oneTime
+          ? [DateTime.parse(_onDate!).weekday - 1]
+          : ([..._selDays]..sort()),
+      dateFrom: _oneTime ? _onDate : _dateFrom,
+      dateTo: _oneTime ? _onDate : _dateTo,
       shift: _shift,
       isActive: _isActive,
       notifyEnabled: _notifyEnabled,
@@ -111,6 +119,18 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
     }
 
     if (mounted) Navigator.pop(context, true);
+  }
+
+  Future<void> _pickOnDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _onDate != null ? DateTime.parse(_onDate!) : DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+    );
+    if (picked != null && mounted) {
+      setState(() => _onDate = DateFormat('yyyy-MM-dd').format(picked));
+    }
   }
 
   Future<void> _pickDate(bool isFrom) async {
@@ -220,32 +240,53 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
             ),
           ])),
 
-          // Repeat days
+          // Repeats on weekdays, or happens once
           _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _clabel('Repeat on'),
-            Wrap(
-              spacing: 6, runSpacing: 6,
-              children: List.generate(7, (i) {
-                final sel = _selDays.contains(i);
-                return GestureDetector(
-                  onTap: () => setState(() =>
-                      sel ? _selDays.remove(i) : _selDays.add(i)),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                    decoration: BoxDecoration(
-                      color: sel ? _kGreen : _kCard,
-                      border: Border.all(color: sel ? _kGreen : _kBorder, width: 2),
-                      borderRadius: BorderRadius.zero,
+            _clabel('How often?'),
+            Row(children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _oneTime = false),
+                  child: _shiftChip('Repeats', !_oneTime, _kGreen),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _oneTime = true),
+                  child: _shiftChip('One time', _oneTime, _kGreen),
+                ),
+              ),
+            ]),
+            const SizedBox(height: 12),
+            if (_oneTime)
+              _dateBtn('Date: ${_fmtDate(_onDate)}', _pickOnDate)
+            else ...[
+              _clabel('Repeat on'),
+              Wrap(
+                spacing: 6, runSpacing: 6,
+                children: List.generate(7, (i) {
+                  final sel = _selDays.contains(i);
+                  return GestureDetector(
+                    onTap: () => setState(() =>
+                        sel ? _selDays.remove(i) : _selDays.add(i)),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                      decoration: BoxDecoration(
+                        color: sel ? _kGreen : _kCard,
+                        border: Border.all(color: sel ? _kGreen : _kBorder, width: 2),
+                        borderRadius: BorderRadius.zero,
+                      ),
+                      child: Text(_dayLabels[i],
+                          style: TextStyle(
+                              color: sel ? Colors.white : _kTxt,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14)),
                     ),
-                    child: Text(_dayLabels[i],
-                        style: TextStyle(
-                            color: sel ? Colors.white : _kTxt,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14)),
-                  ),
-                );
-              }),
-            ),
+                  );
+                }),
+              ),
+            ],
           ])),
 
           // Shift — morning or evening
@@ -312,26 +353,27 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
             ])),
 
           // Date range
-          _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _clabel('Date range (optional)'),
-            Row(children: [
-              Expanded(child: _dateBtn('From: ${_fmtDate(_dateFrom)}',
-                  () => _pickDate(true))),
-              const SizedBox(width: 8),
-              Expanded(child: _dateBtn('To: ${_fmtDate(_dateTo)}',
-                  () => _pickDate(false))),
-            ]),
-            if (_dateFrom != null || _dateTo != null)
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () =>
-                      setState(() { _dateFrom = null; _dateTo = null; }),
-                  child: Text('Clear dates',
-                      style: TextStyle(color: _kTxt2, fontSize: 12)),
+          if (!_oneTime)
+            _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _clabel('Date range (optional)'),
+              Row(children: [
+                Expanded(child: _dateBtn('From: ${_fmtDate(_dateFrom)}',
+                    () => _pickDate(true))),
+                const SizedBox(width: 8),
+                Expanded(child: _dateBtn('To: ${_fmtDate(_dateTo)}',
+                    () => _pickDate(false))),
+              ]),
+              if (_dateFrom != null || _dateTo != null)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () =>
+                        setState(() { _dateFrom = null; _dateTo = null; }),
+                    child: Text('Clear dates',
+                        style: TextStyle(color: _kTxt2, fontSize: 12)),
+                  ),
                 ),
-              ),
-          ])),
+            ])),
 
           // Notification
           _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

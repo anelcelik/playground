@@ -4,12 +4,17 @@ import '../db/database_helper.dart';
 import '../theme.dart';
 import 'modernist.dart';
 
-const _kDefaultReasons = ['Rain', 'Sick', 'Too late', 'Busy'];
+const kDefaultReasons = ['Rain', 'Sick', 'Too late', 'Busy'];
 
-/// "Why not?" sheet for a nobody-went day — shared by Today and the entry
-/// Edit/Delete sheet. Returns the chosen or typed reason, null on dismiss.
-/// A typed reason is remembered as an excuse tag so it is a chip next time.
-Future<String?> showReasonSheet(BuildContext context) async {
+/// Reason picker sheet — "Why not?" for a nobody-went day (Today and the
+/// entry Edit/Delete sheet) and "Why skip?" for a planned activity.
+/// Returns the chosen or typed reason, null on dismiss. A typed reason is
+/// remembered as an excuse tag so it is a chip next time.
+Future<String?> showReasonSheet(
+  BuildContext context, {
+  String title = 'Why not?',
+  String hint = 'Pick or write a reason to save the day as “nobody went”.',
+}) async {
   final tags = await DatabaseHelper.instance.getTags('excuse');
   if (!context.mounted) return null;
   final reason = await showModalBottomSheet<String>(
@@ -22,19 +27,19 @@ Future<String?> showReasonSheet(BuildContext context) async {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Rule(),
-            const SectionLabel('Why not?'),
+            SectionLabel(title),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  for (final t in {..._kDefaultReasons, ...tags})
+                  for (final t in {...kDefaultReasons, ...tags})
                     SquareChip(label: t, onTap: () => Navigator.pop(ctx, t)),
                   SquareChip(
                     label: '+ Write your own',
                     onTap: () async {
-                      final typed = await _typeReason(ctx);
+                      final typed = await typeReason(ctx, title: title);
                       if (typed != null && ctx.mounted) {
                         Navigator.pop(ctx, typed);
                       }
@@ -45,29 +50,33 @@ Future<String?> showReasonSheet(BuildContext context) async {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: Text(
-                  'Pick or write a reason to save the day as “nobody went”.',
-                  style: AppType.bodySm.copyWith(color: c.txt2)),
+              child: Text(hint, style: AppType.bodySm.copyWith(color: c.txt2)),
             ),
           ],
         ),
       );
     },
   );
-  if (reason != null && !_kDefaultReasons.contains(reason)) {
-    await DatabaseHelper.instance.addTag('excuse', reason);
-  }
+  await rememberReason(reason);
   return reason;
 }
 
-Future<String?> _typeReason(BuildContext context) async {
+/// Saves a typed reason as an excuse tag; the built-in ones need no tag.
+Future<void> rememberReason(String? reason) async {
+  if (reason != null && !kDefaultReasons.contains(reason)) {
+    await DatabaseHelper.instance.addTag('excuse', reason);
+  }
+}
+
+/// Free-text reason dialog. Null when cancelled or left empty.
+Future<String?> typeReason(BuildContext context, {String title = 'Why not?'}) async {
   final ctrl = TextEditingController();
   // Commas would split one reason into several in History's reason counts.
   String clean(String v) => v.replaceAll(',', ' ').trim();
   final value = await showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text('Why not?',
+      title: Text(title,
           style: AppType.heading.copyWith(color: AppColors.of(ctx).txt)),
       content: TextField(
         controller: ctrl,
@@ -87,4 +96,61 @@ Future<String?> _typeReason(BuildContext context) async {
     ),
   );
   return value == null || value.isEmpty ? null : value;
+}
+
+/// Inline single-choice reason chips with "+ Write your own" — for "why
+/// didn't the other parent go?" inside the visit sheet and Edit Entry.
+/// Tapping the selected chip again clears it (the reason is optional).
+class ReasonChips extends StatefulWidget {
+  final String? selected;
+  final ValueChanged<String?> onChanged;
+  final String dialogTitle;
+
+  const ReasonChips({
+    super.key,
+    required this.selected,
+    required this.onChanged,
+    this.dialogTitle = 'Why not?',
+  });
+
+  @override
+  State<ReasonChips> createState() => _ReasonChipsState();
+}
+
+class _ReasonChipsState extends State<ReasonChips> {
+  List<String> _tags = [];
+
+  @override
+  void initState() {
+    super.initState();
+    DatabaseHelper.instance.getTags('excuse').then((t) {
+      if (mounted) setState(() => _tags = t);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sel = widget.selected;
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final t in {...kDefaultReasons, ..._tags, if (sel != null) sel})
+          SquareChip(
+            label: t,
+            small: true,
+            selected: t == sel,
+            onTap: () => widget.onChanged(t == sel ? null : t),
+          ),
+        SquareChip(
+          label: '+ Write your own',
+          small: true,
+          onTap: () async {
+            final typed = await typeReason(context, title: widget.dialogTitle);
+            if (typed != null) widget.onChanged(typed);
+          },
+        ),
+      ],
+    );
+  }
 }

@@ -19,6 +19,49 @@ class RecurringService {
 
   /// Returns all recurring activities that apply to [date], each with status.
   /// Also lazily marks past-unresolved activities as missed.
+  /// [activity]'s days up to [today], newest first: every scheduled day
+  /// from its start, plus any day with a log (the schedule may have changed
+  /// since). A scheduled day before today without a log counts as missed —
+  /// worked out here, because getStatusForDate only stores "missed" for
+  /// days someone opened. Today without a log is 'pending'.
+  static List<PlanOccurrence> history(
+      RecurringActivity activity, List<RecurringLog> logs, DateTime today) {
+    String fmt(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
+    final byDate = {for (final l in logs) l.date: l};
+    final end = DateTime(today.year, today.month, today.day);
+    // created_at resets when a plan is edited (upsert replaces the row), so
+    // the earliest log can be older than it.
+    final starts = [
+      if (activity.dateFrom != null) activity.dateFrom!,
+      if (activity.createdAt != null && activity.createdAt!.length >= 10)
+        activity.createdAt!.substring(0, 10),
+      ...byDate.keys,
+    ]..sort();
+    if (starts.isEmpty) return [];
+    var d = DateTime.parse(starts.first);
+    final last = activity.dateTo != null &&
+            DateTime.parse(activity.dateTo!).isBefore(end)
+        ? DateTime.parse(activity.dateTo!)
+        : end;
+    // Three years is plenty for a phone screen and bounds the loop.
+    final floor = DateTime(end.year - 3, end.month, end.day);
+    if (d.isBefore(floor)) d = floor;
+
+    final scheduled = activity.copyWith(isActive: true);
+    final out = <PlanOccurrence>[];
+    while (!d.isAfter(last)) {
+      final key = fmt(d);
+      final log = byDate[key];
+      if (log != null) {
+        out.add(PlanOccurrence(key, log.status, log.skipReason));
+      } else if (scheduled.appliesTo(d)) {
+        out.add(PlanOccurrence(key, d == end ? 'pending' : 'missed'));
+      }
+      d = DateTime(d.year, d.month, d.day + 1);
+    }
+    return out.reversed.toList();
+  }
+
   Future<List<RecurringActivityStatus>> getStatusForDate(String date) async {
     final dateObj = DateTime.parse(date);
     final activities = await DatabaseHelper.instance.getActiveRecurringActivities();

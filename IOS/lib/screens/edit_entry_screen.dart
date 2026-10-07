@@ -4,6 +4,7 @@ import '../models/entry.dart';
 import '../models/family.dart';
 
 import '../theme.dart';
+import '../widgets/reason_sheet.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
 const _kGreen   = kGreen;
@@ -47,6 +48,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
   late String? _duration;
   late Map<String, bool> _kids;
   late Set<String> _acts;
+  String? _absentReason; // why the unticked parents didn't go
   List<String> _actTags = [];
   final _actCtrl = TextEditingController();
   bool _saving = false;
@@ -63,6 +65,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
         k: e.kidList.contains(k),
     };
     _acts = e.activityList.toSet();
+    _absentReason = e.excuse;
     DatabaseHelper.instance.getTags('activity').then((tags) {
       if (mounted) {
         setState(() {
@@ -94,6 +97,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
     final kidStr =
         widget.family.kids.where((k) => _kids[k] == true).join(',');
     final actStr = _acts.isEmpty ? null : _acts.join(', ');
+    final someoneStayed = _absent.isNotEmpty;
 
     final updated = Entry(
       id: widget.entry.id,
@@ -105,12 +109,13 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
       duration: _duration,
       kids: kidStr.isEmpty ? null : kidStr,
       activities: actStr,
-      excuse: widget.entry.excuse,
+      excuse: someoneStayed ? _absentReason : null,
       lastModified: DateTime.now().millisecondsSinceEpoch,
       createdAt: widget.entry.createdAt,
     );
 
     await DatabaseHelper.instance.updateEntry(updated);
+    if (someoneStayed) await rememberReason(_absentReason);
     widget.onSaved?.call();
     if (mounted) Navigator.pop(context);
   }
@@ -127,6 +132,9 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
       });
     }
   }
+
+  List<String> get _absent =>
+      widget.family.parents.where((p) => !_selUsers.contains(p)).toList();
 
   void _toast(String msg) {
     if (!mounted) return;
@@ -191,6 +199,19 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                 ),
               ],
             )),
+
+            // Why the other parent(s) didn't go
+            if (_selUsers.isNotEmpty && _absent.isNotEmpty)
+              _card(Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _clabel("Why didn't ${_absent.join(' & ')} go? (optional)"),
+                  ReasonChips(
+                    selected: _absentReason,
+                    onChanged: (r) => setState(() => _absentReason = r),
+                  ),
+                ],
+              )),
 
             // Shift
             _card(Column(

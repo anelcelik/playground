@@ -14,6 +14,22 @@ bool get _supportsScheduled =>
 const _kIdOutdoor = 1; // "Did you play outside today?"
 const _kIdLog = 2;     // "Don't forget to log your visit"
 
+const _kRecurringDetails = NotificationDetails(
+  iOS: DarwinNotificationDetails(
+    presentAlert: true,
+    presentBadge: false,
+    presentSound: true,
+    interruptionLevel: InterruptionLevel.active,
+  ),
+  android: AndroidNotificationDetails(
+    'playground_recurring',
+    'Recurring Activity Reminders',
+    channelDescription: 'Reminders for recurring activities',
+    importance: Importance.defaultImportance,
+    priority: Priority.defaultPriority,
+  ),
+);
+
 class NotificationService {
   static final NotificationService instance = NotificationService._();
   NotificationService._();
@@ -91,7 +107,9 @@ class NotificationService {
 
   // ── Recurring activity notifications ─────────────────────
 
-  /// Schedules one weekly notification per repeat day for [activity].
+  /// Schedules one weekly notification per repeat day for [activity] — or a
+  /// single one for a one-time plan. Nothing for a plan whose To date has
+  /// passed (weekly repeats know nothing about date ranges).
   Future<void> scheduleRecurringActivity(RecurringActivity activity) async {
     if (!_supportsScheduled) return;
     if (!activity.notifyEnabled || activity.notifyHour == null || !activity.isActive) {
@@ -103,6 +121,27 @@ class NotificationService {
     final body = (activity.notifyMessage?.trim().isNotEmpty == true)
         ? activity.notifyMessage!.trim()
         : 'Time for your recurring activity';
+
+    final now = tz.TZDateTime.now(tz.local);
+    if (activity.dateTo != null) {
+      final to = DateTime.parse(activity.dateTo!);
+      final lastMoment = tz.TZDateTime(tz.local, to.year, to.month, to.day,
+          activity.notifyHour!, activity.notifyMinute ?? 0);
+      if (lastMoment.isBefore(now)) return;
+      if (activity.isOneTime) {
+        await _plugin.zonedSchedule(
+          activity.notifId(to.weekday - 1),
+          activity.title,
+          body,
+          lastMoment,
+          _kRecurringDetails,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+        );
+        return;
+      }
+    }
 
     for (final day in activity.repeatDays) {
       await _scheduleWeekly(
@@ -141,28 +180,12 @@ class NotificationService {
     required int minute,
   }) async {
     if (!_supportsScheduled) return;
-    const details = NotificationDetails(
-      iOS: DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: false,
-        presentSound: true,
-        interruptionLevel: InterruptionLevel.active,
-      ),
-      android: AndroidNotificationDetails(
-        'playground_recurring',
-        'Recurring Activity Reminders',
-        channelDescription: 'Reminders for recurring activities',
-        importance: Importance.defaultImportance,
-        priority: Priority.defaultPriority,
-      ),
-    );
-
     await _plugin.zonedSchedule(
       id,
       title,
       body,
       _nextWeekday(weekday, hour, minute),
-      details,
+      _kRecurringDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,

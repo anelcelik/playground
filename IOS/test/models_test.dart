@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:playground_tracker/models/entry.dart';
 import 'package:playground_tracker/models/recurring_activity.dart';
+import 'package:playground_tracker/services/calendar_service.dart';
+import 'package:playground_tracker/services/recurring_service.dart';
 
 void main() {
   group('Entry', () {
@@ -109,6 +111,100 @@ void main() {
         final id = activity().notifId(day);
         expect(id, inInclusiveRange(100, 9099));
       }
+    });
+  });
+
+  group('Entry.absentNote', () {
+    Entry visit({String user = 'Mom', String? excuse}) => Entry(
+        date: '2026-06-01',
+        shift: 'morning',
+        user: user,
+        vacation: false,
+        excuse: excuse);
+
+    test('names the parent who stayed home', () {
+      expect(visit(excuse: 'Work').absentNote(['Mom', 'Dad']),
+          "Dad didn't go · Work");
+    });
+
+    test('empty without a reason, or for a nobody-went day', () {
+      expect(visit().absentNote(['Mom', 'Dad']), '');
+      const nobody = Entry(
+          date: '2026-06-01',
+          shift: 'morning',
+          user: 'Mom,Dad',
+          vacation: false,
+          noPlayground: true,
+          excuse: 'Rain');
+      expect(nobody.absentNote(['Mom', 'Dad']), '');
+    });
+  });
+
+  group('Plans', () {
+    // 2026-06-01 is a Monday.
+    const footballMonWed = RecurringActivity(
+      id: 'f1',
+      title: 'Football',
+      kidNames: [],
+      repeatDays: [0, 2],
+      dateFrom: '2026-06-01',
+    );
+    RecurringLog log(String date, String status, [String? reason]) =>
+        RecurringLog(
+            id: date,
+            activityId: 'f1',
+            date: date,
+            status: status,
+            skipReason: reason);
+
+    test('a one-time plan applies only on its date', () {
+      const party = RecurringActivity(
+        id: 'p1',
+        title: 'Party',
+        kidNames: [],
+        repeatDays: [2], // Wednesday
+        dateFrom: '2026-06-03',
+        dateTo: '2026-06-03',
+      );
+      expect(party.isOneTime, isTrue);
+      expect(footballMonWed.isOneTime, isFalse);
+      expect(party.appliesTo(DateTime(2026, 6, 3)), isTrue);
+      expect(party.appliesTo(DateTime(2026, 6, 10)), isFalse);
+      expect(party.repeatDaysLabel, startsWith('Once · '));
+    });
+
+    test('history counts unopened past days as missed, newest first', () {
+      final days = RecurringService.history(
+        footballMonWed,
+        [log('2026-06-01', 'confirmed'), log('2026-06-03', 'skipped', 'Rain')],
+        DateTime(2026, 6, 10, 15), // Wednesday afternoon
+      );
+      expect(days.map((d) => '${d.date} ${d.status}').toList(), [
+        '2026-06-10 pending',
+        '2026-06-08 missed',
+        '2026-06-03 skipped',
+        '2026-06-01 confirmed',
+      ]);
+      expect(days[2].reason, 'Rain');
+    });
+
+    test('calendar starts on the next plan day at the plan time', () {
+      // Tuesday → next is Wednesday; morning plan without a reminder → 09:00.
+      expect(CalendarService.firstStart(footballMonWed, DateTime(2026, 6, 2, 15)),
+          DateTime(2026, 6, 3, 9));
+      final evening = footballMonWed.copyWith(
+          shift: 'evening', notifyHour: 18, notifyMinute: 30);
+      expect(CalendarService.firstStart(evening, DateTime(2026, 6, 2, 15)),
+          DateTime(2026, 6, 3, 18, 30));
+      const pastParty = RecurringActivity(
+        id: 'p1',
+        title: 'Party',
+        kidNames: [],
+        repeatDays: [2],
+        dateFrom: '2026-06-03',
+        dateTo: '2026-06-03',
+      );
+      expect(CalendarService.firstStart(pastParty, DateTime(2026, 6, 4)), isNull);
     });
   });
 }
