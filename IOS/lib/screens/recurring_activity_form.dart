@@ -164,12 +164,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
   String _fmtDate(String? d) =>
       d == null ? 'Not set' : DateFormat('d MMM yyyy').format(DateTime.parse(d));
 
-  String _fmtTime() {
-    final h = _notifyHour % 12 == 0 ? 12 : _notifyHour % 12;
-    final m = _notifyMinute.toString().padLeft(2, '0');
-    final p = _notifyHour < 12 ? 'AM' : 'PM';
-    return '$h:$m $p';
-  }
+  String _fmtTime() => AppSettings.instance.fmtHM(_notifyHour, _notifyMinute);
 
   @override
   Widget build(BuildContext context) {

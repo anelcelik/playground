@@ -3,6 +3,8 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:playground_tracker/db/database_helper.dart';
 import 'package:playground_tracker/models/entry.dart';
+import 'package:playground_tracker/models/recurring_activity.dart';
+import 'package:playground_tracker/settings/app_settings.dart';
 
 void main() {
   setUpAll(() {
@@ -202,5 +204,38 @@ void main() {
       expect(config['activity_tags'], ['Swings']);
       expect(config['family_updated_at'], greaterThan(0));
     });
+  });
+
+  test('a nobody-went reason can be changed afterwards', () async {
+    final saved = await db.insertEntry(const Entry(
+      uuid: 'n1',
+      date: '2026-06-01',
+      shift: 'morning',
+      user: 'Mom',
+      vacation: false,
+      noPlayground: true,
+      excuse: 'Rain',
+      lastModified: 1000,
+    ));
+    final updated =
+        await db.updateEntry(saved.copyWith(excuse: 'Grandma visiting'));
+    expect(updated.excuse, 'Grandma visiting');
+    expect(updated.noPlayground, isTrue);
+  });
+
+  test('reminder time labels follow the 24-hour setting', () async {
+    const a = RecurringActivity(
+      id: 'a1',
+      title: 'Football',
+      kidNames: [],
+      repeatDays: [0],
+      notifyHour: 15,
+      notifyMinute: 5,
+    );
+    await AppSettings.instance.setUse24h(false);
+    expect(a.notifyTimeLabel, '3:05 PM');
+    await AppSettings.instance.setUse24h(true);
+    expect(a.notifyTimeLabel, '15:05');
+    await AppSettings.instance.setUse24h(false);
   });
 }

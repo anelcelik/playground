@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../settings/app_settings.dart';
 import 'entry.dart';
 
 // ── Recurring activity definition ─────────────────────────
@@ -123,13 +124,10 @@ class RecurringActivity {
     return ([...repeatDays]..sort()).map((d) => n[d]).join(', ');
   }
 
-  String get notifyTimeLabel {
-    if (notifyHour == null) return '';
-    final h = notifyHour! % 12 == 0 ? 12 : notifyHour! % 12;
-    final m = notifyMinute.toString().padLeft(2, '0');
-    final p = notifyHour! < 12 ? 'AM' : 'PM';
-    return '$h:$m $p';
-  }
+  /// Follows the 12/24-hour choice in Display settings.
+  String get notifyTimeLabel => notifyHour == null
+      ? ''
+      : AppSettings.instance.fmtHM(notifyHour!, notifyMinute ?? 0);
 
   /// Stable notification ID for (this activity, dayOfWeek), range 100–9099.
   int notifId(int dayOfWeek) =>

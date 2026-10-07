@@ -194,12 +194,7 @@ class _NotifCard extends StatelessWidget {
     required this.onTimeTap,
   });
 
-  String _fmt(TimeOfDay t) {
-    final h = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
-    final m = t.minute.toString().padLeft(2, '0');
-    final period = t.period == DayPeriod.am ? 'AM' : 'PM';
-    return '$h:$m $period';
-  }
+  String _fmt(TimeOfDay t) => AppSettings.instance.fmtTimeOfDay(t);
 
   @override
   Widget build(BuildContext context) {

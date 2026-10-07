@@ -83,7 +83,7 @@ class Entry {
         'created_at': createdAt,
       };
 
-  Entry copyWith({bool? isDeleted, int? lastModified}) => Entry(
+  Entry copyWith({bool? isDeleted, int? lastModified, String? excuse}) => Entry(
         id: id,
         uuid: uuid,
         date: date,
@@ -94,7 +94,7 @@ class Entry {
         duration: duration,
         kids: kids,
         activities: activities,
-        excuse: excuse,
+        excuse: excuse ?? this.excuse,
         lastModified: lastModified ?? this.lastModified,
         isDeleted: isDeleted ?? this.isDeleted,
         createdAt: createdAt,
