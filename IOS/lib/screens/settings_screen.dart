@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../models/family.dart';
 import '../sync/sync_service.dart';
@@ -78,18 +77,6 @@ class SettingsScreen extends StatelessWidget {
           label: 'Recap',
           onTap: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const RecapScreen())),
-        ),
-        // TEMPORARY: reproduces iOS reclaiming the app in the background
-        // (the white-screen-on-return bug). Remove with the native hook in
-        // AppDelegate.swift once the reopen path is verified.
-        const Rule(),
-        const SectionLabel('Diagnostics'),
-        _Row(
-          label: 'Test: let iOS reclaim the app',
-          value: 'Then reopen it from the Home Screen',
-          onTap: () => const MethodChannel('com.playground.tracker/diagnostics')
-              .invokeMethod<void>('reclaimScene')
-              .catchError((_) {}),
         ),
         const Rule(),
         Padding(

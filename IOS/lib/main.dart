@@ -10,6 +10,7 @@ import 'models/dashboard_prefs.dart';
 import 'notifications/notification_service.dart';
 import 'screens/setup_screen.dart';
 import 'screens/home_screen.dart';
+import 'services/diag_log.dart';
 import 'services/quick_action_service.dart';
 import 'settings/app_settings.dart';
 import 'sync/sync_controller.dart';
@@ -17,6 +18,8 @@ import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  DiagLog.instance.attach();
+  DiagLog.instance.log('main() start');
 
   // sqflite needs FFI on Linux / macOS / Windows desktop
   if (!kIsWeb &&
@@ -31,8 +34,8 @@ Future<void> main() async {
   // backgrounded app's scene, which destroys this engine; reopening starts a
   // fresh engine and runs main() again inside the still-running process.
   // A step that threw or never answered then left the white launch screen
-  // up for good. Each step is bounded and logged ("[startup]" in the device
-  // log) so a slow or failing one degrades to defaults instead.
+  // up for good. Each step is bounded and logged (DiagLog) so a slow or
+  // failing one degrades to defaults instead.
 
   // Timezone setup — required for scheduling notifications at local time
   tz.initializeTimeZones();
@@ -59,7 +62,7 @@ Future<void> main() async {
   // Home Screen long-press shortcuts ("Log a Visit" / "View Dashboard")
   await _startupStep('quick actions', QuickActionService.instance.init);
 
-  debugPrint('[startup] runApp');
+  DiagLog.instance.log('startup: runApp');
   runApp(const PlaygroundTrackerApp());
 }
 
@@ -67,9 +70,9 @@ Future<void> main() async {
 Future<void> _startupStep(String name, Future<void> Function() run) async {
   try {
     await run().timeout(const Duration(seconds: 8));
-    debugPrint('[startup] $name ok');
+    DiagLog.instance.log('startup: $name ok');
   } catch (e, st) {
-    debugPrint('[startup] $name FAILED: $e\n$st');
+    DiagLog.instance.log('startup: $name FAILED: $e\n$st');
   }
 }
 

@@ -13,19 +13,12 @@ import UIKit
     // Needed for CloudKit silent pushes (CKDatabaseSubscription).
     // Silent pushes require no user permission dialog.
     application.registerForRemoteNotifications()
-    // Breadcrumbs in the device log: iOS reclaiming a backgrounded scene
-    // destroys the Flutter engine, and reopening builds a new one (see
-    // _startupStep in main.dart).
-    for name in [UIScene.willConnectNotification, UIScene.didDisconnectNotification] {
-      NotificationCenter.default.addObserver(forName: name, object: nil, queue: nil) { note in
-        NSLog("[PlaygroundTracker] %@", note.name.rawValue)
-      }
-    }
+    NativeDiagLog.start()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
-    NSLog("[PlaygroundTracker] Flutter engine started")
+    NativeDiagLog.log("Flutter engine started")
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     if CloudKitPlugin.isAvailable,
        let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "CloudKitPlugin") {
@@ -33,25 +26,6 @@ import UIKit
     }
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "CalendarBridge") {
       CalendarBridge.shared.register(with: registrar.messenger())
-    }
-    // TEMPORARY test hook (Settings › Diagnostics): asks iOS to reclaim the
-    // scene the way it does in the background under memory pressure, so the
-    // reopen path can be tried on demand. Remove once that path is verified.
-    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "SceneReclaimTest") {
-      let channel = FlutterMethodChannel(
-        name: "com.playground.tracker/diagnostics", binaryMessenger: registrar.messenger())
-      channel.setMethodCallHandler { call, result in
-        guard call.method == "reclaimScene",
-              let session = UIApplication.shared.connectedScenes.first?.session else {
-          result(FlutterMethodNotImplemented)
-          return
-        }
-        result(nil)
-        NSLog("[PlaygroundTracker] reclaiming the scene (test)")
-        UIApplication.shared.requestSceneSessionDestruction(session, options: nil) { error in
-          NSLog("[PlaygroundTracker] scene reclaim failed: %@", error.localizedDescription)
-        }
-      }
     }
   }
 
@@ -172,5 +146,60 @@ final class CalendarBridge: NSObject, EKEventEditViewDelegate {
       top = presented
     }
     return top
+  }
+}
+
+// Native half of the diagnostics log (Dart half: lib/services/diag_log.dart).
+// Scene and app events go to Documents/diagnostics-native.log, pulled over USB
+// when the app came back from the background as a white screen. Writes are
+// serialised on a background queue and never throw.
+enum NativeDiagLog {
+  private static let queue = DispatchQueue(label: "playground.diaglog")
+  private static let url = FileManager.default
+    .urls(for: .documentDirectory, in: .userDomainMask).first?
+    .appendingPathComponent("diagnostics-native.log")
+  private static let stamp: ISO8601DateFormatter = {
+    let f = ISO8601DateFormatter()
+    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return f
+  }()
+
+  static func start() {
+    queue.async {
+      // Rolling: start over past 256 KB.
+      if let url = url,
+         let size = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.size] as? Int,
+         size > 256 * 1024 {
+        try? FileManager.default.removeItem(at: url)
+      }
+    }
+    log("process launched")
+    let names: [Notification.Name] = [
+      UIScene.willConnectNotification, UIScene.didDisconnectNotification,
+      UIScene.willEnterForegroundNotification, UIScene.didActivateNotification,
+      UIScene.willDeactivateNotification, UIScene.didEnterBackgroundNotification,
+      UIApplication.didReceiveMemoryWarningNotification, UIApplication.willTerminateNotification,
+      UIApplication.protectedDataWillBecomeUnavailableNotification,
+      UIApplication.protectedDataDidBecomeAvailableNotification,
+    ]
+    for name in names {
+      NotificationCenter.default.addObserver(forName: name, object: nil, queue: nil) { note in
+        log(note.name.rawValue)
+      }
+    }
+  }
+
+  static func log(_ message: String) {
+    let line = "\(stamp.string(from: Date())) [\(getpid())] \(message)\n"
+    queue.async {
+      guard let url = url, let data = line.data(using: .utf8) else { return }
+      if let handle = try? FileHandle(forWritingTo: url) {
+        handle.seekToEndOfFile()
+        handle.write(data)
+        handle.closeFile()
+      } else {
+        try? data.write(to: url)
+      }
+    }
   }
 }
