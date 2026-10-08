@@ -93,11 +93,7 @@ class _PlanHistoryScreenState extends State<PlanHistoryScreen> {
       backgroundColor: c.bg,
       appBar: AppBar(
         title: Text(_a.title,
-            style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 17)),
-        iconTheme: const IconThemeData(color: Colors.white),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
           IconButton(
             tooltip: 'Edit plan',

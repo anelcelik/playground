@@ -69,8 +69,8 @@ class PlaygroundTrackerApp extends StatelessWidget {
       builder: (_, __) => MaterialApp(
         title: 'Playground Tracker',
         debugShowCheckedModeBanner: false,
-        theme: kLightTheme,
-        darkTheme: kDarkTheme,
+        theme: buildTheme(AppSettings.instance.palette, Brightness.light),
+        darkTheme: buildTheme(AppSettings.instance.palette, Brightness.dark),
         themeMode: AppSettings.instance.themeMode,
         home: const _AppRouter(),
       ),

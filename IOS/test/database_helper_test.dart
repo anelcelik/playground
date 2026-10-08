@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -5,6 +6,7 @@ import 'package:playground_tracker/db/database_helper.dart';
 import 'package:playground_tracker/models/entry.dart';
 import 'package:playground_tracker/models/recurring_activity.dart';
 import 'package:playground_tracker/settings/app_settings.dart';
+import 'package:playground_tracker/theme.dart';
 
 void main() {
   setUpAll(() {
@@ -237,5 +239,19 @@ void main() {
     await AppSettings.instance.setUse24h(true);
     expect(a.notifyTimeLabel, '15:05');
     await AppSettings.instance.setUse24h(false);
+  });
+
+  test('the colour theme choice is saved and every palette builds', () async {
+    await AppSettings.instance.setPalette(AppPalette.swing);
+    await AppSettings.instance.load();
+    expect(AppSettings.instance.palette, AppPalette.swing);
+    for (final p in AppPalette.values) {
+      for (final b in Brightness.values) {
+        final colors = buildTheme(p, b).extension<AppColors>();
+        expect(colors, same(p.colors(b)));
+        expect(colors!.isDark, b == Brightness.dark);
+      }
+    }
+    await AppSettings.instance.setPalette(AppPalette.modernist);
   });
 }

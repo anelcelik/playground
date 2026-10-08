@@ -23,6 +23,12 @@ const kPaperD    = Color(0xFFF0EEED); // text on dark
 const kPaperD2   = Color(0xFFA9A4A1);
 const kAccentD   = Color(0xFFFF6B4F); // lifted accent for dark surfaces
 
+// Swing — the doodle swing app icon: sunny ground, deep green frame,
+// orange seat. Light mode is green ink on yellow paper; dark mode inverts it.
+const kSwingYellow = Color(0xFFFFB31F);
+const kSwingGreen  = Color(0xFF12443A);
+const kSwingOrange = Color(0xFFF0512E);
+
 const kFont = 'Archivo';
 
 // Legacy names, Modernist values. The screens that were not rewritten
@@ -88,12 +94,14 @@ abstract class AppType {
 
 // ── ThemeData ─────────────────────────────────────────────
 
-ThemeData _base(Brightness b) {
-  final dark = b == Brightness.dark;
-  final bg = dark ? kInkD : kPaper;
-  final surface = dark ? kInkD2 : Colors.white;
-  final onSurface = dark ? kPaperD : kInk;
-  final accent = dark ? kAccentD : kAccent;
+/// The app theme for one colour palette at one brightness. Everything a
+/// screen reads goes through [AppColors], which rides along as an extension.
+ThemeData buildTheme(AppPalette palette, Brightness b) {
+  final c = palette.colors(b);
+  final bg = c.bg;
+  final surface = c.card;
+  final onSurface = c.txt;
+  final accent = c.green;
 
   return ThemeData(
     useMaterial3: true,
@@ -101,16 +109,18 @@ ThemeData _base(Brightness b) {
     fontFamily: kFont,
     scaffoldBackgroundColor: bg,
     cardColor: surface,
-    dividerColor: dark ? kRuleD : kInk,
+    dividerColor: c.border,
+    extensions: [c],
     colorScheme: ColorScheme.fromSeed(
       seedColor: accent,
       brightness: b,
     ).copyWith(
       primary: accent,
+      onPrimary: c.onAccent,
       secondary: onSurface,
       surface: surface,
       onSurface: onSurface,
-      onSurfaceVariant: dark ? kPaperD2 : kInk3,
+      onSurfaceVariant: c.txt2,
     ),
     // Modernist has no rounded corners anywhere. Zeroing the shape defaults
     // once here means individual screens don't have to fight Material 3.
@@ -149,19 +159,20 @@ ThemeData _base(Brightness b) {
     snackBarTheme: SnackBarThemeData(
       backgroundColor: onSurface,
       contentTextStyle: AppType.body.copyWith(color: bg),
+      actionTextColor: bg,
       behavior: SnackBarBehavior.fixed,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
     ),
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith(
-          (s) => s.contains(WidgetState.selected) ? Colors.white : null),
+          (s) => s.contains(WidgetState.selected) ? c.onAccent : null),
       trackColor: WidgetStateProperty.resolveWith(
           (s) => s.contains(WidgetState.selected) ? accent : null),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: accent,
-        foregroundColor: Colors.white,
+        foregroundColor: c.onAccent,
         elevation: 0,
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         textStyle: AppType.button,
@@ -169,14 +180,14 @@ ThemeData _base(Brightness b) {
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: dark ? kAccentD : kAccentDk,
+        foregroundColor: c.accentTxt,
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         textStyle: AppType.body.copyWith(fontWeight: FontWeight.w700),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: dark ? kInkD2 : Colors.white,
+      fillColor: surface,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.zero,
@@ -190,28 +201,56 @@ ThemeData _base(Brightness b) {
         borderRadius: BorderRadius.zero,
         borderSide: BorderSide(color: accent, width: 2),
       ),
-      labelStyle: AppType.bodySm.copyWith(color: dark ? kPaperD2 : kInk3),
+      labelStyle: AppType.bodySm.copyWith(color: c.txt2),
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: accent,
-      foregroundColor: Colors.white,
+      foregroundColor: c.onAccent,
       elevation: 0,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
     ),
   );
 }
 
-final kLightTheme = _base(Brightness.light);
-final kDarkTheme = _base(Brightness.dark);
+final kLightTheme = buildTheme(AppPalette.modernist, Brightness.light);
+final kDarkTheme = buildTheme(AppPalette.modernist, Brightness.dark);
+
+// ── Colour palettes ───────────────────────────────────────
+
+/// The colour themes offered in Display settings. Light / dark stays the
+/// separate Appearance choice; each palette has a set for both.
+enum AppPalette {
+  modernist('Modernist', 'Red and black on paper — the original look',
+      [kPaper, kInk, kAccent]),
+  swing('Swing', 'Sunny yellow, deep green and orange, from the app icon',
+      [kSwingYellow, kSwingGreen, kSwingOrange]);
+
+  const AppPalette(this.label, this.description, this.swatches);
+  final String label;
+  final String description;
+  final List<Color> swatches;
+
+  AppColors colors(Brightness b) => switch (this) {
+        AppPalette.modernist => b == Brightness.dark
+            ? AppColors.modernistDark
+            : AppColors.modernistLight,
+        AppPalette.swing =>
+          b == Brightness.dark ? AppColors.swingDark : AppColors.swingLight,
+      };
+}
+
 
 // ── Per-build colour palette ──────────────────────────────
 // Field names are unchanged from the old green theme so the existing
-// screens keep compiling — only the values moved. `green` is now the
-// Modernist accent; rename it across the codebase when convenient.
+// screens keep compiling — only the values moved. `green` is the palette's
+// accent; rename it across the codebase when convenient.
 
-class AppColors {
+class AppColors extends ThemeExtension<AppColors> {
   final Color bg;
   final Color card;
+
+  /// Recessed surface — logged blocks, empty bar tracks.
+  final Color recessed;
   final Color border;
   final Color txt;
   final Color txt2;
@@ -219,7 +258,10 @@ class AppColors {
   /// The single accent. Named `green` for source compatibility.
   final Color green;
 
-  /// Accent text on a light background — darkened to hold AA at body size.
+  /// Text and icons drawn on top of [green].
+  final Color onAccent;
+
+  /// Accent text on the page background — held at AA for body size.
   final Color accentTxt;
 
   /// Half-strength accent — one-parent days, secondary bars.
@@ -236,26 +278,120 @@ class AppColors {
 
   final bool isDark;
 
-  AppColors.of(BuildContext ctx) : this._(Theme.of(ctx));
+  const AppColors({
+    required this.bg,
+    required this.card,
+    required this.recessed,
+    required this.border,
+    required this.txt,
+    required this.txt2,
+    required this.green,
+    required this.onAccent,
+    required this.accentTxt,
+    required this.accentLt,
+    required this.greenTint,
+    required this.redTint,
+    required this.hairline,
+    required this.isDark,
+  });
 
-  AppColors._(ThemeData t)
-      : isDark = t.brightness == Brightness.dark,
-        bg = t.scaffoldBackgroundColor,
-        card = t.cardColor,
-        border = t.brightness == Brightness.dark ? kRuleD : kInk,
-        txt = t.colorScheme.onSurface,
-        txt2 = t.colorScheme.onSurfaceVariant,
-        green = t.colorScheme.primary,
-        accentTxt = t.brightness == Brightness.dark ? kAccentD : kAccentDk,
-        accentLt =
-            t.brightness == Brightness.dark ? const Color(0xFF7A2E1F) : kAccentLt,
-        greenTint = t.brightness == Brightness.dark
-            ? const Color(0xFF2E1A15)
-            : const Color(0xFFFDE7E2),
-        redTint = t.brightness == Brightness.dark
-            ? const Color(0xFF2E1C1C)
-            : const Color(0xFFFFF5F5),
-        hairline = t.brightness == Brightness.dark
-            ? kRuleD
-            : const Color(0x66201E1D);
+  factory AppColors.of(BuildContext ctx) =>
+      Theme.of(ctx).extension<AppColors>() ?? modernistLight;
+
+  static const modernistLight = AppColors(
+    bg: kPaper,
+    card: Colors.white,
+    recessed: kPaper2,
+    border: kInk,
+    txt: kInk,
+    txt2: kInk3,
+    green: kAccent,
+    onAccent: Colors.white,
+    accentTxt: kAccentDk,
+    accentLt: kAccentLt,
+    greenTint: Color(0xFFFDE7E2),
+    redTint: Color(0xFFFFF5F5),
+    hairline: Color(0x66201E1D),
+    isDark: false,
+  );
+
+  static const modernistDark = AppColors(
+    bg: kInkD,
+    card: kInkD2,
+    recessed: kInkD2,
+    border: kRuleD,
+    txt: kPaperD,
+    txt2: kPaperD2,
+    green: kAccentD,
+    onAccent: Colors.white,
+    accentTxt: kAccentD,
+    accentLt: Color(0xFF7A2E1F),
+    greenTint: Color(0xFF2E1A15),
+    redTint: Color(0xFF2E1C1C),
+    hairline: kRuleD,
+    isDark: true,
+  );
+
+  // Contrast (WCAG): ink on page 10.0, secondary text 5.4, accent text 4.7,
+  // white on the green accent 11.0.
+  static const swingLight = AppColors(
+    bg: Color(0xFFFFF4D6),
+    card: Colors.white,
+    recessed: Color(0xFFFCE9B8),
+    border: kSwingGreen,
+    txt: kSwingGreen,
+    txt2: Color(0xFF4A6A61),
+    green: kSwingGreen,
+    onAccent: Colors.white,
+    accentTxt: Color(0xFFC2401C),
+    accentLt: kSwingOrange,
+    greenTint: Color(0xFFFFE3A1),
+    redTint: Color(0xFFFFE9E2),
+    hairline: Color(0x6612443A),
+    isDark: false,
+  );
+
+  // Contrast: text on page 13.8, secondary 8.7, yellow accent text 8.4,
+  // green on the yellow accent 6.1.
+  static const swingDark = AppColors(
+    bg: Color(0xFF0E2B24),
+    card: Color(0xFF153A31),
+    recessed: Color(0xFF153A31),
+    border: Color(0xFF2F5D51),
+    txt: Color(0xFFFFF4D6),
+    txt2: Color(0xFFB4C9C1),
+    green: kSwingYellow,
+    onAccent: kSwingGreen,
+    accentTxt: kSwingYellow,
+    accentLt: kSwingOrange,
+    greenTint: Color(0xFF3A3517),
+    redTint: Color(0xFF3A1F18),
+    hairline: Color(0xFF2F5D51),
+    isDark: true,
+  );
+
+  @override
+  AppColors copyWith() => this;
+
+  @override
+  AppColors lerp(covariant AppColors? other, double t) {
+    if (other == null) return this;
+    Color l(Color a, Color b) => Color.lerp(a, b, t)!;
+    return AppColors(
+      bg: l(bg, other.bg),
+      card: l(card, other.card),
+      recessed: l(recessed, other.recessed),
+      border: l(border, other.border),
+      txt: l(txt, other.txt),
+      txt2: l(txt2, other.txt2),
+      green: l(green, other.green),
+      onAccent: l(onAccent, other.onAccent),
+      accentTxt: l(accentTxt, other.accentTxt),
+      accentLt: l(accentLt, other.accentLt),
+      greenTint: l(greenTint, other.greenTint),
+      redTint: l(redTint, other.redTint),
+      hairline: l(hairline, other.hairline),
+      isDark: t < 0.5 ? isDark : other.isDark,
+    );
+  }
 }

@@ -7,10 +7,6 @@ import '../theme.dart';
 import '../widgets/reason_sheet.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
-const _kGreen   = kGreen;
-const _kGreenLt = kGreenLt;
-const _kAmber   = kAmber;
-const _kBlue    = kBlue;
 // _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
 
 
@@ -42,6 +38,14 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
   Color get _kTxt    => AppColors.of(context).txt;
   Color get _kTxt2   => AppColors.of(context).txt2;
   Color get _kTint   => AppColors.of(context).greenTint;
+  // Theme-following accents (were const kGreen / kGreenLt).
+  Color get _kGreen => AppColors.of(context).green;
+  Color get _kGreenLt => AppColors.of(context).green;
+  Color get _kOn => AppColors.of(context).onAccent;
+  Color get _kAccentTxt => AppColors.of(context).accentTxt;
+  // Morning / Evening chips: the accent, like every other selection.
+  Color get _kAmber => _kGreen;
+  Color get _kBlue => _kGreen;
 
   late Set<String> _selUsers;
   late String _shift;
@@ -154,22 +158,20 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
       appBar: AppBar(
         title: const Text('Edit Entry',
             style: TextStyle(
-                color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 17)),
-        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           TextButton(
             onPressed: _saving ? null : _save,
             child: _saving
-                ? const SizedBox(
+                ? SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white))
-                : const Text('Save',
+                        strokeWidth: 2, color: _kAccentTxt))
+                : Text('Save',
                     style: TextStyle(
-                        color: Colors.white,
+                        color: _kAccentTxt,
                         fontWeight: FontWeight.bold,
                         fontSize: 16)),
           ),
@@ -262,7 +264,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                         ),
                         child: Text(d,
                             style: TextStyle(
-                                color: sel ? Colors.white : _kTxt,
+                                color: sel ? _kOn : _kTxt,
                                 fontWeight: FontWeight.w500,
                                 fontSize: 13)),
                       ),
@@ -306,8 +308,8 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                                 borderRadius: BorderRadius.zero,
                               ),
                               child: on
-                                  ? const Icon(Icons.check,
-                                      size: 12, color: Colors.white)
+                                  ? Icon(Icons.check,
+                                      size: 12, color: _kOn)
                                   : null,
                             ),
                             const SizedBox(width: 6),
@@ -347,7 +349,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                         ),
                         child: Text(tag,
                             style: TextStyle(
-                                color: on ? Colors.white : _kTxt,
+                                color: on ? _kOn : _kTxt,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500)),
                       ),
@@ -368,7 +370,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                           borderSide:
                               BorderSide(color: _kBorder, width: 2),
                         ),
-                        focusedBorder: const OutlineInputBorder(
+                        focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.zero,
                           borderSide:
                               BorderSide(color: _kGreenLt, width: 2),
@@ -384,7 +386,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                     onPressed: () => _addTag(_actCtrl.text),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _kGreen,
-                      foregroundColor: Colors.white,
+                      foregroundColor: _kOn,
                       minimumSize: const Size(44, 44),
                       padding: EdgeInsets.zero,
                       shape: const RoundedRectangleBorder(
@@ -442,7 +444,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
         child: Text(label,
             textAlign: TextAlign.center,
             style: TextStyle(
-                color: sel ? Colors.white : _kTxt,
+                color: sel ? _kOn : _kTxt,
                 fontWeight: FontWeight.w600,
                 fontSize: 14)),
       );

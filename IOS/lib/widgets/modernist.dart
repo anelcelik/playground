@@ -75,7 +75,7 @@ class BlockButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    final fg = outlined ? c.txt : Colors.white;
+    final fg = outlined ? c.txt : c.onAccent;
     return Semantics(
       button: true,
       child: InkWell(
@@ -105,7 +105,7 @@ class BlockButton extends StatelessWidget {
                           style: AppType.bodySm.copyWith(
                               color: outlined
                                   ? c.txt2
-                                  : Colors.white.withValues(alpha: 0.85))),
+                                  : c.onAccent.withValues(alpha: 0.85))),
                     ],
                   ],
                 ),
@@ -140,7 +140,7 @@ class SquareChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    final fg = selected ? Colors.white : c.txt;
+    final fg = selected ? c.onAccent : c.txt;
     return Semantics(
       button: true,
       selected: selected,
@@ -196,7 +196,7 @@ class Block extends StatelessWidget {
     final body = Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: recessed ? (c.isDark ? kInkD2 : kPaper2) : Colors.transparent,
+        color: recessed ? c.recessed : Colors.transparent,
         border: Border.all(
             color: recessed ? c.hairline : c.border, width: 2),
       ),
@@ -248,7 +248,7 @@ class SquareSwitch extends StatelessWidget {
                   child: Container(
                     width: 16,
                     height: 16,
-                    color: value ? Colors.white : c.txt2,
+                    color: value ? c.onAccent : c.txt2,
                   ),
                 ),
               ),

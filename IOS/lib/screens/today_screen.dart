@@ -146,7 +146,6 @@ class _TodayScreenState extends State<TodayScreen> {
       persist: false,
       action: SnackBarAction(
         label: 'EDIT',
-        textColor: Colors.white,
         onPressed: () => _openSheet(source.shift),
       ),
     ));

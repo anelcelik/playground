@@ -24,6 +24,24 @@ class DisplaySettingsScreen extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             children: [
 
+              // ── Colour theme ─────────────────────────────────
+              _SectionHeader('Color theme', c),
+              _card(c, Column(children: [
+                for (final p in AppPalette.values) ...[
+                  if (p.index > 0) Divider(height: 1, color: c.border),
+                  _RadioRow(
+                    c: c,
+                    title: p.label,
+                    subtitle: p.description,
+                    swatches: p.swatches,
+                    selected: s.palette == p,
+                    onTap: () => s.setPalette(p),
+                  ),
+                ],
+              ])),
+
+              const SizedBox(height: 16),
+
               // ── Theme ────────────────────────────────────────
               _SectionHeader('Appearance', c),
               _card(c, Column(children: [
@@ -153,6 +171,7 @@ class _RadioRow extends StatelessWidget {
   final AppColors c;
   final String title;
   final String subtitle;
+  final List<Color> swatches; // a colour theme's preview chips
   final bool selected;
   final VoidCallback onTap;
 
@@ -160,6 +179,7 @@ class _RadioRow extends StatelessWidget {
     required this.c,
     required this.title,
     required this.subtitle,
+    this.swatches = const [],
     required this.selected,
     required this.onTap,
   });
@@ -170,6 +190,16 @@ class _RadioRow extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Row(children: [
+            for (final sw in swatches)
+              Container(
+                width: 18,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: sw,
+                  border: Border.all(color: c.hairline, width: 1),
+                ),
+              ),
+            if (swatches.isNotEmpty) const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

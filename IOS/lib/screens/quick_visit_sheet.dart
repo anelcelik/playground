@@ -354,7 +354,7 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
                 fontSize: 12,
                 fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                 color: selected && !isClear
-                    ? Colors.white
+                    ? c.onAccent
                     : isClear
                         ? c.txt2
                         : c.txt)),

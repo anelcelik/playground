@@ -586,7 +586,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               builder: (_, cs) => Stack(
                 children: [
                   Container(
-                      height: 8, color: c.isDark ? kInkD2 : kPaper2),
+                      height: 8, color: c.recessed),
                   Container(
                     height: 8,
                     width: peak == 0 ? 0 : cs.maxWidth * (value / peak),

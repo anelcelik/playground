@@ -9,7 +9,6 @@ import 'recurring_activity_form.dart';
 import '../theme.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
-const _kGreen   = kGreen;
 // _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
 
 
@@ -118,10 +117,8 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
       appBar: AppBar(
         title: const Text('Recurring Activities',
             style: TextStyle(
-                color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 17)),
-        iconTheme: const IconThemeData(color: Colors.white),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openForm(),
@@ -207,7 +204,7 @@ class _ActivityTile extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: a.isActive ? _kGreen : kTxt2),
+                    color: a.isActive ? AppColors.of(context).green : kTxt2),
               ),
             ),
           ]),
@@ -315,8 +312,8 @@ class _EmptyState extends StatelessWidget {
               icon: const Icon(Icons.add),
               label: const Text('Add first activity'),
               style: ElevatedButton.styleFrom(
-                  backgroundColor: _kGreen,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.of(context).green,
+                  foregroundColor: AppColors.of(context).onAccent,
                   padding: const EdgeInsets.symmetric(
                       horizontal: 20, vertical: 12),
                   shape: const RoundedRectangleBorder(
