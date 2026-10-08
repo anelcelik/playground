@@ -13,10 +13,19 @@ import UIKit
     // Needed for CloudKit silent pushes (CKDatabaseSubscription).
     // Silent pushes require no user permission dialog.
     application.registerForRemoteNotifications()
+    // Breadcrumbs in the device log: iOS reclaiming a backgrounded scene
+    // destroys the Flutter engine, and reopening builds a new one (see
+    // _startupStep in main.dart).
+    for name in [UIScene.willConnectNotification, UIScene.didDisconnectNotification] {
+      NotificationCenter.default.addObserver(forName: name, object: nil, queue: nil) { note in
+        NSLog("[PlaygroundTracker] %@", note.name.rawValue)
+      }
+    }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
+    NSLog("[PlaygroundTracker] Flutter engine started")
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     if CloudKitPlugin.isAvailable,
        let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "CloudKitPlugin") {
@@ -24,6 +33,25 @@ import UIKit
     }
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "CalendarBridge") {
       CalendarBridge.shared.register(with: registrar.messenger())
+    }
+    // TEMPORARY test hook (Settings › Diagnostics): asks iOS to reclaim the
+    // scene the way it does in the background under memory pressure, so the
+    // reopen path can be tried on demand. Remove once that path is verified.
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "SceneReclaimTest") {
+      let channel = FlutterMethodChannel(
+        name: "com.playground.tracker/diagnostics", binaryMessenger: registrar.messenger())
+      channel.setMethodCallHandler { call, result in
+        guard call.method == "reclaimScene",
+              let session = UIApplication.shared.connectedScenes.first?.session else {
+          result(FlutterMethodNotImplemented)
+          return
+        }
+        result(nil)
+        NSLog("[PlaygroundTracker] reclaiming the scene (test)")
+        UIApplication.shared.requestSceneSessionDestruction(session, options: nil) { error in
+          NSLog("[PlaygroundTracker] scene reclaim failed: %@", error.localizedDescription)
+        }
+      }
     }
   }
 

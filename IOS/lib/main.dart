@@ -27,21 +27,26 @@ Future<void> main() async {
     databaseFactory = databaseFactoryFfi;
   }
 
+  // Nothing below may keep runApp() from running. iOS can reclaim a
+  // backgrounded app's scene, which destroys this engine; reopening starts a
+  // fresh engine and runs main() again inside the still-running process.
+  // A step that threw or never answered then left the white launch screen
+  // up for good. Each step is bounded and logged ("[startup]" in the device
+  // log) so a slow or failing one degrades to defaults instead.
+
   // Timezone setup — required for scheduling notifications at local time
   tz.initializeTimeZones();
-  try {
+  await _startupStep('timezone', () async {
     final localTz = await FlutterTimezone.getLocalTimezone();
     tz_local.setLocalLocation(tz_local.getLocation(localTz));
-  } catch (_) {
-    // Falls back to UTC if timezone detection fails (e.g. on Linux desktop)
-  }
+  }); // falls back to UTC (e.g. on Linux desktop)
 
   // Load display preferences (date/time format) + dashboard layout
-  await AppSettings.instance.load();
-  await DashboardPrefs.instance.load();
+  await _startupStep('settings', AppSettings.instance.load);
+  await _startupStep('dashboard prefs', DashboardPrefs.instance.load);
 
   // Local notifications (no-op on unsupported platforms)
-  await NotificationService.instance.init();
+  await _startupStep('notifications', NotificationService.instance.init);
 
   // The app is paid up front on the App Store, so there is no in-app
   // purchase to restore and no unlock state to hold. StoreKit gates the
@@ -52,9 +57,20 @@ Future<void> main() async {
   SyncController.instance.start();
 
   // Home Screen long-press shortcuts ("Log a Visit" / "View Dashboard")
-  await QuickActionService.instance.init();
+  await _startupStep('quick actions', QuickActionService.instance.init);
 
+  debugPrint('[startup] runApp');
   runApp(const PlaygroundTrackerApp());
+}
+
+/// Runs one startup step with a time limit; a failure is logged, not fatal.
+Future<void> _startupStep(String name, Future<void> Function() run) async {
+  try {
+    await run().timeout(const Duration(seconds: 8));
+    debugPrint('[startup] $name ok');
+  } catch (e, st) {
+    debugPrint('[startup] $name FAILED: $e\n$st');
+  }
 }
 
 class PlaygroundTrackerApp extends StatelessWidget {
