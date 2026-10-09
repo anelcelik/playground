@@ -382,7 +382,7 @@ class _HowItWorks extends StatelessWidget {
               ('1', 'Tap "Invite someone" — iOS share sheet opens'),
               ('2', 'Send the link via Messages, WhatsApp, or copy it'),
               ('3', 'They tap the link → "Accept" → done'),
-              ('4', 'Both phones sync automatically every 30 seconds'),
+              ('4', 'Both phones stay in sync automatically'),
             ].map((e) => Padding(
                   padding: const EdgeInsets.only(bottom: 7),
                   child: Row(children: [

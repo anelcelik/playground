@@ -5,8 +5,8 @@ import '../widgets/modernist.dart';
 
 /// The privacy policy, readable inside the app (App Review guideline
 /// 5.1.1(i) asks for it in the app as well as in App Store Connect).
-/// The same text lives in docs/privacy-policy.md for the web page; change
-/// both together.
+/// The same text lives in webpagepreparation/privacy-policy.md for the web
+/// page; change both together.
 class PrivacyScreen extends StatelessWidget {
   const PrivacyScreen({super.key});
 
