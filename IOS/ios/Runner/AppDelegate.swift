@@ -14,6 +14,7 @@ import UIKit
     // Silent pushes require no user permission dialog.
     application.registerForRemoteNotifications()
     NativeDiagLog.start()
+    ResumeCover.shared.install()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -201,5 +202,83 @@ enum NativeDiagLog {
         try? data.write(to: url)
       }
     }
+  }
+}
+
+// FlutterViewController drops its drawing surface when the scene enters the
+// background and recreates it only once the scene is active again
+// (appOrSceneBecameActive). Until then the bare view shows: the white seen in
+// the app switcher, during the return animation, and for as long as the scene
+// stays inactive (Face ID, banners). ResumeCover lays a snapshot of the last
+// frame over the Flutter view as the scene deactivates, and lifts it once
+// Flutter is displaying UI again — or after 5 s regardless, so a real stall
+// still shows (and is logged).
+final class ResumeCover: NSObject {
+  static let shared = ResumeCover()
+
+  private var cover: UIView?
+  private weak var watched: FlutterViewController?
+  private var watchdog: DispatchWorkItem?
+  private var coveredAt = Date()
+
+  func install() {
+    let center = NotificationCenter.default
+    center.addObserver(forName: UIScene.willDeactivateNotification, object: nil, queue: .main) {
+      [weak self] note in self?.coverIfShowingUI(note.object as? UIWindowScene)
+    }
+    center.addObserver(forName: UIScene.didActivateNotification, object: nil, queue: .main) {
+      [weak self] _ in self?.sceneActivated()
+    }
+  }
+
+  private func flutterViewController(_ scene: UIWindowScene?) -> FlutterViewController? {
+    let window = scene?.windows.first { $0.isKeyWindow } ?? scene?.windows.first
+    return window?.rootViewController as? FlutterViewController
+  }
+
+  private func coverIfShowingUI(_ scene: UIWindowScene?) {
+    guard cover == nil, let vc = flutterViewController(scene), vc.isDisplayingFlutterUI,
+          let snapshot = vc.view.snapshotView(afterScreenUpdates: false) else { return }
+    snapshot.frame = vc.view.bounds
+    snapshot.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    vc.view.addSubview(snapshot)
+    cover = snapshot
+    coveredAt = Date()
+    if watched !== vc {
+      watched?.removeObserver(self, forKeyPath: "displayingFlutterUI")
+      vc.addObserver(self, forKeyPath: "displayingFlutterUI", options: [.new], context: nil)
+      watched = vc
+    }
+  }
+
+  private func sceneActivated() {
+    guard cover != nil else { return }
+    if watched?.isDisplayingFlutterUI == true {
+      // Never lost its surface (Control Center, a banner): nothing to wait for.
+      lift("active, UI still on screen")
+      return
+    }
+    watchdog?.cancel()
+    let item = DispatchWorkItem { [weak self] in self?.lift("FLUTTER UI NOT BACK 5s after activate") }
+    watchdog = item
+    DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: item)
+  }
+
+  override func observeValue(
+    forKeyPath keyPath: String?, of object: Any?,
+    change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?
+  ) {
+    guard keyPath == "displayingFlutterUI", (change?[.newKey] as? Bool) == true else { return }
+    DispatchQueue.main.async { [weak self] in self?.lift("Flutter UI back") }
+  }
+
+  private func lift(_ reason: String) {
+    guard let view = cover else { return }
+    cover = nil
+    watchdog?.cancel()
+    watchdog = nil
+    let ms = Int(Date().timeIntervalSince(coveredAt) * 1000)
+    NativeDiagLog.log("resume cover lifted after \(ms) ms: \(reason)")
+    UIView.animate(withDuration: 0.15, animations: { view.alpha = 0 }) { _ in view.removeFromSuperview() }
   }
 }
