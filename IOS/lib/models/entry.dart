@@ -83,7 +83,7 @@ class Entry {
         'created_at': createdAt,
       };
 
-  Entry copyWith({bool? isDeleted, int? lastModified}) => Entry(
+  Entry copyWith({bool? isDeleted, int? lastModified, String? excuse}) => Entry(
         id: id,
         uuid: uuid,
         date: date,
@@ -94,7 +94,7 @@ class Entry {
         duration: duration,
         kids: kids,
         activities: activities,
-        excuse: excuse,
+        excuse: excuse ?? this.excuse,
         lastModified: lastModified ?? this.lastModified,
         isDeleted: isDeleted ?? this.isDeleted,
         createdAt: createdAt,
@@ -105,6 +105,16 @@ class Entry {
 
   List<String> get kidList =>
       (kids ?? '').split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+
+  /// "Dad didn't go · Work" for a visit where not every parent went and a
+  /// reason was given; empty otherwise. Nobody-went days show [excuse] as is.
+  String absentNote(List<String> parents) {
+    if (noPlayground || vacation || (excuse?.isEmpty ?? true)) return '';
+    final absent = parents.where((p) => !userList.contains(p)).toList();
+    return absent.isEmpty
+        ? excuse!
+        : "${absent.join(' & ')} didn't go · $excuse";
+  }
 
   List<String> get activityList =>
       (activities ?? '').split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();

@@ -120,8 +120,8 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
                     style: TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: kGreen,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.of(context).green,
+                  foregroundColor: AppColors.of(context).onAccent,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.zero),
@@ -199,7 +199,7 @@ class _HeroCard extends StatelessWidget {
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: AppColors.of(context).greenTint,
-          border: Border.all(color: kGreen.withAlpha(80), width: 2),
+          border: Border.all(color: AppColors.of(context).green.withAlpha(80), width: 2),
           borderRadius: BorderRadius.zero,
         ),
         child: Row(children: [
@@ -266,16 +266,16 @@ class _ParticipantTile extends StatelessWidget {
           height: 40,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isOwner ? kGreen : Colors.transparent,
+            color: isOwner ? AppColors.of(context).green : Colors.transparent,
             border: Border.all(
-                color: isOwner ? kGreen : AppColors.of(context).border,
+                color: isOwner ? AppColors.of(context).green : AppColors.of(context).border,
                 width: 2),
           ),
           child: Text(
             displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
             style: AppType.heading.copyWith(
                 fontSize: 16,
-                color: isOwner ? Colors.white : AppColors.of(context).txt),
+                color: isOwner ? AppColors.of(context).onAccent : AppColors.of(context).txt),
           ),
         ),
         const SizedBox(width: 12),
@@ -296,7 +296,7 @@ class _ParticipantTile extends StatelessWidget {
                         : 'Connected',
                 style: TextStyle(
                     fontSize: 12,
-                    color: isPending ? kAmber : c.txt2),
+                    color: isPending ? AppColors.of(context).txt : c.txt2),
               ),
             ],
           ),
@@ -309,11 +309,11 @@ class _ParticipantTile extends StatelessWidget {
               color: AppColors.of(context).greenTint,
               borderRadius: BorderRadius.zero,
             ),
-            child: const Text('You',
+            child: Text('You',
                 style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: kGreen)),
+                    color: AppColors.of(context).green)),
           ),
         if (onRevoke != null)
           TextButton(
@@ -365,8 +365,8 @@ class _HowItWorks extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(14),
-        decoration: const BoxDecoration(
-          color: Color(0xFFF0F4F0),
+        decoration: BoxDecoration(
+          color: c.recessed,
           borderRadius: BorderRadius.zero,
         ),
         child: Column(
@@ -389,13 +389,13 @@ class _HowItWorks extends StatelessWidget {
                     Container(
                       width: 22,
                       height: 22,
-                      decoration: const BoxDecoration(
-                          color: kGreen,
+                      decoration: BoxDecoration(
+                          color: AppColors.of(context).green,
                           borderRadius: BorderRadius.zero),
                       child: Center(
                         child: Text(e.$1,
-                            style: const TextStyle(
-                                color: Colors.white,
+                            style: TextStyle(
+                                color: AppColors.of(context).onAccent,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold)),
                       ),

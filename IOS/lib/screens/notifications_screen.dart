@@ -7,7 +7,6 @@ import '../theme.dart';
 import '../widgets/modernist.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
-const _kGreen   = kGreen;
 // _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
 
 
@@ -34,7 +33,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _load() async {
     final prefs = await DatabaseHelper.instance.getNotifPrefs();
-    final granted = await NotificationService.instance.requestPermission();
+    // Just look; the prompt comes when a reminder is switched on (_save).
+    final granted = await NotificationService.instance.hasPermission();
     if (mounted) {
       setState(() {
         _prefs = prefs;
@@ -47,6 +47,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _save(NotifPrefs prefs) async {
     setState(() => _prefs = prefs);
     await DatabaseHelper.instance.saveNotifPrefs(prefs);
+
+    if ((prefs.outdoorEnabled || prefs.logEnabled) && !_permissionGranted) {
+      final ok = await NotificationService.instance.requestPermission();
+      if (mounted) setState(() => _permissionGranted = ok);
+    }
 
     // Apply immediately
     if (prefs.outdoorEnabled) {
@@ -73,7 +78,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           child: Theme(
             data: Theme.of(ctx).copyWith(
                 colorScheme:
-                    Theme.of(ctx).colorScheme.copyWith(primary: _kGreen)),
+                    Theme.of(ctx).colorScheme.copyWith(primary: AppColors.of(context).green)),
             child: child!,
           ),
         ),
@@ -92,9 +97,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         title: const Text(
           'Notifications',
           style: TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
+              fontWeight: FontWeight.bold, fontSize: 17),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -103,7 +107,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (!_permissionGranted)
+                  // Only once a reminder is on: before that, iOS hasn't asked.
+                  if (!_permissionGranted &&
+                      (_prefs.outdoorEnabled || _prefs.logEnabled))
                     _PermissionBanner(
                       onRetry: () async {
                         final ok = await NotificationService.instance
@@ -194,12 +200,7 @@ class _NotifCard extends StatelessWidget {
     required this.onTimeTap,
   });
 
-  String _fmt(TimeOfDay t) {
-    final h = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
-    final m = t.minute.toString().padLeft(2, '0');
-    final period = t.period == DayPeriod.am ? 'AM' : 'PM';
-    return '$h:$m $period';
-  }
+  String _fmt(TimeOfDay t) => AppSettings.instance.fmtTimeOfDay(t);
 
   @override
   Widget build(BuildContext context) {
@@ -226,7 +227,7 @@ class _NotifCard extends StatelessWidget {
           // Header row
           Row(
             children: [
-              Icon(icon, size: 20, color: _kGreen),
+              Icon(icon, size: 20, color: AppColors.of(context).green),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -259,21 +260,21 @@ class _NotifCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: enabled ? c2.greenTint : c2.bg,
                   border: Border.all(
-                      color: enabled ? _kGreen : kBorder, width: 2),
+                      color: enabled ? AppColors.of(context).green : kBorder, width: 2),
                   borderRadius: BorderRadius.zero,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.access_time_rounded,
-                        size: 18, color: enabled ? _kGreen : kTxt2),
+                        size: 18, color: enabled ? AppColors.of(context).green : kTxt2),
                     const SizedBox(width: 8),
                     Text(
                       'Every day at  ${_fmt(time)}',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: enabled ? _kGreen : kTxt2,
+                        color: enabled ? AppColors.of(context).green : kTxt2,
                       ),
                     ),
                     if (enabled) ...[
@@ -316,7 +317,7 @@ class _PermissionBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber_rounded, size: 18, color: _kGreen),
+          Icon(Icons.warning_amber_rounded, size: 18, color: AppColors.of(context).green),
           const Expanded(
             child: Text(
               'Notifications are blocked. Open Settings → Playground Tracker → Allow Notifications.',
@@ -328,9 +329,9 @@ class _PermissionBanner extends StatelessWidget {
           ),
           TextButton(
             onPressed: onRetry,
-            child: const Text('Retry',
+            child: Text('Retry',
                 style: TextStyle(
-                    color: _kGreen, fontWeight: FontWeight.w700)),
+                    color: AppColors.of(context).green, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -352,8 +353,8 @@ class _InfoNote extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF0F4F0),
+      decoration: BoxDecoration(
+        color: c2.recessed,
         borderRadius: BorderRadius.zero,
       ),
       child: Row(

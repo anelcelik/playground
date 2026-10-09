@@ -14,6 +14,22 @@ bool get _supportsScheduled =>
 const _kIdOutdoor = 1; // "Did you play outside today?"
 const _kIdLog = 2;     // "Don't forget to log your visit"
 
+const _kRecurringDetails = NotificationDetails(
+  iOS: DarwinNotificationDetails(
+    presentAlert: true,
+    presentBadge: false,
+    presentSound: true,
+    interruptionLevel: InterruptionLevel.active,
+  ),
+  android: AndroidNotificationDetails(
+    'playground_recurring',
+    'Recurring Activity Reminders',
+    channelDescription: 'Reminders for recurring activities',
+    importance: Importance.defaultImportance,
+    priority: Priority.defaultPriority,
+  ),
+);
+
 class NotificationService {
   static final NotificationService instance = NotificationService._();
   NotificationService._();
@@ -21,11 +37,13 @@ class NotificationService {
   final _plugin = FlutterLocalNotificationsPlugin();
 
   Future<void> init() async {
+    // No permission prompt at launch: iOS asks when someone first turns a
+    // reminder on (requestPermission), so the request has its context.
     const settings = InitializationSettings(
       iOS: DarwinInitializationSettings(
-        requestAlertPermission: true,
+        requestAlertPermission: false,
         requestBadgePermission: false,
-        requestSoundPermission: true,
+        requestSoundPermission: false,
       ),
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
       linux: LinuxInitializationSettings(defaultActionName: 'Open'),
@@ -34,6 +52,15 @@ class NotificationService {
 
     // Restore any previously saved schedule after a cold restart
     await _restoreSchedule();
+  }
+
+  /// Whether notifications are allowed, without ever showing the prompt.
+  /// True off iOS, where nothing gates scheduling.
+  Future<bool> hasPermission() async {
+    final ios = _plugin
+        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+    if (ios == null) return true;
+    return (await ios.checkPermissions())?.isEnabled ?? false;
   }
 
   /// Asks iOS for notification permission (shows system dialog on first call).
@@ -91,7 +118,9 @@ class NotificationService {
 
   // ── Recurring activity notifications ─────────────────────
 
-  /// Schedules one weekly notification per repeat day for [activity].
+  /// Schedules one weekly notification per repeat day for [activity] — or a
+  /// single one for a one-time plan. Nothing for a plan whose To date has
+  /// passed (weekly repeats know nothing about date ranges).
   Future<void> scheduleRecurringActivity(RecurringActivity activity) async {
     if (!_supportsScheduled) return;
     if (!activity.notifyEnabled || activity.notifyHour == null || !activity.isActive) {
@@ -103,6 +132,27 @@ class NotificationService {
     final body = (activity.notifyMessage?.trim().isNotEmpty == true)
         ? activity.notifyMessage!.trim()
         : 'Time for your recurring activity';
+
+    final now = tz.TZDateTime.now(tz.local);
+    if (activity.dateTo != null) {
+      final to = DateTime.parse(activity.dateTo!);
+      final lastMoment = tz.TZDateTime(tz.local, to.year, to.month, to.day,
+          activity.notifyHour!, activity.notifyMinute ?? 0);
+      if (lastMoment.isBefore(now)) return;
+      if (activity.isOneTime) {
+        await _plugin.zonedSchedule(
+          activity.notifId(to.weekday - 1),
+          activity.title,
+          body,
+          lastMoment,
+          _kRecurringDetails,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+        );
+        return;
+      }
+    }
 
     for (final day in activity.repeatDays) {
       await _scheduleWeekly(
@@ -141,28 +191,12 @@ class NotificationService {
     required int minute,
   }) async {
     if (!_supportsScheduled) return;
-    const details = NotificationDetails(
-      iOS: DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: false,
-        presentSound: true,
-        interruptionLevel: InterruptionLevel.active,
-      ),
-      android: AndroidNotificationDetails(
-        'playground_recurring',
-        'Recurring Activity Reminders',
-        channelDescription: 'Reminders for recurring activities',
-        importance: Importance.defaultImportance,
-        priority: Priority.defaultPriority,
-      ),
-    );
-
     await _plugin.zonedSchedule(
       id,
       title,
       body,
       _nextWeekday(weekday, hour, minute),
-      details,
+      _kRecurringDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,

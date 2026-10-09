@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../db/database_helper.dart';
+import '../theme.dart';
 
 class AppSettings extends ChangeNotifier {
   static final AppSettings instance = AppSettings._();
@@ -9,10 +10,12 @@ class AppSettings extends ChangeNotifier {
   bool _use24h = false;
   bool _euDate = true; // true = European d MMM yyyy | false = US MMM d, yyyy
   ThemeMode _themeMode = ThemeMode.system;
+  AppPalette _palette = AppPalette.modernist;
 
   bool get use24h => _use24h;
   bool get euDate => _euDate;
   ThemeMode get themeMode => _themeMode;
+  AppPalette get palette => _palette;
 
   Future<void> load() async {
     _use24h   = await DatabaseHelper.instance.getMeta('setting_24h') == '1';
@@ -23,6 +26,9 @@ class AppSettings extends ChangeNotifier {
       'dark' => ThemeMode.dark,
       _ => ThemeMode.system,
     };
+    final pal = await DatabaseHelper.instance.getMeta('setting_palette');
+    _palette = AppPalette.values
+        .firstWhere((p) => p.name == pal, orElse: () => AppPalette.modernist);
   }
 
   Future<void> setUse24h(bool v) async {
@@ -40,6 +46,12 @@ class AppSettings extends ChangeNotifier {
   Future<void> setThemeMode(ThemeMode mode) async {
     _themeMode = mode;
     await DatabaseHelper.instance.setMeta('setting_theme', mode.name);
+    notifyListeners();
+  }
+
+  Future<void> setPalette(AppPalette p) async {
+    _palette = p;
+    await DatabaseHelper.instance.setMeta('setting_palette', p.name);
     notifyListeners();
   }
 

@@ -709,6 +709,14 @@ class DatabaseHelper {
     return rows.map(RecurringLog.fromMap).toList();
   }
 
+  Future<List<RecurringLog>> getRecurringLogsForActivity(
+      String activityId) async {
+    final db = await database;
+    final rows = await db.query('recurring_activity_logs',
+        where: 'activity_id = ?', whereArgs: [activityId]);
+    return rows.map(RecurringLog.fromMap).toList();
+  }
+
   Future<RecurringLog> upsertRecurringLog(RecurringLog log) async {
     final db = await database;
     await db.insert('recurring_activity_logs', log.toMap(),

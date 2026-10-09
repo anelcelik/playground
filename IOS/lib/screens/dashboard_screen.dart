@@ -586,7 +586,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               builder: (_, cs) => Stack(
                 children: [
                   Container(
-                      height: 8, color: c.isDark ? kInkD2 : kPaper2),
+                      height: 8, color: c.recessed),
                   Container(
                     height: 8,
                     width: peak == 0 ? 0 : cs.maxWidth * (value / peak),
@@ -741,6 +741,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (!e.vacation && !e.noPlayground && e.kidList.isNotEmpty)
         e.kidList.join(' & '),
       if (e.noPlayground && (e.excuse?.isNotEmpty ?? false)) e.excuse!,
+      if (e.absentNote(widget.family.parents).isNotEmpty)
+        e.absentNote(widget.family.parents),
     ];
 
     return InkWell(

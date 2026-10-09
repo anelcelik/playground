@@ -10,6 +10,7 @@ import '../settings/app_settings.dart';
 import '../theme.dart';
 import '../widgets/entry_actions.dart';
 import '../widgets/modernist.dart';
+import '../widgets/reason_sheet.dart';
 import 'quick_visit_sheet.dart';
 import 'recap_screen.dart';
 
@@ -20,6 +21,9 @@ import 'recap_screen.dart';
 /// something that should happen daily in ten seconds. Here the default
 /// path is one block that repeats the last visit, and everything else is
 /// two taps. Same tables, same columns — fewer decisions.
+///
+/// Tapping a past day in the week strip (or the date, for older days)
+/// shows that day instead, so a forgotten visit can still be logged.
 class TodayScreen extends StatefulWidget {
   final Family family;
   final VoidCallback onEntrySaved;
@@ -39,7 +43,8 @@ class TodayScreen extends StatefulWidget {
 class _TodayScreenState extends State<TodayScreen> {
   static String _fmt(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
 
-  final _today = DateTime.now();
+  final _now = DateTime.now();
+  late DateTime _day = DateUtils.dateOnly(_now);
   bool _loading = true;
   List<Entry> _entries = [];
   List<Entry> _lastVisit = [];
@@ -47,7 +52,24 @@ class _TodayScreenState extends State<TodayScreen> {
   // Weekday strip: date → number of parents who went that day.
   final Map<String, int> _week = {};
 
-  String get _date => _fmt(_today);
+  String get _date => _fmt(_day);
+  bool get _isToday => DateUtils.isSameDay(_day, _now);
+
+  void _selectDay(DateTime d) {
+    if (d.isAfter(_now) || DateUtils.isSameDay(d, _day)) return;
+    setState(() => _day = DateUtils.dateOnly(d));
+    _load();
+  }
+
+  Future<void> _pickDay() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _day,
+      firstDate: DateTime(2020),
+      lastDate: DateUtils.dateOnly(_now),
+    );
+    if (picked != null) _selectDay(picked);
+  }
 
   @override
   void initState() {
@@ -62,7 +84,7 @@ class _TodayScreenState extends State<TodayScreen> {
 
     // Seven small indexed queries beat one hand-rolled aggregate here.
     _week.clear();
-    final monday = _today.subtract(Duration(days: _today.weekday - 1));
+    final monday = _day.subtract(Duration(days: _day.weekday - 1));
     for (var i = 0; i < 7; i++) {
       final d = _fmt(monday.add(Duration(days: i)));
       final dayEntries = await DatabaseHelper.instance.getEntriesForDate(d);
@@ -120,9 +142,10 @@ class _TodayScreenState extends State<TodayScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: const Text('Visit logged'),
+      // With an action, Flutter would otherwise keep it up until tapped.
+      persist: false,
       action: SnackBarAction(
         label: 'EDIT',
-        textColor: Colors.white,
         onPressed: () => _openSheet(source.shift),
       ),
     ));
@@ -145,7 +168,7 @@ class _TodayScreenState extends State<TodayScreen> {
   Future<void> _logNonVisit({required bool vacation}) async {
     String? reason;
     if (!vacation) {
-      reason = await _askReason();
+      reason = await showReasonSheet(context);
       if (reason == null) return;
     }
     await DatabaseHelper.instance.insertEntry(Entry(
@@ -158,47 +181,6 @@ class _TodayScreenState extends State<TodayScreen> {
       lastModified: DateTime.now().millisecondsSinceEpoch,
     ));
     await _refresh();
-  }
-
-  Future<String?> _askReason() async {
-    final tags = await DatabaseHelper.instance.getTags('excuse');
-    if (!mounted) return null;
-    return showModalBottomSheet<String>(
-      context: context,
-      builder: (ctx) {
-        final c = AppColors.of(ctx);
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Rule(),
-              const SectionLabel('Why not?'),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final t in (tags.isEmpty
-                        ? const ['Rain', 'Sick', 'Too late', 'Busy']
-                        : tags))
-                      SquareChip(
-                          label: t,
-                          onTap: () => Navigator.pop(ctx, t)),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Text('Tap a reason to save the day as “nobody went”.',
-                    style: AppType.bodySm.copyWith(color: c.txt2)),
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   @override
@@ -243,15 +225,34 @@ class _TodayScreenState extends State<TodayScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(AppSettings.instance.fmtDateFull(_date).toUpperCase(),
-                      style: AppType.label
-                          .copyWith(color: c.txt2, letterSpacing: 1.6)),
+                  // Tap the date to reach a day before this week.
+                  InkWell(
+                    onTap: _pickDay,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(AppSettings.instance.fmtDateFull(_date).toUpperCase(),
+                            style: AppType.label
+                                .copyWith(color: c.txt2, letterSpacing: 1.6)),
+                        const SizedBox(width: 6),
+                        Icon(Icons.calendar_today_outlined,
+                            size: 12, color: c.txt2),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 5),
-                  Text('Today',
+                  Text(_dayTitle,
                       style: AppType.title.copyWith(color: c.txt)),
                 ],
               ),
             ),
+            if (!_isToday)
+              TextButton(
+                onPressed: () => _selectDay(_now),
+                child: Text('TODAY',
+                    style: AppType.label
+                        .copyWith(color: c.accentTxt, fontSize: 11)),
+              ),
             // Recap used to be buried in the gear popup.
             TextButton(
               onPressed: () => Navigator.push(context,
@@ -264,10 +265,20 @@ class _TodayScreenState extends State<TodayScreen> {
         ),
       );
 
+  String get _dayTitle {
+    if (_isToday) return 'Today';
+    if (DateUtils.isSameDay(_day, _now.subtract(const Duration(days: 1)))) {
+      return 'Yesterday';
+    }
+    return DateFormat('EEEE').format(_day);
+  }
+
   // ── Week strip ──────────────────────────────────────────
 
+  /// The week of the shown day. Past days are tappable; future ones are
+  /// dimmed, since there is nothing to log for them yet.
   Widget _weekStrip(AppColors c) {
-    final monday = _today.subtract(Duration(days: _today.weekday - 1));
+    final monday = _day.subtract(Duration(days: _day.weekday - 1));
     return Container(
       decoration: BoxDecoration(
         border: Border(
@@ -279,38 +290,46 @@ class _TodayScreenState extends State<TodayScreen> {
         children: List.generate(7, (i) {
           final d = monday.add(Duration(days: i));
           final key = _fmt(d);
-          final isToday = key == _date;
+          final selected = key == _date;
+          final future = d.isAfter(_now);
           final count = _week[key] ?? 0;
           return Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: isToday ? c.txt : Colors.transparent,
-                border: Border(
-                  right: i < 6
-                      ? BorderSide(color: c.hairline, width: 1)
-                      : BorderSide.none,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: future ? null : () => _selectDay(d),
+              child: Opacity(
+                opacity: future ? 0.35 : 1,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: selected ? c.txt : Colors.transparent,
+                    border: Border(
+                      right: i < 6
+                          ? BorderSide(color: c.hairline, width: 1)
+                          : BorderSide.none,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(DateFormat('E').format(d)[0],
+                          style: AppType.label.copyWith(
+                              fontSize: 9,
+                              letterSpacing: 1,
+                              color: selected
+                                  ? c.bg.withValues(alpha: 0.75)
+                                  : c.txt2)),
+                      const SizedBox(height: 3),
+                      Text('${d.day}',
+                          style: AppType.body.copyWith(
+                              fontSize: 15,
+                              fontWeight:
+                                  selected ? FontWeight.w800 : FontWeight.w600,
+                              color: selected ? c.bg : c.txt)),
+                      const SizedBox(height: 5),
+                      _dayMark(c, count, selected),
+                    ],
+                  ),
                 ),
-              ),
-              child: Column(
-                children: [
-                  Text(DateFormat('E').format(d)[0],
-                      style: AppType.label.copyWith(
-                          fontSize: 9,
-                          letterSpacing: 1,
-                          color: isToday
-                              ? c.bg.withValues(alpha: 0.75)
-                              : c.txt2)),
-                  const SizedBox(height: 3),
-                  Text('${d.day}',
-                      style: AppType.body.copyWith(
-                          fontSize: 15,
-                          fontWeight:
-                              isToday ? FontWeight.w800 : FontWeight.w600,
-                          color: isToday ? c.bg : c.txt)),
-                  const SizedBox(height: 5),
-                  _dayMark(c, count, isToday),
-                ],
               ),
             ),
           );
@@ -377,7 +396,7 @@ class _TodayScreenState extends State<TodayScreen> {
               const SizedBox(height: 11),
               Row(
                 children: [
-                  _textAction(c, 'Nobody went today',
+                  _textAction(c, _isToday ? 'Nobody went today' : 'Nobody went',
                       accent: true,
                       onTap: () => _logNonVisit(vacation: false)),
                   const SizedBox(width: 16),
@@ -490,7 +509,7 @@ class _TodayScreenState extends State<TodayScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionLabel('Planned for today',
+        SectionLabel(_isToday ? 'Planned for today' : 'Planned',
             trailing: '$done of ${_recurring.length} done'),
         for (final r in _recurring)
           Padding(
@@ -503,7 +522,9 @@ class _TodayScreenState extends State<TodayScreen> {
 
   Widget _plannedRow(AppColors c, RecurringActivityStatus r) {
     final a = r.activity;
-    final resolved = !r.isPending;
+    // A past day auto-marks untouched plans as missed; keep DONE / SKIP
+    // available so they can still be filled in afterwards.
+    final resolved = !r.isPending && !r.isMissed;
     final subtitle = [
       if (a.notifyTimeLabel.isNotEmpty) a.notifyTimeLabel,
       if (a.kidNames.isNotEmpty) a.kidNames.join(' & '),
@@ -575,8 +596,12 @@ class _TodayScreenState extends State<TodayScreen> {
           }),
           const SizedBox(width: 6),
           _pill(c, 'SKIP', onTap: () async {
+            final reason = await showReasonSheet(context,
+                title: 'Why skip?',
+                hint: 'Pick or write why “${a.title}” didn’t happen.');
+            if (reason == null) return;
             await RecurringService.instance
-                .skip(activity: a, date: _date, reason: 'other');
+                .skip(activity: a, date: _date, reason: reason);
             await _refresh();
           }),
         ],
@@ -612,7 +637,7 @@ class _TodayScreenState extends State<TodayScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionLabel("Today's log"),
+        SectionLabel(_isToday ? "Today's log" : 'Log'),
         for (final e in visits)
           InkWell(
             onTap: () => showEntryActions(context,
@@ -655,6 +680,12 @@ class _TodayScreenState extends State<TodayScreen> {
                                     if (e.activityList.isNotEmpty)
                                       e.activityList.join(', ')
                                   ].join(' · '),
+                                  style:
+                                      AppType.bodySm.copyWith(color: c.txt2)),
+                            ],
+                            if (e.absentNote(widget.family.parents).isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(e.absentNote(widget.family.parents),
                                   style:
                                       AppType.bodySm.copyWith(color: c.txt2)),
                             ],

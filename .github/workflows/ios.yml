@@ -21,6 +21,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # App Store Connect has refused uploads built with Xcode older than 26
+      # since 28 Apr 2026. Use the newest release (non-beta) Xcode on the
+      # runner and stop early if even that is too old.
+      - name: Select Xcode 26 or later
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -n1)
+          sudo xcode-select -s "$xcode"
+          xcodebuild -version
+          major=$(xcodebuild -version | awk 'NR==1 { split($2, v, "."); print v[1] }')
+          if [ "$major" -lt 26 ]; then
+            echo "::error::Newest Xcode on this runner is $xcode; App Store uploads need 26 or later"
+            exit 1
+          fi
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:

@@ -4,8 +4,6 @@ import '../db/database_helper.dart';
 import '../theme.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
-const _kGreen   = kGreen;
-const _kGreenLt = kGreenLt;
 // _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
 
 
@@ -103,9 +101,8 @@ class _SetupScreenState extends State<SetupScreen> {
       appBar: AppBar(
         title: const Text(
           'Playground Tracker',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(14),
@@ -119,10 +116,10 @@ class _SetupScreenState extends State<SetupScreen> {
               children: [
                 Text(
                   widget.isEditing ? 'Family Settings' : 'Welcome',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    color: _kGreen,
+                    color: AppColors.of(context).green,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -170,8 +167,8 @@ class _SetupScreenState extends State<SetupScreen> {
                   child: ElevatedButton(
                     onPressed: _save,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _kGreen,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.of(context).green,
+                      foregroundColor: AppColors.of(context).onAccent,
                       padding: const EdgeInsets.symmetric(vertical: 15),
                       shape: const RoundedRectangleBorder(
                           borderRadius: BorderRadius.zero),
@@ -247,9 +244,9 @@ class _PersonRow extends StatelessWidget {
                   borderRadius: BorderRadius.zero,
                   borderSide: BorderSide(color: kBorder, width: 2),
                 ),
-                focusedBorder: const OutlineInputBorder(
+                focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.zero,
-                  borderSide: BorderSide(color: _kGreenLt, width: 2),
+                  borderSide: BorderSide(color: AppColors.of(context).green, width: 2),
                 ),
                 border: const OutlineInputBorder(
                     borderRadius: BorderRadius.zero),

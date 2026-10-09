@@ -14,7 +14,7 @@ import 'package:quick_actions/quick_actions.dart';
 /// No-op on non-iOS/Android platforms (Linux dev, etc.) — quick_actions has
 /// no plugin implementation there, so calling into it throws
 /// MissingPluginException, which would otherwise hang `main()` since it's
-/// awaited before `runApp()`. See [PurchaseService] for the same pattern.
+/// awaited before `runApp()`.
 class QuickActionService {
   static final QuickActionService instance = QuickActionService._();
   QuickActionService._();

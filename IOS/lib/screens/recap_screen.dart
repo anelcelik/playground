@@ -97,7 +97,7 @@ class _RecapScreenState extends State<RecapScreen> {
         child: Text(label,
             textAlign: TextAlign.center,
             style: TextStyle(
-                color: sel ? Colors.white : c.txt2,
+                color: sel ? c.onAccent : c.txt2,
                 fontSize: 13,
                 fontWeight: FontWeight.w600)),
       ),
@@ -142,25 +142,25 @@ class _RecapBody extends StatelessWidget {
           ),
           child: Column(children: [
             Text(periodLabel.toUpperCase(),
-                style: const TextStyle(
-                    color: Colors.white70,
+                style: TextStyle(
+                    color: c.onAccent.withValues(alpha: 0.7),
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.2)),
             const SizedBox(height: 8),
             Text('$totalVisits',
-                style: const TextStyle(
-                    color: Colors.white,
+                style: TextStyle(
+                    color: c.onAccent,
                     fontSize: 56,
                     fontWeight: FontWeight.w900,
                     height: 1)),
             Text(totalVisits == 1 ? 'playground visit' : 'playground visits',
-                style: const TextStyle(color: Colors.white, fontSize: 16)),
+                style: TextStyle(color: c.onAccent, fontSize: 16)),
             if (totalMinutes > 0) ...[
               const SizedBox(height: 14),
               Text('${_fmtMins(totalMinutes)} outside as a family',
-                  style: const TextStyle(
-                      color: Colors.white,
+                  style: TextStyle(
+                      color: c.onAccent,
                       fontSize: 15,
                       fontWeight: FontWeight.w600)),
             ],

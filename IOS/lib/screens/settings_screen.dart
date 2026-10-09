@@ -8,6 +8,7 @@ import 'setup_screen.dart';
 import 'invite_family_screen.dart';
 import 'notifications_screen.dart';
 import 'display_settings_screen.dart';
+import 'privacy_screen.dart';
 import 'recap_screen.dart';
 
 /// The fourth tab. Collects what the gear PopupMenuButton used to hold,
@@ -77,6 +78,12 @@ class SettingsScreen extends StatelessWidget {
           label: 'Recap',
           onTap: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const RecapScreen())),
+        ),
+        _Row(
+          label: 'Privacy',
+          value: 'No data collected',
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const PrivacyScreen())),
         ),
         const Rule(),
         Padding(

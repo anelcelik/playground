@@ -56,6 +56,10 @@ class SyncService {
       _lastSyncedAt = DateTime.now();
       status.value = SyncStatus.synced;
       _ensureSubscriptions();
+    } on MissingPluginException {
+      // Native side skipped CloudKit: this build has no iCloud entitlement
+      // (see CloudKitPlugin.isAvailable).
+      status.value = SyncStatus.unavailable;
     } catch (e, st) {
       debugPrint('[CloudKit] sync error: $e\n$st');
       status.value = SyncStatus.error;

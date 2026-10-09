@@ -65,7 +65,7 @@ class _DashboardCustomiseScreenState
               }
             },
             child: Text('Reset',
-                style: TextStyle(color: Colors.white.withAlpha(200))),
+                style: TextStyle(color: AppColors.of(context).accentTxt)),
           ),
         ],
       ),

@@ -5,6 +5,7 @@ import '../models/entry.dart';
 import '../models/family.dart';
 import '../theme.dart';
 import '../widgets/modernist.dart';
+import '../widgets/reason_sheet.dart';
 
 /// The second tap. Everything below "who went" is optional and prefilled
 /// from the last visit of the same shift, so Save is reachable immediately.
@@ -58,6 +59,9 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
   late Set<String> _kids;
   late Set<String> _activities;
   String? _duration;
+  // Why the parents who are not ticked stayed home. Only kept while
+  // someone is unticked; never prefilled from the last visit.
+  String? _absentReason;
   List<String> _activityTags = [];
   bool _saving = false;
 
@@ -77,6 +81,7 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
     if (_kids.isEmpty) _kids = {...widget.family.kids};
     _activities = {...?s?.activityList};
     _duration = s?.duration;
+    _absentReason = widget.existing?.excuse;
     _loadTags();
   }
 
@@ -86,6 +91,9 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
   }
 
   bool get _canSave => _users.isNotEmpty;
+
+  List<String> get _absent =>
+      widget.family.parents.where((p) => !_users.contains(p)).toList();
 
   Future<void> _save() async {
     if (!_canSave || _saving) return;
@@ -102,6 +110,7 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
       duration: _duration,
       kids: _kids.isEmpty ? null : _kids.join(','),
       activities: _activities.isEmpty ? null : _activities.join(','),
+      excuse: _absent.isEmpty ? null : _absentReason,
       lastModified: now,
       createdAt: widget.existing?.createdAt,
     );
@@ -115,6 +124,7 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
     for (final a in _activities) {
       await DatabaseHelper.instance.addTag('activity', a);
     }
+    if (_absent.isNotEmpty) await rememberReason(_absentReason);
     if (mounted) Navigator.pop(context, true);
   }
 
@@ -216,6 +226,17 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
                           : _users.add(p)),
                     ),
                 ]),
+                if (_users.isNotEmpty && _absent.isNotEmpty) ...[
+                  SectionLabel(
+                      "Why didn't ${_absent.join(' & ')} go?  ·  optional"),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+                    child: ReasonChips(
+                      selected: _absentReason,
+                      onChanged: (r) => setState(() => _absentReason = r),
+                    ),
+                  ),
+                ],
                 if (widget.family.kids.isNotEmpty) ...[
                   const SectionLabel('Kids'),
                   _wrap([
@@ -333,7 +354,7 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
                 fontSize: 12,
                 fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                 color: selected && !isClear
-                    ? Colors.white
+                    ? c.onAccent
                     : isClear
                         ? c.txt2
                         : c.txt)),

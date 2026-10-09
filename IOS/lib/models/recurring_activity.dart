@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../settings/app_settings.dart';
 import 'entry.dart';
 
 // ── Recurring activity definition ─────────────────────────
@@ -113,7 +114,12 @@ class RecurringActivity {
     return true;
   }
 
+  /// A one-time plan: a single date, stored as From = To on that weekday so
+  /// appliesTo, sync and the DB need nothing new.
+  bool get isOneTime => dateFrom != null && dateFrom == dateTo;
+
   String get repeatDaysLabel {
+    if (isOneTime) return 'Once · ${AppSettings.instance.fmtDate(dateFrom!)}';
     if (repeatDays.isEmpty) return 'No days';
     const n = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     final s = repeatDays.toSet();
@@ -123,13 +129,10 @@ class RecurringActivity {
     return ([...repeatDays]..sort()).map((d) => n[d]).join(', ');
   }
 
-  String get notifyTimeLabel {
-    if (notifyHour == null) return '';
-    final h = notifyHour! % 12 == 0 ? 12 : notifyHour! % 12;
-    final m = notifyMinute.toString().padLeft(2, '0');
-    final p = notifyHour! < 12 ? 'AM' : 'PM';
-    return '$h:$m $p';
-  }
+  /// Follows the 12/24-hour choice in Display settings.
+  String get notifyTimeLabel => notifyHour == null
+      ? ''
+      : AppSettings.instance.fmtHM(notifyHour!, notifyMinute ?? 0);
 
   /// Stable notification ID for (this activity, dayOfWeek), range 100–9099.
   int notifId(int dayOfWeek) =>
@@ -180,6 +183,15 @@ class RecurringLog {
 }
 
 // ── Combined view for a specific date ─────────────────────
+
+/// One day in a plan's history (PlanHistoryScreen).
+class PlanOccurrence {
+  final String date;    // YYYY-MM-DD
+  final String status;  // 'confirmed' | 'skipped' | 'missed' | 'pending'
+  final String? reason; // skip reason
+
+  const PlanOccurrence(this.date, this.status, [this.reason]);
+}
 
 class RecurringActivityStatus {
   final RecurringActivity activity;
