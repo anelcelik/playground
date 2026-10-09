@@ -33,7 +33,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _load() async {
     final prefs = await DatabaseHelper.instance.getNotifPrefs();
-    final granted = await NotificationService.instance.requestPermission();
+    // Just look; the prompt comes when a reminder is switched on (_save).
+    final granted = await NotificationService.instance.hasPermission();
     if (mounted) {
       setState(() {
         _prefs = prefs;
@@ -46,6 +47,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _save(NotifPrefs prefs) async {
     setState(() => _prefs = prefs);
     await DatabaseHelper.instance.saveNotifPrefs(prefs);
+
+    if ((prefs.outdoorEnabled || prefs.logEnabled) && !_permissionGranted) {
+      final ok = await NotificationService.instance.requestPermission();
+      if (mounted) setState(() => _permissionGranted = ok);
+    }
 
     // Apply immediately
     if (prefs.outdoorEnabled) {
@@ -101,7 +107,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (!_permissionGranted)
+                  // Only once a reminder is on: before that, iOS hasn't asked.
+                  if (!_permissionGranted &&
+                      (_prefs.outdoorEnabled || _prefs.logEnabled))
                     _PermissionBanner(
                       onRetry: () async {
                         final ok = await NotificationService.instance

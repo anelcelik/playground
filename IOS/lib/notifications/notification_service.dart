@@ -37,11 +37,13 @@ class NotificationService {
   final _plugin = FlutterLocalNotificationsPlugin();
 
   Future<void> init() async {
+    // No permission prompt at launch: iOS asks when someone first turns a
+    // reminder on (requestPermission), so the request has its context.
     const settings = InitializationSettings(
       iOS: DarwinInitializationSettings(
-        requestAlertPermission: true,
+        requestAlertPermission: false,
         requestBadgePermission: false,
-        requestSoundPermission: true,
+        requestSoundPermission: false,
       ),
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
       linux: LinuxInitializationSettings(defaultActionName: 'Open'),
@@ -50,6 +52,15 @@ class NotificationService {
 
     // Restore any previously saved schedule after a cold restart
     await _restoreSchedule();
+  }
+
+  /// Whether notifications are allowed, without ever showing the prompt.
+  /// True off iOS, where nothing gates scheduling.
+  Future<bool> hasPermission() async {
+    final ios = _plugin
+        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+    if (ios == null) return true;
+    return (await ios.checkPermissions())?.isEnabled ?? false;
   }
 
   /// Asks iOS for notification permission (shows system dialog on first call).

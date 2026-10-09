@@ -10,7 +10,6 @@ import 'models/dashboard_prefs.dart';
 import 'notifications/notification_service.dart';
 import 'screens/setup_screen.dart';
 import 'screens/home_screen.dart';
-import 'services/diag_log.dart';
 import 'services/quick_action_service.dart';
 import 'settings/app_settings.dart';
 import 'sync/sync_controller.dart';
@@ -18,8 +17,6 @@ import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  DiagLog.instance.attach();
-  DiagLog.instance.log('main() start');
 
   // sqflite needs FFI on Linux / macOS / Windows desktop
   if (!kIsWeb &&
@@ -34,8 +31,8 @@ Future<void> main() async {
   // backgrounded app's scene, which destroys this engine; reopening starts a
   // fresh engine and runs main() again inside the still-running process.
   // A step that threw or never answered then left the white launch screen
-  // up for good. Each step is bounded and logged (DiagLog) so a slow or
-  // failing one degrades to defaults instead.
+  // up for good. Each step is bounded so a slow or failing one degrades to
+  // defaults instead.
 
   // Timezone setup — required for scheduling notifications at local time
   tz.initializeTimeZones();
@@ -51,10 +48,8 @@ Future<void> main() async {
   // Local notifications (no-op on unsupported platforms)
   await _startupStep('notifications', NotificationService.instance.init);
 
-  // The app is paid up front on the App Store, so there is no in-app
-  // purchase to restore and no unlock state to hold. StoreKit gates the
-  // download; the app itself never gates a screen. PurchaseService and
-  // PaywallScreen are deliberately no longer wired in.
+  // The app is paid up front on the App Store: no in-app purchase, nothing
+  // to unlock, no screen is ever gated.
 
   // iCloud sync (no-op on non-iOS platforms)
   SyncController.instance.start();
@@ -62,7 +57,6 @@ Future<void> main() async {
   // Home Screen long-press shortcuts ("Log a Visit" / "View Dashboard")
   await _startupStep('quick actions', QuickActionService.instance.init);
 
-  DiagLog.instance.log('startup: runApp');
   runApp(const PlaygroundTrackerApp());
 }
 
@@ -70,9 +64,8 @@ Future<void> main() async {
 Future<void> _startupStep(String name, Future<void> Function() run) async {
   try {
     await run().timeout(const Duration(seconds: 8));
-    DiagLog.instance.log('startup: $name ok');
   } catch (e, st) {
-    DiagLog.instance.log('startup: $name FAILED: $e\n$st');
+    debugPrint('[startup] $name failed: $e\n$st');
   }
 }
 

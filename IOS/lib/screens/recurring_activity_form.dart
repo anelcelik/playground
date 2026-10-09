@@ -388,7 +388,11 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
               ),
               SquareSwitch(
                 value: _notifyEnabled,
-                onChanged: (v) => setState(() => _notifyEnabled = v),
+                onChanged: (v) {
+                  setState(() => _notifyEnabled = v);
+                  // First reminder anywhere in the app: iOS asks now.
+                  if (v) NotificationService.instance.requestPermission();
+                },
               ),
             ]),
             if (_notifyEnabled) ...[

@@ -13,13 +13,11 @@ import UIKit
     // Needed for CloudKit silent pushes (CKDatabaseSubscription).
     // Silent pushes require no user permission dialog.
     application.registerForRemoteNotifications()
-    NativeDiagLog.start()
     ResumeCover.shared.install()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
-    NativeDiagLog.log("Flutter engine started")
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     if CloudKitPlugin.isAvailable,
        let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "CloudKitPlugin") {
@@ -150,61 +148,6 @@ final class CalendarBridge: NSObject, EKEventEditViewDelegate {
   }
 }
 
-// Native half of the diagnostics log (Dart half: lib/services/diag_log.dart).
-// Scene and app events go to Documents/diagnostics-native.log, pulled over USB
-// when the app came back from the background as a white screen. Writes are
-// serialised on a background queue and never throw.
-enum NativeDiagLog {
-  private static let queue = DispatchQueue(label: "playground.diaglog")
-  private static let url = FileManager.default
-    .urls(for: .documentDirectory, in: .userDomainMask).first?
-    .appendingPathComponent("diagnostics-native.log")
-  private static let stamp: ISO8601DateFormatter = {
-    let f = ISO8601DateFormatter()
-    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    return f
-  }()
-
-  static func start() {
-    queue.async {
-      // Rolling: start over past 256 KB.
-      if let url = url,
-         let size = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.size] as? Int,
-         size > 256 * 1024 {
-        try? FileManager.default.removeItem(at: url)
-      }
-    }
-    log("process launched")
-    let names: [Notification.Name] = [
-      UIScene.willConnectNotification, UIScene.didDisconnectNotification,
-      UIScene.willEnterForegroundNotification, UIScene.didActivateNotification,
-      UIScene.willDeactivateNotification, UIScene.didEnterBackgroundNotification,
-      UIApplication.didReceiveMemoryWarningNotification, UIApplication.willTerminateNotification,
-      UIApplication.protectedDataWillBecomeUnavailableNotification,
-      UIApplication.protectedDataDidBecomeAvailableNotification,
-    ]
-    for name in names {
-      NotificationCenter.default.addObserver(forName: name, object: nil, queue: nil) { note in
-        log(note.name.rawValue)
-      }
-    }
-  }
-
-  static func log(_ message: String) {
-    let line = "\(stamp.string(from: Date())) [\(getpid())] \(message)\n"
-    queue.async {
-      guard let url = url, let data = line.data(using: .utf8) else { return }
-      if let handle = try? FileHandle(forWritingTo: url) {
-        handle.seekToEndOfFile()
-        handle.write(data)
-        handle.closeFile()
-      } else {
-        try? data.write(to: url)
-      }
-    }
-  }
-}
-
 // FlutterViewController drops its drawing surface when the scene enters the
 // background and recreates it only once the scene is active again
 // (appOrSceneBecameActive). Until then the bare view shows: the white seen in
@@ -212,14 +155,13 @@ enum NativeDiagLog {
 // stays inactive (Face ID, banners). ResumeCover lays a snapshot of the last
 // frame over the Flutter view as the scene deactivates, and lifts it once
 // Flutter is displaying UI again — or after 5 s regardless, so a real stall
-// still shows (and is logged).
+// still shows.
 final class ResumeCover: NSObject {
   static let shared = ResumeCover()
 
   private var cover: UIView?
   private weak var watched: FlutterViewController?
   private var watchdog: DispatchWorkItem?
-  private var coveredAt = Date()
 
   func install() {
     let center = NotificationCenter.default
@@ -243,7 +185,6 @@ final class ResumeCover: NSObject {
     snapshot.autoresizingMask = [.flexibleWidth, .flexibleHeight]
     vc.view.addSubview(snapshot)
     cover = snapshot
-    coveredAt = Date()
     if watched !== vc {
       watched?.removeObserver(self, forKeyPath: "displayingFlutterUI")
       vc.addObserver(self, forKeyPath: "displayingFlutterUI", options: [.new], context: nil)
@@ -255,11 +196,11 @@ final class ResumeCover: NSObject {
     guard cover != nil else { return }
     if watched?.isDisplayingFlutterUI == true {
       // Never lost its surface (Control Center, a banner): nothing to wait for.
-      lift("active, UI still on screen")
+      lift()
       return
     }
     watchdog?.cancel()
-    let item = DispatchWorkItem { [weak self] in self?.lift("FLUTTER UI NOT BACK 5s after activate") }
+    let item = DispatchWorkItem { [weak self] in self?.lift() }
     watchdog = item
     DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: item)
   }
@@ -269,16 +210,14 @@ final class ResumeCover: NSObject {
     change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?
   ) {
     guard keyPath == "displayingFlutterUI", (change?[.newKey] as? Bool) == true else { return }
-    DispatchQueue.main.async { [weak self] in self?.lift("Flutter UI back") }
+    DispatchQueue.main.async { [weak self] in self?.lift() }
   }
 
-  private func lift(_ reason: String) {
+  private func lift() {
     guard let view = cover else { return }
     cover = nil
     watchdog?.cancel()
     watchdog = nil
-    let ms = Int(Date().timeIntervalSince(coveredAt) * 1000)
-    NativeDiagLog.log("resume cover lifted after \(ms) ms: \(reason)")
     UIView.animate(withDuration: 0.15, animations: { view.alpha = 0 }) { _ in view.removeFromSuperview() }
   }
 }
