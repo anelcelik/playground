@@ -9,12 +9,8 @@ import '../sync/sync_service.dart';
 import '../theme.dart';
 import '../widgets/entry_actions.dart';
 import '../widgets/modernist.dart';
+import '../models/durations.dart';
 import 'dashboard_customise_screen.dart';
-
-const _durMap = {
-  '15 min': 15, '30 min': 30, '45 min': 45, '1 hour': 60,
-  '1.5 hours': 90, '2 hours': 120, '2+ hours': 150,
-};
 
 const _monthNames = [
   'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
@@ -406,7 +402,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Color? _squareFill(AppColors c, int state) => switch (state) {
         _dayBoth => c.green,
         _dayOne => c.accentLt,
-        _dayVacation => c.txt,
+        _ => null,
+      };
+
+  /// Vacation is drawn as a thick outline rather than a fill: in palettes
+  /// where the accent is the ink colour, a filled square read as "both".
+  Border? _squareBorder(AppColors c, int state, double thick) =>
+      switch (state) {
+        _dayNone => Border.all(color: c.hairline, width: 1),
+        _dayVacation => Border.all(color: c.txt, width: thick),
         _ => null,
       };
 
@@ -495,9 +499,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: _squareFill(c, state),
-                        border: state == _dayNone
-                            ? Border.all(color: c.hairline, width: 1)
-                            : null,
+                        border: _squareBorder(c, state, 3),
                       ),
                     ),
                   ),
@@ -529,9 +531,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             height: 9,
             decoration: BoxDecoration(
               color: _squareFill(c, state),
-              border: state == _dayNone
-                  ? Border.all(color: c.hairline, width: 1)
-                  : null,
+              border: _squareBorder(c, state, 2),
             ),
           ),
           const SizedBox(width: 6),
@@ -813,7 +813,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Map<String, int> _calcDurStats(List<Entry> entries) {
     final vals = entries
         .where((e) => !e.vacation && !e.noPlayground && e.duration != null)
-        .map((e) => _durMap[e.duration] ?? 0)
+        .map((e) => durationMinutes(e.duration))
         .where((v) => v > 0)
         .toList();
     if (vals.isEmpty) return {'avg': 0, 'total': 0};

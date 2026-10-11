@@ -44,6 +44,15 @@ class DisplaySettingsScreen extends StatelessWidget {
 
               // ── Theme ────────────────────────────────────────
               _SectionHeader('Appearance', c),
+              if (s.palette.isFixed)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                      '${s.palette.label} is always '
+                      '${s.palette == AppPalette.whiteOnBlack ? 'dark' : 'light'}; '
+                      'this applies to Modernist and Swing.',
+                      style: TextStyle(fontSize: 12, color: c.txt2)),
+                ),
               _card(c, Column(children: [
                 _RadioRow(
                   c: c,

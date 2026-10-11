@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../db/database_helper.dart';
+import '../models/durations.dart';
 import '../models/entry.dart';
 import '../models/family.dart';
 import '../theme.dart';
@@ -53,7 +54,6 @@ class _QuickVisitSheet extends StatefulWidget {
 }
 
 class _QuickVisitSheetState extends State<_QuickVisitSheet> {
-  static const _durations = ['15m', '30m', '45m', '1h', '1.5h', '2h', '2h+'];
 
   late Set<String> _users;
   late Set<String> _kids;
@@ -80,7 +80,7 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
     _kids = {...?s?.kidList};
     if (_kids.isEmpty) _kids = {...widget.family.kids};
     _activities = {...?s?.activityList};
-    _duration = s?.duration;
+    _duration = normalizeDuration(s?.duration);
     _absentReason = widget.existing?.excuse;
     _loadTags();
   }
@@ -305,7 +305,7 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
   /// 4-column grid of preset durations plus a "—" to clear it. Presets beat
   /// a picker for something logged daily.
   Widget _durationGrid(AppColors c) {
-    final cells = [..._durations, '—'];
+    final cells = [...kDurations, '—'];
     return Container(
       decoration: BoxDecoration(border: Border.all(color: c.border, width: 2)),
       child: Column(

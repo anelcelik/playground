@@ -341,7 +341,14 @@ class _TodayScreenState extends State<TodayScreen> {
   Widget _dayMark(AppColors c, int count, bool isToday) {
     // -1 vacation · 0 nothing logged · 1 one parent · 2+ both
     if (count == -1) {
-      return Container(width: 7, height: 7, color: isToday ? c.bg : c.txt);
+      // An outline, not a fill: with the accent as ink it read as "both".
+      return Container(
+        width: 7,
+        height: 7,
+        decoration: BoxDecoration(
+          border: Border.all(color: isToday ? c.bg : c.txt, width: 2),
+        ),
+      );
     }
     if (count == 0) {
       return Container(
@@ -431,7 +438,7 @@ class _TodayScreenState extends State<TodayScreen> {
             ],
           ),
           const SizedBox(height: 2),
-          Text(logged ? _describe(entry) : 'Not logged',
+          Text(logged ? _describe(entry, withShift: false) : 'Not logged',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AppType.bodySm.copyWith(color: c.txt2)),
@@ -456,9 +463,9 @@ class _TodayScreenState extends State<TodayScreen> {
         ),
       );
 
-  String _describe(Entry e) {
+  String _describe(Entry e, {bool withShift = true}) {
     final parts = <String>[
-      e.shift == 'morning' ? 'Morning' : 'Evening',
+      if (withShift) e.shift == 'morning' ? 'Morning' : 'Evening',
       if (e.userList.isNotEmpty) e.userList.join(' & '),
       if (e.kidList.isNotEmpty) e.kidList.join(' & '),
       if (e.duration != null && e.duration!.isNotEmpty) e.duration!,

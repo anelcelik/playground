@@ -98,6 +98,10 @@ abstract class AppType {
 /// screen reads goes through [AppColors], which rides along as an extension.
 ThemeData buildTheme(AppPalette palette, Brightness b) {
   final c = palette.colors(b);
+  // A fixed palette (always light / always dark) ignores [b]; the theme's
+  // brightness follows the colours so text fields, keyboard and status bar
+  // match them.
+  b = c.isDark ? Brightness.dark : Brightness.light;
   final bg = c.bg;
   final surface = c.card;
   final onSurface = c.txt;
@@ -223,12 +227,19 @@ enum AppPalette {
   modernist('Modernist', 'Red and black on paper — the original look',
       [kPaper, kInk, kAccent]),
   swing('Swing', 'Sunny yellow, deep green and orange, from the app icon',
-      [kSwingYellow, kSwingGreen, kSwingOrange]);
+      [kSwingYellow, kSwingGreen, kSwingOrange]),
+  blackOnWhite('Black on white', 'Plain black and white, always light',
+      [Colors.white, Colors.black, Color(0xFF8C8C8C)]),
+  whiteOnBlack('White on black', 'Plain white on black, always dark',
+      [Colors.black, Colors.white, Color(0xFF6E6E6E)]);
 
   const AppPalette(this.label, this.description, this.swatches);
   final String label;
   final String description;
   final List<Color> swatches;
+
+  /// Always light or always dark, whatever Appearance says.
+  bool get isFixed => this == blackOnWhite || this == whiteOnBlack;
 
   AppColors colors(Brightness b) => switch (this) {
         AppPalette.modernist => b == Brightness.dark
@@ -236,6 +247,8 @@ enum AppPalette {
             : AppColors.modernistLight,
         AppPalette.swing =>
           b == Brightness.dark ? AppColors.swingDark : AppColors.swingLight,
+        AppPalette.blackOnWhite => AppColors.blackOnWhite,
+        AppPalette.whiteOnBlack => AppColors.whiteOnBlack,
       };
 }
 
@@ -367,6 +380,42 @@ class AppColors extends ThemeExtension<AppColors> {
     greenTint: Color(0xFF3A3517),
     redTint: Color(0xFF3A1F18),
     hairline: Color(0xFF2F5D51),
+    isDark: true,
+  );
+
+  // Contrast: secondary text 6.7 on white, half-strength marks 3.4.
+  static const blackOnWhite = AppColors(
+    bg: Colors.white,
+    card: Colors.white,
+    recessed: Color(0xFFF0F0F0),
+    border: Colors.black,
+    txt: Colors.black,
+    txt2: Color(0xFF5C5C5C),
+    green: Colors.black,
+    onAccent: Colors.white,
+    accentTxt: Colors.black,
+    accentLt: Color(0xFF8C8C8C),
+    greenTint: Color(0xFFEDEDED),
+    redTint: Color(0xFFF5F5F5),
+    hairline: Color(0x66000000),
+    isDark: false,
+  );
+
+  // Contrast: secondary text 8.3 on black (7.4 on cards), marks 4.1.
+  static const whiteOnBlack = AppColors(
+    bg: Colors.black,
+    card: Color(0xFF121212),
+    recessed: Color(0xFF1C1C1C),
+    border: Colors.white,
+    txt: Colors.white,
+    txt2: Color(0xFFA3A3A3),
+    green: Colors.white,
+    onAccent: Colors.black,
+    accentTxt: Colors.white,
+    accentLt: Color(0xFF6E6E6E),
+    greenTint: Color(0xFF242424),
+    redTint: Color(0xFF1F1A1A),
+    hairline: Color(0x66FFFFFF),
     isDark: true,
   );
 

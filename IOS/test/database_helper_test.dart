@@ -250,7 +250,11 @@ void main() {
       for (final b in Brightness.values) {
         final colors = buildTheme(p, b).extension<AppColors>();
         expect(colors, same(p.colors(b)));
-        expect(colors!.isDark, b == Brightness.dark);
+        // Fixed palettes stay light or dark whatever the appearance says.
+        final dark = p.isFixed ? p == AppPalette.whiteOnBlack : b == Brightness.dark;
+        expect(colors!.isDark, dark);
+        expect(buildTheme(p, b).brightness,
+            dark ? Brightness.dark : Brightness.light);
       }
     }
     await AppSettings.instance.setPalette(AppPalette.modernist);

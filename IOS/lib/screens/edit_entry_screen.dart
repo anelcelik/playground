@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../db/database_helper.dart';
+import '../models/durations.dart';
 import '../models/entry.dart';
 import '../models/family.dart';
 
@@ -11,9 +12,6 @@ import '../widgets/reason_sheet.dart';
 
 
 
-const _durations = [
-  '15 min', '30 min', '45 min', '1 hour', '1.5 hours', '2 hours', '2+ hours',
-];
 
 class EditEntryScreen extends StatefulWidget {
   final Entry entry;
@@ -63,7 +61,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
     final e = widget.entry;
     _selUsers = e.userList.toSet();
     _shift = e.shift;
-    _duration = e.duration;
+    _duration = normalizeDuration(e.duration);
     _kids = {
       for (final k in widget.family.kids)
         k: e.kidList.contains(k),
@@ -248,7 +246,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                 Wrap(
                   spacing: 7,
                   runSpacing: 7,
-                  children: _durations.map((d) {
+                  children: kDurations.map((d) {
                     final sel = _duration == d;
                     return GestureDetector(
                       onTap: () =>

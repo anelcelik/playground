@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -85,6 +86,14 @@ class PlaygroundTrackerApp extends StatelessWidget {
         theme: buildTheme(AppSettings.instance.palette, Brightness.light),
         darkTheme: buildTheme(AppSettings.instance.palette, Brightness.dark),
         themeMode: AppSettings.instance.themeMode,
+        // Status bar icons follow the app's colours, not the system setting:
+        // a fixed palette can be dark while the iPhone is in light mode.
+        builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+          value: Theme.of(context).brightness == Brightness.dark
+              ? SystemUiOverlayStyle.light
+              : SystemUiOverlayStyle.dark,
+          child: child!,
+        ),
         // Keyed on appGeneration: Delete all data bumps it, which rebuilds
         // the router from scratch and lands on onboarding.
         home: ValueListenableBuilder<int>(
