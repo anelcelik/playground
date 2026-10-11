@@ -273,4 +273,15 @@ void main() {
     expect(await db.getEntriesForDate('2026-06-01'), isEmpty);
     expect(AppSettings.instance.palette, AppPalette.modernist);
   });
+
+  test('the log lists every entry newest day first, without deleted ones',
+      () async {
+    await db.insertEntry(entry(uuid: 'old', date: '2026-06-01'));
+    await db.insertEntry(entry(uuid: 'new', date: '2026-06-03'));
+    final gone = await db.insertEntry(entry(uuid: 'gone', date: '2026-06-02'));
+    await db.deleteEntry(gone.id!);
+
+    final all = await db.getAllEntries();
+    expect(all.map((e) => e.uuid), ['new', 'old']);
+  });
 }

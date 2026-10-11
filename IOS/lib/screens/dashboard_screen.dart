@@ -5,9 +5,7 @@ import '../models/dashboard_prefs.dart';
 import '../models/entry.dart';
 import '../models/family.dart';
 import '../settings/app_settings.dart';
-import '../sync/sync_service.dart';
 import '../theme.dart';
-import '../widgets/entry_actions.dart';
 import '../widgets/modernist.dart';
 import '../models/durations.dart';
 import 'dashboard_customise_screen.dart';
@@ -304,7 +302,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       'activities': _activitiesBlock(c, entries),
       'missed_reasons': _reasonsBlock(c, entries, missed),
-      'log': _logBlock(c, entries),
     };
 
     final out = <Widget>[
@@ -690,118 +687,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ── Log ─────────────────────────────────────────────────
-
-  Widget _logBlock(AppColors c, List<Entry> entries) {
-    if (entries.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SectionLabel('Log'),
-          _note(c, 'No entries this period'),
-        ],
-      );
-    }
-
-    final grouped = <String, List<Entry>>{};
-    for (final e in entries) {
-      grouped.putIfAbsent(e.date, () => []).add(e);
-    }
-    final dates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SectionLabel('Log'),
-        for (final date in dates) ...[
-          SectionLabel(AppSettings.instance.fmtDateFull(date),
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 6)),
-          for (final e in grouped[date]!) ...[
-            const Hairline(),
-            _logRow(c, e),
-          ],
-        ],
-        const SizedBox(height: 8),
-      ],
-    );
-  }
-
-  Widget _logRow(AppColors c, Entry e) {
-    final who = e.userList.isEmpty ? e.user : e.userList.join(' & ');
-    final String tag;
-    if (e.noPlayground) {
-      tag = 'Nobody went';
-    } else if (e.vacation) {
-      tag = 'Vacation';
-    } else {
-      tag = e.shift == 'morning' ? 'Morning' : 'Evening';
-    }
-
-    final detail = <String>[
-      if (!e.vacation && !e.noPlayground && e.duration != null) e.duration!,
-      if (!e.vacation && !e.noPlayground && e.kidList.isNotEmpty)
-        e.kidList.join(' & '),
-      if (e.noPlayground && (e.excuse?.isNotEmpty ?? false)) e.excuse!,
-      if (e.absentNote(widget.family.parents).isNotEmpty)
-        e.absentNote(widget.family.parents),
-    ];
-
-    return InkWell(
-      onTap: () => showEntryActions(
-        context,
-        entry: e,
-        family: widget.family,
-        onChanged: () {
-          _load();
-          SyncService.instance.sync();
-        },
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 3,
-              height: 34,
-              margin: const EdgeInsets.only(right: 12, top: 2),
-              color: e.noPlayground || e.vacation ? c.hairline : c.green,
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(who,
-                      style:
-                          AppType.heading.copyWith(color: c.txt, fontSize: 15)),
-                  const SizedBox(height: 3),
-                  Text(
-                    [tag, ...detail].join('  ·  '),
-                    style: AppType.bodySm.copyWith(color: c.txt2),
-                  ),
-                  if (e.activityList.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        for (final a in e.activityList)
-                          Text(a.toUpperCase(),
-                              style: AppType.label.copyWith(
-                                  color: c.accentTxt,
-                                  fontSize: 9,
-                                  letterSpacing: 0.9)),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right, size: 18, color: c.txt2),
-          ],
-        ),
-      ),
-    );
-  }
 
   // ── Small shared pieces ─────────────────────────────────
 

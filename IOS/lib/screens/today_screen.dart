@@ -204,10 +204,6 @@ class _TodayScreenState extends State<TodayScreen> {
             const Rule(),
             _plannedSection(c),
           ],
-          if (_entries.isNotEmpty) ...[
-            const Rule(),
-            _logList(c),
-          ],
           const SizedBox(height: 28),
         ],
       ),
@@ -420,29 +416,37 @@ class _TodayScreenState extends State<TodayScreen> {
 
   Widget _shiftBlock(AppColors c, String shift, String label, Entry? entry) {
     final logged = entry != null;
-    return Block(
-      onTap: () => _openSheet(shift),
-      recessed: logged,
-      padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(label.toUpperCase(),
-                    style: AppType.label.copyWith(
-                        fontSize: 13, letterSpacing: 0.5, color: c.txt)),
-              ),
-              if (logged) Icon(Icons.check, size: 15, color: c.accentTxt),
-            ],
-          ),
-          const SizedBox(height: 2),
-          Text(logged ? _describe(entry, withShift: false) : 'Not logged',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppType.bodySm.copyWith(color: c.txt2)),
-        ],
+    // Tap edits the visit; a long press offers Edit / Delete (the day's full
+    // list lives in Settings › Log now).
+    return GestureDetector(
+      onLongPress: logged
+          ? () => showEntryActions(context,
+              entry: entry, family: widget.family, onChanged: _refresh)
+          : null,
+      child: Block(
+        onTap: () => _openSheet(shift),
+        recessed: logged,
+        padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(label.toUpperCase(),
+                      style: AppType.label.copyWith(
+                          fontSize: 13, letterSpacing: 0.5, color: c.txt)),
+                ),
+                if (logged) Icon(Icons.check, size: 15, color: c.accentTxt),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(logged ? _describe(entry, withShift: false) : 'Not logged',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppType.bodySm.copyWith(color: c.txt2)),
+          ],
+        ),
       ),
     );
   }
@@ -635,78 +639,4 @@ class _TodayScreenState extends State<TodayScreen> {
                   color: filled ? c.bg : c.txt2)),
         ),
       );
-
-  // ── Today's log ─────────────────────────────────────────
-
-  Widget _logList(AppColors c) {
-    final visits = _entries.where((e) => !e.vacation && !e.noPlayground).toList();
-    if (visits.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionLabel(_isToday ? "Today's log" : 'Log'),
-        for (final e in visits)
-          InkWell(
-            onTap: () => showEntryActions(context,
-                entry: e, family: widget.family, onChanged: _refresh),
-            child: Column(
-              children: [
-                const Hairline(),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 11, 20, 11),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 60,
-                        child: Text(
-                            (e.shift == 'morning' ? 'Morning' : 'Evening')
-                                .toUpperCase(),
-                            style: AppType.label.copyWith(
-                                color: c.accentTxt, letterSpacing: 1.1)),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                                [
-                                  e.userList.join(' & '),
-                                  if (e.kidList.isNotEmpty)
-                                    e.kidList.join(' & ')
-                                ].join(' · '),
-                                style: AppType.body.copyWith(
-                                    fontWeight: FontWeight.w700, color: c.txt)),
-                            if (e.duration?.isNotEmpty == true ||
-                                e.activityList.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                  [
-                                    if (e.duration?.isNotEmpty == true)
-                                      e.duration!,
-                                    if (e.activityList.isNotEmpty)
-                                      e.activityList.join(', ')
-                                  ].join(' · '),
-                                  style:
-                                      AppType.bodySm.copyWith(color: c.txt2)),
-                            ],
-                            if (e.absentNote(widget.family.parents).isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(e.absentNote(widget.family.parents),
-                                  style:
-                                      AppType.bodySm.copyWith(color: c.txt2)),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        const Hairline(),
-      ],
-    );
-  }
 }

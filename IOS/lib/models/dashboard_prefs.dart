@@ -12,13 +12,12 @@ const kSectionMeta = <String, ({String label, IconData icon})>{
   'charts':          (label: 'Charts',                    icon: Icons.pie_chart_outline),
   'activities':      (label: 'Top Activities',            icon: Icons.local_activity_outlined),
   'missed_reasons':  (label: 'No Playground Reasons',     icon: Icons.cancel_outlined),
-  'log':             (label: 'Log',                       icon: Icons.list_rounded),
 };
 
 // Default order (shown when no prefs are saved yet)
 const _kDefaultOrder = [
   'calendar', 'parent_stats', 'missed_reasons',
-  'kid_stats', 'time_stats', 'charts', 'activities', 'log',
+  'kid_stats', 'time_stats', 'charts', 'activities',
 ];
 
 // ── SectionConfig ─────────────────────────────────────────

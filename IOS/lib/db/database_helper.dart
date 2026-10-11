@@ -276,6 +276,17 @@ class DatabaseHelper {
     return rows.map(Entry.fromMap).toList();
   }
 
+  /// Every entry, newest day first (Settings › Log).
+  Future<List<Entry>> getAllEntries() async {
+    final db = await database;
+    final rows = await db.query(
+      'entries',
+      where: 'is_deleted = 0',
+      orderBy: 'date DESC, shift, id',
+    );
+    return rows.map(Entry.fromMap).toList();
+  }
+
   // Most recent real visit (excludes vacation / no-playground, which have
   // nothing worth copying) — powers "Copy last visit" on the entry screen.
   // Returns every shift logged for that date, so a two-shift day copies

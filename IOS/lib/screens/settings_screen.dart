@@ -9,6 +9,7 @@ import 'setup_screen.dart';
 import 'invite_family_screen.dart';
 import 'notifications_screen.dart';
 import 'display_settings_screen.dart';
+import 'log_screen.dart';
 import 'privacy_screen.dart';
 import 'recap_screen.dart';
 
@@ -88,6 +89,12 @@ class SettingsScreen extends StatelessWidget {
         ),
         const Rule(),
         const SectionLabel('Your data'),
+        _Row(
+          label: 'Log',
+          value: 'Every visit, newest first',
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => LogScreen(family: family))),
+        ),
         _Row(
           label: 'Delete all data',
           value: 'On this iPhone and in iCloud',

@@ -17,6 +17,12 @@ Yes. Tap a day in the week strip at the top of **Today**. For an older day, tap
 the date above the title and pick it from the calendar. **TODAY** brings you
 back.
 
+### Where do I see everything I logged?
+
+In **Settings > Log**: every visit, vacation and nobody-went day, newest
+first. Tap one to edit or delete it. On **Today**, long-press a logged
+**Morning** or **Evening** box to edit or delete that visit.
+
 ### Nobody went today. How do I record that?
 
 Tap **Nobody went today** and pick a reason, or tap **+ Write your own**. For a
