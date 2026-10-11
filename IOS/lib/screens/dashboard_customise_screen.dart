@@ -53,7 +53,7 @@ class _DashboardCustomiseScreenState
               final current = DashboardPrefs.instance.sections.map((s) => s.id).toList();
               const defaultOrder = [
                 'parent_stats', 'kid_stats', 'time_stats',
-                'charts', 'activities', 'missed_reasons', 'log',
+                'charts', 'activities', 'missed_reasons',
               ];
               for (var i = 0; i < defaultOrder.length; i++) {
                 final from = current.indexOf(defaultOrder[i]);

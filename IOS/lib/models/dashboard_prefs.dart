@@ -12,13 +12,12 @@ const kSectionMeta = <String, ({String label, IconData icon})>{
   'charts':          (label: 'Charts',                    icon: Icons.pie_chart_outline),
   'activities':      (label: 'Top Activities',            icon: Icons.local_activity_outlined),
   'missed_reasons':  (label: 'No Playground Reasons',     icon: Icons.cancel_outlined),
-  'log':             (label: 'Log',                       icon: Icons.list_rounded),
 };
 
 // Default order (shown when no prefs are saved yet)
 const _kDefaultOrder = [
   'calendar', 'parent_stats', 'missed_reasons',
-  'kid_stats', 'time_stats', 'charts', 'activities', 'log',
+  'kid_stats', 'time_stats', 'charts', 'activities',
 ];
 
 // ── SectionConfig ─────────────────────────────────────────
@@ -53,15 +52,21 @@ class DashboardPrefs extends ChangeNotifier {
   // removed, they are one tap away via the tune button.
   static const _kDefaultHidden = {'charts', 'activities'};
 
-  List<SectionConfig> _sections = _kDefaultOrder
+  static List<SectionConfig> _defaults() => _kDefaultOrder
       .map((id) => SectionConfig(id: id, visible: !_kDefaultHidden.contains(id)))
       .toList();
+
+  List<SectionConfig> _sections = _defaults();
 
   List<SectionConfig> get sections => _sections;
 
   Future<void> load() async {
     final raw = await DatabaseHelper.instance.getMeta('dashboard_layout');
-    if (raw == null || raw.isEmpty) return;
+    if (raw == null || raw.isEmpty) {
+      // Nothing saved (first run, or after Delete all data): the defaults.
+      _sections = _defaults();
+      return;
+    }
 
     try {
       final data = (jsonDecode(raw) as List).cast<Map<String, dynamic>>();

@@ -17,6 +17,12 @@ Yes. Tap a day in the week strip at the top of **Today**. For an older day, tap
 the date above the title and pick it from the calendar. **TODAY** brings you
 back.
 
+### Where do I see everything I logged?
+
+In **Settings > Log**: every visit, vacation and nobody-went day, newest
+first. Tap one to edit or delete it. On **Today**, long-press a logged
+**Morning** or **Evening** box to edit or delete that visit.
+
 ### Nobody went today. How do I record that?
 
 Tap **Nobody went today** and pick a reason, or tap **+ Write your own**. For a
@@ -62,9 +68,9 @@ See the [privacy policy](privacy-policy) for details.
 
 ### How do I delete my data?
 
-Delete entries in the app at any time. Deleting the app removes everything on
-the iPhone. To remove the iCloud copy, open iOS Settings, tap your name, then
-iCloud, open the storage list, choose Playground Tracker and delete its data.
+Go to **Settings > Delete all data**. It removes everything from your iPhone
+and from your iCloud at once; if you share the log with family, it is removed
+for them too. You can also delete single entries at any time.
 
 ### Does it work on iPad?
 

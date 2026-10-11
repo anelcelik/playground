@@ -5,6 +5,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:playground_tracker/db/database_helper.dart';
 import 'package:playground_tracker/models/entry.dart';
 import 'package:playground_tracker/models/recurring_activity.dart';
+import 'package:playground_tracker/services/data_reset.dart';
 import 'package:playground_tracker/settings/app_settings.dart';
 import 'package:playground_tracker/theme.dart';
 
@@ -241,17 +242,72 @@ void main() {
     await AppSettings.instance.setUse24h(false);
   });
 
-  test('the colour theme choice is saved and every palette builds', () async {
-    await AppSettings.instance.setPalette(AppPalette.swing);
+  test('the theme choice is saved and every theme builds', () async {
+    await AppSettings.instance.setPalette(AppPalette.swingDark);
     await AppSettings.instance.load();
-    expect(AppSettings.instance.palette, AppPalette.swing);
+    expect(AppSettings.instance.palette, AppPalette.swingDark);
     for (final p in AppPalette.values) {
-      for (final b in Brightness.values) {
-        final colors = buildTheme(p, b).extension<AppColors>();
-        expect(colors, same(p.colors(b)));
-        expect(colors!.isDark, b == Brightness.dark);
-      }
+      final colors = p.fixed ?? AppSettings.instance.customColors;
+      final theme = buildTheme(colors);
+      expect(theme.extension<AppColors>(), same(colors));
+      expect(theme.brightness,
+          colors.isDark ? Brightness.dark : Brightness.light);
     }
-    await AppSettings.instance.setPalette(AppPalette.modernist);
+    await AppSettings.instance.setPalette(AppPalette.modernistLight);
+  });
+
+  test('an old palette plus appearance setting becomes one theme', () async {
+    await db.setMeta('setting_palette', 'swing');
+    await db.setMeta('setting_theme', 'dark');
+    await AppSettings.instance.load();
+    expect(AppSettings.instance.palette, AppPalette.swingDark);
+
+    await db.setMeta('setting_palette', 'modernist');
+    await db.setMeta('setting_theme', 'light');
+    await AppSettings.instance.load();
+    expect(AppSettings.instance.palette, AppPalette.modernistLight);
+  });
+
+  test('My colors are saved and kept readable', () async {
+    // A bright yellow accent on white is the hard case.
+    await AppSettings.instance.setCustomColors(
+        bg: const Color(0xFFFFFFFF),
+        txt: const Color(0xFF000000),
+        accent: const Color(0xFFFFEB3B));
+    await AppSettings.instance.load();
+    expect(AppSettings.instance.palette, AppPalette.custom);
+
+    final c = AppSettings.instance.colors;
+    expect(c.isDark, isFalse);
+    expect(contrastRatio(c.txt2, c.bg), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(c.accentTxt, c.bg), greaterThanOrEqualTo(4.5));
+    expect(c.onAccent, Colors.black); // black reads better on yellow
+    await AppSettings.instance.setPalette(AppPalette.modernistLight);
+  });
+
+  test('Delete all data leaves an empty app with default settings', () async {
+    // deleteAllData reaches the sync service's platform channel.
+    TestWidgetsFlutterBinding.ensureInitialized();
+    await db.saveFamily(['Mom'], ['Bean']);
+    await db.insertEntry(entry());
+    await AppSettings.instance.setPalette(AppPalette.swingDark);
+
+    expect(await deleteAllData(), isTrue);
+
+    expect((await db.getFamily()).parents, isEmpty);
+    expect(await db.getEntriesForDate('2026-06-01'), isEmpty);
+    // Nothing chosen any more: the default follows the (light) test platform.
+    expect(AppSettings.instance.palette, AppPalette.modernistLight);
+  });
+
+  test('the log lists every entry newest day first, without deleted ones',
+      () async {
+    await db.insertEntry(entry(uuid: 'old', date: '2026-06-01'));
+    await db.insertEntry(entry(uuid: 'new', date: '2026-06-03'));
+    final gone = await db.insertEntry(entry(uuid: 'gone', date: '2026-06-02'));
+    await db.deleteEntry(gone.id!);
+
+    final all = await db.getAllEntries();
+    expect(all.map((e) => e.uuid), ['new', 'old']);
   });
 }

@@ -141,6 +141,8 @@ class SquareChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final fg = selected ? c.onAccent : c.txt;
+    // Every selected chip shows a check, not only those that pass an icon.
+    final icon = this.icon ?? (selected ? Icons.check : null);
     return Semantics(
       button: true,
       selected: selected,
@@ -149,13 +151,17 @@ class SquareChip extends StatelessWidget {
         child: Container(
           constraints: const BoxConstraints(minHeight: 44),
           padding: EdgeInsets.symmetric(horizontal: small ? 11 : 16),
-          alignment: Alignment.center,
+          // Big chips span the row; small ones (reasons, activities) wrap
+          // side by side at their own width.
+          alignment: small ? null : Alignment.center,
           decoration: BoxDecoration(
             color: selected ? c.green : Colors.transparent,
             border: Border.all(
                 color: selected ? c.green : c.hairline, width: 2),
           ),
-          child: Row(
+          child: Align(
+            widthFactor: small ? 1 : null,
+            child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[
@@ -169,6 +175,7 @@ class SquareChip extends StatelessWidget {
                       : AppType.body
                           .copyWith(color: fg, fontWeight: FontWeight.w700)),
             ],
+          ),
           ),
         ),
       ),

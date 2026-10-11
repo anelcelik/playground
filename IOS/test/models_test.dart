@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:playground_tracker/models/durations.dart';
 import 'package:playground_tracker/models/entry.dart';
 import 'package:playground_tracker/models/recurring_activity.dart';
 import 'package:playground_tracker/services/calendar_service.dart';
@@ -205,6 +206,24 @@ void main() {
         dateTo: '2026-06-03',
       );
       expect(CalendarService.firstStart(pastParty, DateTime(2026, 6, 4)), isNull);
+    });
+  });
+
+  group('Durations', () {
+    test('both label styles count the same minutes', () {
+      expect(durationMinutes('1h'), 60);
+      expect(durationMinutes('1 hour'), 60);
+      expect(durationMinutes('2h+'), 150);
+      expect(durationMinutes('2+ hours'), 150);
+      expect(durationMinutes(null), 0);
+      expect(durationMinutes('soon'), 0);
+    });
+
+    test('older labels normalize to the visit sheet ones', () {
+      expect(normalizeDuration('30 min'), '30m');
+      expect(normalizeDuration('1.5 hours'), '1.5h');
+      expect(normalizeDuration('45m'), '45m');
+      expect(normalizeDuration(null), isNull);
     });
   });
 }

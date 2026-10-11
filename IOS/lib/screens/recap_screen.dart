@@ -2,12 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../db/database_helper.dart';
 import '../models/entry.dart';
+import '../models/durations.dart';
 import '../theme.dart';
-
-const _durMap = {
-  '15 min': 15, '30 min': 30, '45 min': 45, '1 hour': 60,
-  '1.5 hours': 90, '2 hours': 120, '2+ hours': 150,
-};
 
 /// A "your month/year so far" snapshot — a fun, shareable-feeling summary,
 /// distinct from the regular Dashboard's data-dense insights. Reuses the
@@ -124,7 +120,7 @@ class _RecapBody extends StatelessWidget {
 
     final totalVisits = real.length;
     final totalMinutes = real.fold<int>(
-        0, (sum, e) => sum + (_durMap[e.duration] ?? 0));
+        0, (sum, e) => sum + durationMinutes(e.duration));
     final topActivity = _topOf(_activityCounts(real));
     final topParent = _topOf(byUser);
     final topKid = _topOf(byKid);

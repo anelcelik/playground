@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../db/database_helper.dart';
+import '../models/durations.dart';
 import '../models/entry.dart';
 import '../models/family.dart';
 
@@ -11,9 +12,6 @@ import '../widgets/reason_sheet.dart';
 
 
 
-const _durations = [
-  '15 min', '30 min', '45 min', '1 hour', '1.5 hours', '2 hours', '2+ hours',
-];
 
 class EditEntryScreen extends StatefulWidget {
   final Entry entry;
@@ -63,7 +61,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
     final e = widget.entry;
     _selUsers = e.userList.toSet();
     _shift = e.shift;
-    _duration = e.duration;
+    _duration = normalizeDuration(e.duration);
     _kids = {
       for (final k in widget.family.kids)
         k: e.kidList.contains(k),
@@ -248,7 +246,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                 Wrap(
                   spacing: 7,
                   runSpacing: 7,
-                  children: _durations.map((d) {
+                  children: kDurations.map((d) {
                     final sel = _duration == d;
                     return GestureDetector(
                       onTap: () =>
@@ -262,7 +260,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                               color: sel ? _kGreen : _kBorder, width: 2),
                           borderRadius: BorderRadius.zero,
                         ),
-                        child: Text(d,
+                        child: _checkText(d, sel,
                             style: TextStyle(
                                 color: sel ? _kOn : _kTxt,
                                 fontWeight: FontWeight.w500,
@@ -347,7 +345,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                               color: on ? _kGreen : _kBorder, width: 2),
                           borderRadius: BorderRadius.zero,
                         ),
-                        child: Text(tag,
+                        child: _checkText(tag, on,
                             style: TextStyle(
                                 color: on ? _kOn : _kTxt,
                                 fontSize: 12,
@@ -441,7 +439,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
           border: Border.all(color: sel ? active : _kBorder, width: 2),
           borderRadius: BorderRadius.zero,
         ),
-        child: Text(label,
+        child: _checkText(label, sel,
             textAlign: TextAlign.center,
             style: TextStyle(
                 color: sel ? _kOn : _kTxt,
@@ -449,3 +447,22 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                 fontSize: 14)),
       );
 }
+
+/// A chip label with a check in front when selected, like the kids' chips.
+Widget _checkText(String label, bool selected,
+        {required TextStyle style, TextAlign? textAlign}) =>
+    Text.rich(
+      TextSpan(children: [
+        if (selected)
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Icon(Icons.check, size: 14, color: style.color),
+            ),
+          ),
+        TextSpan(text: label),
+      ]),
+      textAlign: textAlign,
+      style: style,
+    );

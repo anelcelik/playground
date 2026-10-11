@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../settings/app_settings.dart';
 import '../theme.dart';
+import 'custom_theme_screen.dart';
 
 class DisplaySettingsScreen extends StatelessWidget {
   const DisplaySettingsScreen({super.key});
@@ -25,6 +26,7 @@ class DisplaySettingsScreen extends StatelessWidget {
             children: [
 
               // ── Colour theme ─────────────────────────────────
+              // One flat list: every theme is fully light or dark.
               _SectionHeader('Color theme', c),
               _card(c, Column(children: [
                 for (final p in AppPalette.values) ...[
@@ -33,42 +35,24 @@ class DisplaySettingsScreen extends StatelessWidget {
                     c: c,
                     title: p.label,
                     subtitle: p.description,
-                    swatches: p.swatches,
+                    swatches: swatchesOf(p.fixed ?? s.customColors),
                     selected: s.palette == p,
                     onTap: () => s.setPalette(p),
                   ),
                 ],
               ])),
-
-              const SizedBox(height: 16),
-
-              // ── Theme ────────────────────────────────────────
-              _SectionHeader('Appearance', c),
-              _card(c, Column(children: [
-                _RadioRow(
-                  c: c,
-                  title: 'System',
-                  subtitle: 'Follow the device light/dark setting',
-                  selected: s.themeMode == ThemeMode.system,
-                  onTap: () => s.setThemeMode(ThemeMode.system),
+              if (s.palette == AppPalette.custom)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const CustomThemeScreen())),
+                    icon: const Icon(Icons.palette_outlined),
+                    label: const Text('Edit my colors'),
+                  ),
                 ),
-                Divider(height: 1, color: c.border),
-                _RadioRow(
-                  c: c,
-                  title: 'Light',
-                  subtitle: 'Always use the light theme',
-                  selected: s.themeMode == ThemeMode.light,
-                  onTap: () => s.setThemeMode(ThemeMode.light),
-                ),
-                Divider(height: 1, color: c.border),
-                _RadioRow(
-                  c: c,
-                  title: 'Dark',
-                  subtitle: 'Always use the dark theme',
-                  selected: s.themeMode == ThemeMode.dark,
-                  onTap: () => s.setThemeMode(ThemeMode.dark),
-                ),
-              ])),
 
               const SizedBox(height: 16),
 
@@ -217,8 +201,8 @@ class _RadioRow extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             selected
-                ? Icon(Icons.check_circle_rounded, color: c.green, size: 24)
-                : Icon(Icons.circle_outlined, color: c.border, size: 24),
+                ? Icon(Icons.check_box, color: c.green, size: 24)
+                : Icon(Icons.check_box_outline_blank, color: c.hairline, size: 24),
           ]),
         ),
       );

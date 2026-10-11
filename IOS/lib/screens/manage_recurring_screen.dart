@@ -180,7 +180,11 @@ class _ActivityTile extends StatelessWidget {
               color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))
         ],
       ),
-      child: Column(children: [
+      // ListTile paints its ink on the nearest Material; without this one
+      // the card's colour hid the tap feedback.
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(children: [
         ListTile(
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -223,7 +227,7 @@ class _ActivityTile extends StatelessWidget {
                   style: TextStyle(fontSize: 12, color: kTxt2),
                 ),
               if (a.notifyEnabled && a.notifyHour != null)
-                Text(a.notifyTimeLabel,
+                Text('Reminder ${a.notifyTimeLabel}',
                     style: TextStyle(fontSize: 12, color: kTxt2)),
               Text('Tap for history & calendar',
                   style: TextStyle(fontSize: 11, color: kTxt2)),
@@ -249,6 +253,7 @@ class _ActivityTile extends StatelessWidget {
               onTap: onDelete),
         ]),
       ]),
+      ),
     );
   }
 }

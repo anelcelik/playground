@@ -18,14 +18,15 @@ void main() {
   // complete. The app's own DB calls complete during pump, which flushes
   // microtasks.
 
-  testWidgets('fresh install shows the setup screen', (tester) async {
+  testWidgets('fresh install starts onboarding', (tester) async {
     await tester.runAsync(DatabaseHelper.resetForTests);
 
     await tester.pumpWidget(const PlaygroundTrackerApp());
     await tester.pumpAndSettle();
 
-    // No family configured yet → setup flow, not the home tabs
+    // No family configured yet → onboarding, not the home tabs
     expect(find.textContaining('Playground Tracker'), findsWidgets);
     expect(find.text('Dashboard'), findsNothing);
+    expect(find.text('GET STARTED'), findsOneWidget);
   });
 }
