@@ -19,8 +19,9 @@ the log with your partner through iCloud.
 - **Plans.** Set up activities that repeat on fixed days, or a one-time event,
   with an optional reminder. Each plan keeps its own history: done, skipped or
   missed.
-- **Add plans to your calendar.** Open the plan and add it to your iPhone
-  calendar, then invite people from there.
+- **Add plans to your calendar or Reminders.** Add a plan to your iPhone
+  calendar and invite people from there, or put it in Reminders with an
+  alert.
 - **Share with your family.** Invite your partner with a link; both phones stay
   in sync through iCloud.
 - **Your look.** Choose between the Modernist and Swing color themes, light or

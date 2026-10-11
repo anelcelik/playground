@@ -32,6 +32,10 @@
 	<string>Adds your plans to your calendar when you tap Add to Calendar.</string>
 	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
 	<string>Adds your plans to your calendar when you tap Add to Calendar.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>Adds your plans to Reminders when you choose Add to Reminders.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Adds your plans to Reminders when you choose Add to Reminders.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

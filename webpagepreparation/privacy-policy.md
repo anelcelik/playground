@@ -18,9 +18,9 @@ If you are signed in to iCloud, the app keeps a copy in your own private iCloud 
 
 Reminder notifications are scheduled on your iPhone. Nothing about them is sent anywhere. The app asks for permission only when you turn a reminder on.
 
-## Calendar
+## Calendar and Reminders
 
-Add to Calendar opens Apple's own event editor with the plan filled in. The app does not read your calendar; the event is saved only if you tap Add.
+Add to Calendar opens Apple's own event editor with the plan filled in. The app does not read your calendar; the event is saved only if you tap Add. Add to Reminders saves the plan as one new reminder in your Reminders app. The app does not read your reminders and nothing is sent anywhere.
 
 ## Children
 

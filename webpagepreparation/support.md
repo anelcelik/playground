@@ -42,9 +42,16 @@ a plan in **Plans** to see how often it actually happened.
 
 ### How do I add a plan to my calendar and invite people?
 
-Open **Plans**, tap the plan, then tap **Add to Calendar**. Your iPhone's own
-New Event screen opens with the plan filled in. Add people under **Invitees**
-and tap **Add**; your calendar sends the invitations.
+When you create a plan, pick **Calendar** under **Also add to**. Later, open
+**Plans**, tap the plan, then tap **Add to Calendar**. Your iPhone's own New
+Event screen opens with the plan filled in. Add people under **Invitees** and
+tap **Add**; your calendar sends the invitations.
+
+### Can a plan go into the Reminders app instead?
+
+Yes. Pick **Reminders** under **Also add to** when you create the plan, or tap
+**Add to Reminders** on the plan's page. It becomes a reminder with an alert at
+the plan's time, repeating on the plan's days.
 
 ### How do I share the log with my partner?
 
