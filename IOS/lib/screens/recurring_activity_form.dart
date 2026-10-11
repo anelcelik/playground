@@ -5,6 +5,7 @@ import '../models/entry.dart';
 import '../models/family.dart';
 import '../models/recurring_activity.dart';
 import '../notifications/notification_service.dart';
+import '../services/calendar_service.dart';
 
 import '../settings/app_settings.dart';
 import '../theme.dart';
@@ -58,6 +59,9 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
   late int _notifyHour;
   late int _notifyMinute;
   late TextEditingController _notifyMsgCtrl;
+  // New plans only: also add to Calendar / Reminders once saved.
+  bool _toCalendar = false;
+  bool _toReminders = false;
   bool _saving = false;
 
   @override
@@ -91,6 +95,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
     if (title.isEmpty) { _toast('Enter a title'); return; }
     if (_oneTime && _onDate == null) { _toast('Pick a date'); return; }
     if (!_oneTime && _selDays.isEmpty) { _toast('Select at least one day'); return; }
+    final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
 
     final activity = RecurringActivity(
@@ -121,7 +126,35 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
       await NotificationService.instance.cancelRecurringActivity(activity);
     }
 
+    // Calendar first: its New Event sheet slides over this form. The notes
+    // show on the Plans screen once the form has closed.
+    final notes = <String>[
+      if (_toCalendar)
+        CalendarService.message(await CalendarService.addPlan(activity),
+                reminders: false) ??
+            '',
+      if (_toReminders)
+        CalendarService.message(await CalendarService.addReminder(activity),
+                reminders: true) ??
+            '',
+    ]..removeWhere((n) => n.isEmpty);
+
     if (mounted) Navigator.pop(context, true);
+    if (notes.isNotEmpty) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(notes.join('. ')),
+        behavior: SnackBarBehavior.floating,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      ));
+    }
+  }
+
+  /// A one-time plan whose reminder time has already passed gets none.
+  bool get _reminderInPast {
+    if (!_oneTime || _onDate == null) return false;
+    final d = DateTime.parse(_onDate!);
+    return DateTime(d.year, d.month, d.day, _notifyHour, _notifyMinute)
+        .isBefore(DateTime.now());
   }
 
   Future<void> _pickOnDate() async {
@@ -449,8 +482,51 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                   style: TextStyle(fontSize: 11, color: _kTxt2),
                 ),
               ),
+              if (_reminderInPast)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'This time has already passed, so no notification will '
+                    'come. Pick a later time.',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: _kAccentTxt),
+                  ),
+                ),
             ],
           ])),
+
+          // Calendar / Reminders, offered while the plan is new; the plan's
+          // own page has the same two buttons for later.
+          if (isNew)
+            _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _clabel('Also add to (optional)'),
+              Row(children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _toCalendar = !_toCalendar),
+                    child: _shiftChip('Calendar', _toCalendar, _kGreen),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _toReminders = !_toReminders),
+                    child: _shiftChip('Reminders', _toReminders, _kGreen),
+                  ),
+                ),
+              ]),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'When you save: Calendar opens with the plan filled in, so '
+                  'you can invite people. Reminders gets the plan with an '
+                  'alert at its time.',
+                  style: TextStyle(fontSize: 12, color: _kTxt2),
+                ),
+              ),
+            ])),
 
           // Active toggle (only on edit)
           if (!isNew)

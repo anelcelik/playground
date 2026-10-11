@@ -51,6 +51,8 @@ import UIKit
 // own New Event sheet, prefilled. Apps cannot send invitations themselves; the
 // sheet's Invitees row does. From iOS 17 the sheet runs out of process and
 // needs no calendar permission; before that it needs full access.
+// "Add to Reminders" has no such sheet: it asks for Reminders access once and
+// saves the reminder itself (due time with an alert, weekly repeat).
 final class CalendarBridge: NSObject, EKEventEditViewDelegate {
   static let shared = CalendarBridge()
   private let store = EKEventStore()
@@ -60,11 +62,80 @@ final class CalendarBridge: NSObject, EKEventEditViewDelegate {
     let channel = FlutterMethodChannel(
       name: "com.playground.tracker/calendar", binaryMessenger: messenger)
     channel.setMethodCallHandler { call, result in
-      guard call.method == "addEvent", let args = call.arguments as? [String: Any] else {
+      guard let args = call.arguments as? [String: Any] else {
         result(FlutterMethodNotImplemented)
         return
       }
-      CalendarBridge.shared.addEvent(args, result: result)
+      switch call.method {
+      case "addEvent": CalendarBridge.shared.addEvent(args, result: result)
+      case "addReminder": CalendarBridge.shared.addReminder(args, result: result)
+      default: result(FlutterMethodNotImplemented)
+      }
+    }
+  }
+
+  private static func number(_ args: [String: Any], _ key: String) -> Double? {
+    (args[key] as? NSNumber)?.doubleValue
+  }
+
+  private static func start(_ args: [String: Any]) -> Date {
+    Date(timeIntervalSince1970: (number(args, "startMs") ?? 0) / 1000)
+  }
+
+  /// Weekly on the plan's days until its last day; nil for a one-time plan.
+  private static func recurrence(_ args: [String: Any]) -> EKRecurrenceRule? {
+    guard let days = args["weekdays"] as? [NSNumber], !days.isEmpty else { return nil }
+    // Dart 0 = Mon … 6 = Sun; EKWeekday 1 = Sun … 7 = Sat.
+    let weekdays = days.compactMap { EKWeekday(rawValue: ($0.intValue + 1) % 7 + 1) }
+    var end: EKRecurrenceEnd?
+    if let until = number(args, "untilMs") {
+      end = EKRecurrenceEnd(end: Date(timeIntervalSince1970: until / 1000))
+    }
+    return EKRecurrenceRule(
+      recurrenceWith: .weekly,
+      interval: 1,
+      daysOfTheWeek: weekdays.map { EKRecurrenceDayOfWeek($0) },
+      daysOfTheMonth: nil,
+      monthsOfTheYear: nil,
+      weeksOfTheYear: nil,
+      daysOfTheYear: nil,
+      setPositions: nil,
+      end: end)
+  }
+
+  private func addReminder(_ args: [String: Any], result: @escaping FlutterResult) {
+    let done: (Bool) -> Void = { granted in
+      DispatchQueue.main.async {
+        result(granted ? CalendarBridge.saveReminder(args) : "denied")
+      }
+    }
+    if #available(iOS 17.0, *) {
+      store.requestFullAccessToReminders { granted, _ in done(granted) }
+    } else {
+      store.requestAccess(to: .reminder) { granted, _ in done(granted) }
+    }
+  }
+
+  private static func saveReminder(_ args: [String: Any]) -> String {
+    // A store made before access was granted can see no lists; use a new one.
+    let store = EKEventStore()
+    guard let list = store.defaultCalendarForNewReminders() else { return "unavailable" }
+    let start = start(args)
+    let reminder = EKReminder(eventStore: store)
+    reminder.calendar = list
+    reminder.title = args["title"] as? String
+    reminder.notes = args["notes"] as? String
+    reminder.dueDateComponents = Calendar.current.dateComponents(
+      [.year, .month, .day, .hour, .minute], from: start)
+    reminder.addAlarm(EKAlarm(absoluteDate: start))
+    if let rule = recurrence(args) {
+      reminder.recurrenceRules = [rule]
+    }
+    do {
+      try store.save(reminder, commit: true)
+      return "saved"
+    } catch {
+      return "error"
     }
   }
 
@@ -89,33 +160,15 @@ final class CalendarBridge: NSObject, EKEventEditViewDelegate {
       result("unavailable")
       return
     }
-    func number(_ key: String) -> Double? { (args[key] as? NSNumber)?.doubleValue }
-
     let event = EKEvent(eventStore: store)
     event.title = args["title"] as? String
     event.notes = args["notes"] as? String
-    let start = Date(timeIntervalSince1970: (number("startMs") ?? 0) / 1000)
+    let start = CalendarBridge.start(args)
     event.startDate = start
-    event.endDate = start.addingTimeInterval((number("durationMin") ?? 60) * 60)
-    if let days = args["weekdays"] as? [NSNumber], !days.isEmpty {
-      // Dart 0 = Mon … 6 = Sun; EKWeekday 1 = Sun … 7 = Sat.
-      let weekdays = days.compactMap { EKWeekday(rawValue: ($0.intValue + 1) % 7 + 1) }
-      var end: EKRecurrenceEnd?
-      if let until = number("untilMs") {
-        end = EKRecurrenceEnd(end: Date(timeIntervalSince1970: until / 1000))
-      }
-      event.recurrenceRules = [
-        EKRecurrenceRule(
-          recurrenceWith: .weekly,
-          interval: 1,
-          daysOfTheWeek: weekdays.map { EKRecurrenceDayOfWeek($0) },
-          daysOfTheMonth: nil,
-          monthsOfTheYear: nil,
-          weeksOfTheYear: nil,
-          daysOfTheYear: nil,
-          setPositions: nil,
-          end: end)
-      ]
+    event.endDate = start.addingTimeInterval(
+      (CalendarBridge.number(args, "durationMin") ?? 60) * 60)
+    if let rule = CalendarBridge.recurrence(args) {
+      event.recurrenceRules = [rule]
     }
 
     let editor = EKEventEditViewController()

@@ -17,6 +17,10 @@ const _kIdLog = 2;     // "Don't forget to log your visit"
 const _kRecurringDetails = NotificationDetails(
   iOS: DarwinNotificationDetails(
     presentAlert: true,
+    // iOS 14+ ignores presentAlert while the app is open: without banner
+    // and list a reminder due then was dropped, not even kept in the list.
+    presentBanner: true,
+    presentList: true,
     presentBadge: false,
     presentSound: true,
     interruptionLevel: InterruptionLevel.active,
@@ -233,6 +237,8 @@ class NotificationService {
     const details = NotificationDetails(
       iOS: DarwinNotificationDetails(
         presentAlert: true,
+        presentBanner: true, // see _kRecurringDetails
+        presentList: true,
         presentBadge: false,
         presentSound: true,
         interruptionLevel: InterruptionLevel.active,

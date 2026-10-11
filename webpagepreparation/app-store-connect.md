@@ -35,8 +35,8 @@ Mark them with a reason, such as rain, sick or busy, or write your own. When onl
 PLANS
 Set up activities that repeat on fixed days, or a one-time event, with an optional reminder. Mark each one done or skipped. Every plan keeps its own history, so you can see how often it really happened.
 
-ADD PLANS TO YOUR CALENDAR
-Open a plan and add it to your iPhone calendar, repeat included, then invite people from there.
+ADD PLANS TO YOUR CALENDAR OR REMINDERS
+Add a plan to your iPhone calendar, repeat included, and invite people from there. Or put it in the Reminders app with an alert at the plan's time.
 
 SHARE WITH YOUR FAMILY
 Invite your partner with a link. Your log stays in sync on both phones through iCloud.
@@ -84,8 +84,11 @@ past day in the week strip to log or edit that day. "Nobody went today"
 records a day without a visit.
 
 Plans: open the Plans tab, tap +, create a plan; it appears on Today with
-Done / Skip. Tap the plan in Plans to see its history and "Add to Calendar",
-which opens the system New Event sheet (write-only calendar access).
+Done / Skip. Tap the plan in Plans to see its history, "Add to Calendar"
+(opens the system New Event sheet, write-only calendar access) and "Add to
+Reminders" (asks for Reminders access, then saves one reminder; the app never
+reads existing reminders). Both are also offered under "Also add to" when
+creating a plan.
 
 Family sync (Settings > Family sync) uses CloudKit sharing and needs a second
 Apple ID to accept the invitation; everything else in the app works without

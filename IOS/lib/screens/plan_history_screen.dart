@@ -58,16 +58,12 @@ class _PlanHistoryScreenState extends State<PlanHistoryScreen> {
     if (changed == true && mounted) Navigator.pop(context, true);
   }
 
-  Future<void> _addToCalendar() async {
-    final result = await CalendarService.addPlan(_a);
+  Future<void> _addTo({required bool reminders}) async {
+    final result = reminders
+        ? await CalendarService.addReminder(_a)
+        : await CalendarService.addPlan(_a);
     if (!mounted) return;
-    final msg = switch (result) {
-      'saved' => 'Added to your calendar',
-      'denied' => 'Calendar access is off — allow it in iPhone Settings',
-      'none' => 'This plan has no upcoming day to add',
-      'unavailable' => 'Calendar is only available on iPhone',
-      _ => null, // cancelled
-    };
+    final msg = CalendarService.message(result, reminders: reminders);
     if (msg == null) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
@@ -133,7 +129,17 @@ class _PlanHistoryScreenState extends State<PlanHistoryScreen> {
                     label: 'Add to Calendar',
                     sublabel: 'Opens iPhone Calendar — add invitees there',
                     icon: Icons.event_outlined,
-                    onTap: _addToCalendar,
+                    onTap: () => _addTo(reminders: false),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                  child: BlockButton(
+                    label: 'Add to Reminders',
+                    sublabel: 'A reminder with an alert at the plan\'s time',
+                    icon: Icons.checklist_rounded,
+                    outlined: true,
+                    onTap: () => _addTo(reminders: true),
                   ),
                 ),
                 SectionLabel('History',
