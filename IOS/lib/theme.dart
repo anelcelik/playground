@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 // ── Modernist palette ─────────────────────────────────────
@@ -94,14 +96,11 @@ abstract class AppType {
 
 // ── ThemeData ─────────────────────────────────────────────
 
-/// The app theme for one colour palette at one brightness. Everything a
-/// screen reads goes through [AppColors], which rides along as an extension.
-ThemeData buildTheme(AppPalette palette, Brightness b) {
-  final c = palette.colors(b);
-  // A fixed palette (always light / always dark) ignores [b]; the theme's
-  // brightness follows the colours so text fields, keyboard and status bar
-  // match them.
-  b = c.isDark ? Brightness.dark : Brightness.light;
+/// The app theme for one colour set. Everything a screen reads goes through
+/// [AppColors], which rides along as an extension; the theme's brightness
+/// follows the colours so text fields, keyboard and status bar match them.
+ThemeData buildTheme(AppColors c) {
+  final b = c.isDark ? Brightness.dark : Brightness.light;
   final bg = c.bg;
   final surface = c.card;
   final onSurface = c.txt;
@@ -182,6 +181,15 @@ ThemeData buildTheme(AppPalette palette, Brightness b) {
         textStyle: AppType.button,
       ),
     ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: c.accentTxt,
+        side: BorderSide(color: c.border, width: 2),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        minimumSize: const Size.fromHeight(48),
+        textStyle: AppType.body.copyWith(fontWeight: FontWeight.w700),
+      ),
+    ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: c.accentTxt,
@@ -216,42 +224,39 @@ ThemeData buildTheme(AppPalette palette, Brightness b) {
   );
 }
 
-final kLightTheme = buildTheme(AppPalette.modernist, Brightness.light);
-final kDarkTheme = buildTheme(AppPalette.modernist, Brightness.dark);
+/// WCAG contrast ratio between two colours (1 to 21).
+double contrastRatio(Color a, Color b) {
+  final x = a.computeLuminance(), y = b.computeLuminance();
+  return (math.max(x, y) + 0.05) / (math.min(x, y) + 0.05);
+}
 
 // ── Colour palettes ───────────────────────────────────────
 
-/// The colour themes offered in Display settings. Light / dark stays the
-/// separate Appearance choice; each palette has a set for both.
+/// The colour themes in Display settings: one flat list, each entry fully
+/// light or fully dark. [custom] gets its colours from AppSettings.
 enum AppPalette {
-  modernist('Modernist', 'Red and black on paper — the original look',
-      [kPaper, kInk, kAccent]),
-  swing('Swing', 'Sunny yellow, deep green and orange, from the app icon',
-      [kSwingYellow, kSwingGreen, kSwingOrange]),
-  blackOnWhite('Black on white', 'Plain black and white, always light',
-      [Colors.white, Colors.black, Color(0xFF8C8C8C)]),
-  whiteOnBlack('White on black', 'Plain white on black, always dark',
-      [Colors.black, Colors.white, Color(0xFF6E6E6E)]);
+  modernistLight('Modernist light', 'Red and black on paper, the original',
+      AppColors.modernistLight),
+  modernistDark('Modernist dark', 'Coral on warm black', AppColors.modernistDark),
+  swingLight('Swing light', 'Deep green and orange on sunny yellow',
+      AppColors.swingLight),
+  swingDark('Swing dark', 'Sunny yellow on deep green', AppColors.swingDark),
+  blackOnWhite('Black on white', 'Plain black on white', AppColors.blackOnWhite),
+  whiteOnBlack('White on black', 'Plain white on black', AppColors.whiteOnBlack),
+  custom('My colors', 'Your own background, text and accent', null);
 
-  const AppPalette(this.label, this.description, this.swatches);
+  const AppPalette(this.label, this.description, this.fixed);
   final String label;
   final String description;
-  final List<Color> swatches;
 
-  /// Always light or always dark, whatever Appearance says.
-  bool get isFixed => this == blackOnWhite || this == whiteOnBlack;
-
-  AppColors colors(Brightness b) => switch (this) {
-        AppPalette.modernist => b == Brightness.dark
-            ? AppColors.modernistDark
-            : AppColors.modernistLight,
-        AppPalette.swing =>
-          b == Brightness.dark ? AppColors.swingDark : AppColors.swingLight,
-        AppPalette.blackOnWhite => AppColors.blackOnWhite,
-        AppPalette.whiteOnBlack => AppColors.whiteOnBlack,
-      };
+  /// The colours of every palette except [custom].
+  final AppColors? fixed;
 }
 
+/// Three preview chips for a colour set: background, text, accent (the
+/// half-strength accent where the accent is the text colour).
+List<Color> swatchesOf(AppColors c) =>
+    [c.bg, c.txt, c.green == c.txt ? c.accentLt : c.green];
 
 // ── Per-build colour palette ──────────────────────────────
 // Field names are unchanged from the old green theme so the existing
@@ -307,6 +312,45 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.hairline,
     required this.isDark,
   });
+
+  /// "My colors": background, text and accent come from the user, the rest
+  /// is derived. Secondary and accent text are pulled towards the text colour
+  /// until they reach 4.5:1 on the background, as far as the text allows.
+  factory AppColors.custom({
+    required Color bg,
+    required Color txt,
+    required Color accent,
+  }) {
+    final dark = bg.computeLuminance() < txt.computeLuminance();
+    Color mix(Color a, Color b, double t) => Color.lerp(a, b, t)!;
+    Color readable(Color c) {
+      var out = c;
+      for (var i = 1; i <= 10 && contrastRatio(out, bg) < 4.5; i++) {
+        out = mix(c, txt, i / 10);
+      }
+      return out;
+    }
+
+    return AppColors(
+      bg: bg,
+      card: dark ? mix(bg, txt, 0.06) : mix(bg, Colors.white, 0.6),
+      recessed: mix(bg, txt, dark ? 0.1 : 0.06),
+      border: dark ? mix(bg, txt, 0.35) : txt,
+      txt: txt,
+      txt2: readable(mix(txt, bg, 0.35)),
+      green: accent,
+      onAccent: contrastRatio(Colors.white, accent) >=
+              contrastRatio(Colors.black, accent)
+          ? Colors.white
+          : Colors.black,
+      accentTxt: readable(accent),
+      accentLt: mix(accent, bg, 0.45),
+      greenTint: mix(bg, accent, 0.15),
+      redTint: mix(bg, const Color(0xFFE53935), 0.08),
+      hairline: txt.withValues(alpha: 0.4),
+      isDark: dark,
+    );
+  }
 
   factory AppColors.of(BuildContext ctx) =>
       Theme.of(ctx).extension<AppColors>() ?? modernistLight;

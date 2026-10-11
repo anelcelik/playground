@@ -8,6 +8,7 @@ import '../settings/app_settings.dart';
 import '../sync/sync_service.dart';
 import '../theme.dart';
 import '../widgets/modernist.dart';
+import 'custom_theme_screen.dart';
 import 'recurring_activity_form.dart';
 
 /// First launch: welcome, the family's names (nicknames welcome), optional
@@ -399,17 +400,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _lookPage(AppColors c) {
     final s = AppSettings.instance;
     return _page(c, 'Your look', [
-      _para(c, 'Pick a color theme. Light and dark mode follow your iPhone.'),
+      _para(c,
+          'Pick a color theme, or make your own. You can change it any time '
+          'in Settings.'),
       for (final p in AppPalette.values) ...[
         Block(
           recessed: s.palette == p,
           onTap: () async {
             await s.setPalette(p);
+            if (p == AppPalette.custom && mounted) {
+              await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const CustomThemeScreen()));
+            }
             if (mounted) setState(() {});
           },
           child: Row(
             children: [
-              for (final sw in p.swatches)
+              for (final sw in swatchesOf(p.fixed ?? s.customColors))
                 Container(
                   width: 16,
                   height: 32,

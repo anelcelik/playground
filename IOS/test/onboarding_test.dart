@@ -65,7 +65,7 @@ void main() {
 
   testWidgets('names are required before continuing', (tester) async {
     await tester.pumpWidget(MaterialApp(
-      theme: buildTheme(AppPalette.modernist, Brightness.light),
+      theme: buildTheme(AppColors.modernistLight),
       home: OnboardingScreen(onComplete: () {}),
     ));
     await tester.pump();

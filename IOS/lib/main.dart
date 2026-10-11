@@ -83,9 +83,9 @@ class PlaygroundTrackerApp extends StatelessWidget {
       builder: (_, __) => MaterialApp(
         title: 'Playground Tracker',
         debugShowCheckedModeBanner: false,
-        theme: buildTheme(AppSettings.instance.palette, Brightness.light),
-        darkTheme: buildTheme(AppSettings.instance.palette, Brightness.dark),
-        themeMode: AppSettings.instance.themeMode,
+        // One theme, fully light or dark, picked in Settings (no System
+        // / Light / Dark switch any more).
+        theme: buildTheme(AppSettings.instance.colors),
         // Status bar icons follow the app's colours, not the system setting:
         // a fixed palette can be dark while the iPhone is in light mode.
         builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(

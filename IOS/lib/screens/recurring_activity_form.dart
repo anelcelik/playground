@@ -278,7 +278,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                         border: Border.all(color: sel ? _kGreen : _kBorder, width: 2),
                         borderRadius: BorderRadius.zero,
                       ),
-                      child: Text(_dayLabels[i],
+                      child: _checkText(_dayLabels[i], sel,
                           style: TextStyle(
                               color: sel ? _kOn : _kTxt,
                               fontWeight: FontWeight.w600,
@@ -506,7 +506,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
           border: Border.all(color: sel ? activeColor : _kBorder, width: 2),
           borderRadius: BorderRadius.zero,
         ),
-        child: Text(label,
+        child: _checkText(label, sel,
             textAlign: TextAlign.center,
             style: TextStyle(
                 color: sel ? _kOn : _kTxt,
@@ -529,3 +529,22 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
         ),
       );
 }
+
+/// A chip label with a check in front when selected, like the kids' chips.
+Widget _checkText(String label, bool selected,
+        {required TextStyle style, TextAlign? textAlign}) =>
+    Text.rich(
+      TextSpan(children: [
+        if (selected)
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Icon(Icons.check, size: 14, color: style.color),
+            ),
+          ),
+        TextSpan(text: label),
+      ]),
+      textAlign: textAlign,
+      style: style,
+    );

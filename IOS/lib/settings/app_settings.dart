@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../db/database_helper.dart';
@@ -9,26 +11,52 @@ class AppSettings extends ChangeNotifier {
 
   bool _use24h = false;
   bool _euDate = true; // true = European d MMM yyyy | false = US MMM d, yyyy
-  ThemeMode _themeMode = ThemeMode.system;
-  AppPalette _palette = AppPalette.modernist;
+  AppPalette _palette = AppPalette.modernistLight;
+  // "My colors": white background, black text, blue accent until edited.
+  Color _customBg = Colors.white;
+  Color _customTxt = Colors.black;
+  Color _customAccent = const Color(0xFF1565C0);
 
   bool get use24h => _use24h;
   bool get euDate => _euDate;
-  ThemeMode get themeMode => _themeMode;
   AppPalette get palette => _palette;
+  Color get customBg => _customBg;
+  Color get customTxt => _customTxt;
+  Color get customAccent => _customAccent;
+
+  /// The colours in use: the chosen palette's, or the user's own.
+  AppColors get colors => _palette.fixed ?? customColors;
+  AppColors get customColors => AppColors.custom(
+      bg: _customBg, txt: _customTxt, accent: _customAccent);
 
   Future<void> load() async {
     _use24h   = await DatabaseHelper.instance.getMeta('setting_24h') == '1';
     final eu  = await DatabaseHelper.instance.getMeta('setting_eu_date');
     _euDate   = eu == null || eu == '1'; // default to European
-    _themeMode = switch (await DatabaseHelper.instance.getMeta('setting_theme')) {
-      'light' => ThemeMode.light,
-      'dark' => ThemeMode.dark,
-      _ => ThemeMode.system,
+    // Until 11 Oct 2026 a palette (modernist / swing) came with a separate
+    // System / Light / Dark setting; both now map onto one theme. Nothing
+    // chosen yet follows the phone's current look.
+    final mode = await DatabaseHelper.instance.getMeta('setting_theme');
+    final dark = switch (mode) {
+      'dark' => true,
+      'light' => false,
+      _ => PlatformDispatcher.instance.platformBrightness == Brightness.dark,
     };
     final pal = await DatabaseHelper.instance.getMeta('setting_palette');
-    _palette = AppPalette.values
-        .firstWhere((p) => p.name == pal, orElse: () => AppPalette.modernist);
+    _palette = switch (pal) {
+      'swing' => dark ? AppPalette.swingDark : AppPalette.swingLight,
+      _ => AppPalette.values.firstWhere((p) => p.name == pal,
+          orElse: () =>
+              dark ? AppPalette.modernistDark : AppPalette.modernistLight),
+    };
+    Color? color(String? v) => v == null ? null : Color(int.parse(v));
+    _customBg = color(await DatabaseHelper.instance.getMeta('custom_bg')) ??
+        Colors.white;
+    _customTxt = color(await DatabaseHelper.instance.getMeta('custom_txt')) ??
+        Colors.black;
+    _customAccent =
+        color(await DatabaseHelper.instance.getMeta('custom_accent')) ??
+            const Color(0xFF1565C0);
   }
 
   /// Re-reads every setting (after Delete all data) and redraws the app.
@@ -49,10 +77,22 @@ class AppSettings extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> setThemeMode(ThemeMode mode) async {
-    _themeMode = mode;
-    await DatabaseHelper.instance.setMeta('setting_theme', mode.name);
-    notifyListeners();
+  /// "My colors": stores any of the three and switches to the custom theme.
+  Future<void> setCustomColors({Color? bg, Color? txt, Color? accent}) async {
+    final db = DatabaseHelper.instance;
+    if (bg != null) {
+      _customBg = bg;
+      await db.setMeta('custom_bg', '${bg.toARGB32()}');
+    }
+    if (txt != null) {
+      _customTxt = txt;
+      await db.setMeta('custom_txt', '${txt.toARGB32()}');
+    }
+    if (accent != null) {
+      _customAccent = accent;
+      await db.setMeta('custom_accent', '${accent.toARGB32()}');
+    }
+    await setPalette(AppPalette.custom);
   }
 
   Future<void> setPalette(AppPalette p) async {

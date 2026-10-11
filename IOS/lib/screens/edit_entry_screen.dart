@@ -260,7 +260,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                               color: sel ? _kGreen : _kBorder, width: 2),
                           borderRadius: BorderRadius.zero,
                         ),
-                        child: Text(d,
+                        child: _checkText(d, sel,
                             style: TextStyle(
                                 color: sel ? _kOn : _kTxt,
                                 fontWeight: FontWeight.w500,
@@ -345,7 +345,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                               color: on ? _kGreen : _kBorder, width: 2),
                           borderRadius: BorderRadius.zero,
                         ),
-                        child: Text(tag,
+                        child: _checkText(tag, on,
                             style: TextStyle(
                                 color: on ? _kOn : _kTxt,
                                 fontSize: 12,
@@ -439,7 +439,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
           border: Border.all(color: sel ? active : _kBorder, width: 2),
           borderRadius: BorderRadius.zero,
         ),
-        child: Text(label,
+        child: _checkText(label, sel,
             textAlign: TextAlign.center,
             style: TextStyle(
                 color: sel ? _kOn : _kTxt,
@@ -447,3 +447,22 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                 fontSize: 14)),
       );
 }
+
+/// A chip label with a check in front when selected, like the kids' chips.
+Widget _checkText(String label, bool selected,
+        {required TextStyle style, TextAlign? textAlign}) =>
+    Text.rich(
+      TextSpan(children: [
+        if (selected)
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Icon(Icons.check, size: 14, color: style.color),
+            ),
+          ),
+        TextSpan(text: label),
+      ]),
+      textAlign: textAlign,
+      style: style,
+    );
