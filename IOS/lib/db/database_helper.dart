@@ -18,6 +18,16 @@ class DatabaseHelper {
 
   Future<Database> get database => _dbFuture ??= _initDB();
 
+  /// Settings › Delete all data: closes the database and deletes its file,
+  /// so the next access creates a fresh, empty one.
+  Future<void> deleteEverything() async {
+    final future = _dbFuture;
+    _dbFuture = null;
+    if (future != null) await (await future).close();
+    await deleteDatabase(
+        databasePathOverride ?? join(await getDatabasesPath(), 'playground.db'));
+  }
+
   /// Test-only: closes the database so the next access reopens it.
   static Future<void> resetForTests() async {
     final future = _dbFuture;

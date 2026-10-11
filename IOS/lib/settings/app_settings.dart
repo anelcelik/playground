@@ -31,6 +31,12 @@ class AppSettings extends ChangeNotifier {
         .firstWhere((p) => p.name == pal, orElse: () => AppPalette.modernist);
   }
 
+  /// Re-reads every setting (after Delete all data) and redraws the app.
+  Future<void> reload() async {
+    await load();
+    notifyListeners();
+  }
+
   Future<void> setUse24h(bool v) async {
     _use24h = v;
     await DatabaseHelper.instance.setMeta('setting_24h', v ? '1' : '0');

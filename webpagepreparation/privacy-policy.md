@@ -1,6 +1,6 @@
 # Playground Tracker — Privacy Policy
 
-Effective 9 October 2026
+Effective 11 October 2026
 
 ## In short
 
@@ -28,7 +28,7 @@ The app is meant for parents. Children's names stay on your iPhone and in your o
 
 ## Deleting your data
 
-Delete entries in the app at any time. Deleting the app removes everything stored on the iPhone. To remove the iCloud copy, open iOS Settings, tap your name, then iCloud, open the storage list, choose Playground Tracker and delete its data. To stop sharing, use Family sync in Settings.
+Settings › Delete all data removes everything at once, from your iPhone and from your iCloud; if you share the log with family, it is removed for them too. You can also delete single entries at any time, and deleting the app removes everything stored on the iPhone. To stop sharing, use Family sync in Settings.
 
 ## Changes
 

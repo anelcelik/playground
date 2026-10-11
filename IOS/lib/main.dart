@@ -8,8 +8,9 @@ import 'package:timezone/timezone.dart' as tz_local;
 import 'db/database_helper.dart';
 import 'models/dashboard_prefs.dart';
 import 'notifications/notification_service.dart';
-import 'screens/setup_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/home_screen.dart';
+import 'services/data_reset.dart';
 import 'services/quick_action_service.dart';
 import 'settings/app_settings.dart';
 import 'sync/sync_controller.dart';
@@ -84,14 +85,19 @@ class PlaygroundTrackerApp extends StatelessWidget {
         theme: buildTheme(AppSettings.instance.palette, Brightness.light),
         darkTheme: buildTheme(AppSettings.instance.palette, Brightness.dark),
         themeMode: AppSettings.instance.themeMode,
-        home: const _AppRouter(),
+        // Keyed on appGeneration: Delete all data bumps it, which rebuilds
+        // the router from scratch and lands on onboarding.
+        home: ValueListenableBuilder<int>(
+          valueListenable: appGeneration,
+          builder: (_, generation, __) => _AppRouter(key: ValueKey(generation)),
+        ),
       ),
     );
   }
 }
 
 class _AppRouter extends StatefulWidget {
-  const _AppRouter();
+  const _AppRouter({super.key});
 
   @override
   State<_AppRouter> createState() => _AppRouterState();
@@ -136,7 +142,7 @@ class _AppRouterState extends State<_AppRouter> {
       );
     }
     if (!_hasFamily) {
-      return SetupScreen(
+      return OnboardingScreen(
         onComplete: () => setState(() => _hasFamily = true),
       );
     }

@@ -53,15 +53,21 @@ class DashboardPrefs extends ChangeNotifier {
   // removed, they are one tap away via the tune button.
   static const _kDefaultHidden = {'charts', 'activities'};
 
-  List<SectionConfig> _sections = _kDefaultOrder
+  static List<SectionConfig> _defaults() => _kDefaultOrder
       .map((id) => SectionConfig(id: id, visible: !_kDefaultHidden.contains(id)))
       .toList();
+
+  List<SectionConfig> _sections = _defaults();
 
   List<SectionConfig> get sections => _sections;
 
   Future<void> load() async {
     final raw = await DatabaseHelper.instance.getMeta('dashboard_layout');
-    if (raw == null || raw.isEmpty) return;
+    if (raw == null || raw.isEmpty) {
+      // Nothing saved (first run, or after Delete all data): the defaults.
+      _sections = _defaults();
+      return;
+    }
 
     try {
       final data = (jsonDecode(raw) as List).cast<Map<String, dynamic>>();

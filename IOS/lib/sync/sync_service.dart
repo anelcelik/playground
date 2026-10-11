@@ -32,6 +32,10 @@ class SyncService {
   DateTime? _lastSyncedAt;
   DateTime? get lastSyncedAt => _lastSyncedAt;
 
+  /// Set while all data is being deleted, so no sync recreates the iCloud
+  /// copy between deleting it and wiping the local database.
+  bool paused = false;
+
   bool get _isIos =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
 
@@ -47,6 +51,7 @@ class SyncService {
       status.value = SyncStatus.unavailable;
       return;
     }
+    if (paused) return;
     if (status.value == SyncStatus.syncing) return;
     status.value = SyncStatus.syncing;
 
@@ -70,7 +75,7 @@ class SyncService {
   /// Silent — does not change the status dot. On failure the entry keeps its
   /// needs_push flag and is retried on the next sync cycle.
   Future<void> pushEntry(Entry entry) async {
-    if (!_isIos) return;
+    if (!_isIos || paused) return;
     try {
       await _kChannel
           .invokeMethod<void>('saveEntry', entry.toJsonMap())
@@ -79,6 +84,25 @@ class SyncService {
           .markEntriesPushed([(uuid: entry.uuid, lastModified: entry.lastModified)]);
     } catch (e) {
       debugPrint('[CloudKit] pushEntry error: $e');
+    }
+  }
+
+  /// Settings › Delete all data: deletes this family's iCloud copy so sync
+  /// can't bring it back. True when it is gone or there is none to reach
+  /// (not iOS, a build without iCloud, signed out of iCloud); false when the
+  /// delete failed, e.g. offline — then nothing should be deleted locally.
+  Future<bool> deleteCloudData() async {
+    if (!_isIos) return true;
+    try {
+      await _kChannel.invokeMethod<void>('deleteAllData').timeout(_kCallTimeout);
+      _lastSyncedAt = null;
+      return true;
+    } on MissingPluginException {
+      return true;
+    } on PlatformException catch (e) {
+      return e.code == 'ICLOUD_UNAVAILABLE';
+    } catch (_) {
+      return false;
     }
   }
 

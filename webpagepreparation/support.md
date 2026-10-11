@@ -62,9 +62,9 @@ See the [privacy policy](privacy-policy) for details.
 
 ### How do I delete my data?
 
-Delete entries in the app at any time. Deleting the app removes everything on
-the iPhone. To remove the iCloud copy, open iOS Settings, tap your name, then
-iCloud, open the storage list, choose Playground Tracker and delete its data.
+Go to **Settings > Delete all data**. It removes everything from your iPhone
+and from your iCloud at once; if you share the log with family, it is removed
+for them too. You can also delete single entries at any time.
 
 ### Does it work on iPad?
 

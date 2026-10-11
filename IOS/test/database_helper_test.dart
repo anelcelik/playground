@@ -5,6 +5,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:playground_tracker/db/database_helper.dart';
 import 'package:playground_tracker/models/entry.dart';
 import 'package:playground_tracker/models/recurring_activity.dart';
+import 'package:playground_tracker/services/data_reset.dart';
 import 'package:playground_tracker/settings/app_settings.dart';
 import 'package:playground_tracker/theme.dart';
 
@@ -253,5 +254,19 @@ void main() {
       }
     }
     await AppSettings.instance.setPalette(AppPalette.modernist);
+  });
+
+  test('Delete all data leaves an empty app with default settings', () async {
+    // deleteAllData reaches the sync service's platform channel.
+    TestWidgetsFlutterBinding.ensureInitialized();
+    await db.saveFamily(['Mom'], ['Bean']);
+    await db.insertEntry(entry());
+    await AppSettings.instance.setPalette(AppPalette.swing);
+
+    expect(await deleteAllData(), isTrue);
+
+    expect((await db.getFamily()).parents, isEmpty);
+    expect(await db.getEntriesForDate('2026-06-01'), isEmpty);
+    expect(AppSettings.instance.palette, AppPalette.modernist);
   });
 }

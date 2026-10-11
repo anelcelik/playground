@@ -147,6 +147,9 @@ import UIKit
                 self.revokeParticipant(participantID, db: db, zoneID: zoneID, result: result)
             }
 
+        case "deleteAllData":
+            deleteAllData(result)
+
         default:
             finish(result, FlutterMethodNotImplemented)
         }
@@ -156,6 +159,64 @@ import UIKit
     /// CloudKit callbacks arrive on arbitrary queues.
     private func finish(_ result: @escaping FlutterResult, _ value: Any?) {
         DispatchQueue.main.async { result(value) }
+    }
+
+    // MARK: - Delete all data
+
+    /// Settings › Delete all data. Deletes this family's zone from iCloud so
+    /// sync can't bring the log back: the owner's private zone (its CKShare
+    /// goes with it, so invited family lose access) and, for a participant,
+    /// the shared zone, which leaves the share. A zone that isn't there counts
+    /// as deleted; any failure (offline) is reported, so the Dart side keeps
+    /// the local data too.
+    private func deleteAllData(_ result: @escaping FlutterResult) {
+        ckContainer.accountStatus { status, _ in
+            guard status == .available else {
+                self.finish(result, self.err(
+                    "ICLOUD_UNAVAILABLE", "iCloud is not available (status \(status.rawValue))"))
+                return
+            }
+            let group = DispatchGroup()
+            let lock = NSLock()
+            var failure: Error?
+            func fail(_ error: Error) {
+                lock.lock(); failure = failure ?? error; lock.unlock()
+            }
+            for db in [self.ckContainer.privateCloudDatabase, self.ckContainer.sharedCloudDatabase] {
+                group.enter()
+                db.fetchAllRecordZones { zones, error in
+                    if let error = error {
+                        fail(error)
+                        group.leave()
+                        return
+                    }
+                    let ids = (zones ?? []).map(\.zoneID).filter { $0.zoneName == Self.zoneName }
+                    guard !ids.isEmpty else {
+                        group.leave()
+                        return
+                    }
+                    let op = CKModifyRecordZonesOperation(
+                        recordZonesToSave: nil, recordZoneIDsToDelete: ids)
+                    op.modifyRecordZonesResultBlock = { outcome in
+                        if case .failure(let error) = outcome { fail(error) }
+                        group.leave()
+                    }
+                    db.add(op)
+                }
+            }
+            group.notify(queue: .main) {
+                if let error = failure {
+                    self.finish(result, self.err("DELETE_FAILED", error.localizedDescription))
+                    return
+                }
+                for key in [self.kPrivateToken, self.kSharedToken, self.kIsParticipant] {
+                    UserDefaults.standard.removeObject(forKey: key)
+                }
+                self.cachedZone = nil
+                self.cachedDB = nil
+                self.finish(result, nil)
+            }
+        }
     }
 
     // MARK: - Zone discovery / creation
