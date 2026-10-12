@@ -553,6 +553,8 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
   }
 
   Widget _card(Widget child) => Container(
+        // Full width even when the content is short (the kids card was not).
+        width: double.infinity,
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: _kCard,
