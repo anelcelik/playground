@@ -13,6 +13,7 @@ import '../widgets/modernist.dart';
 import '../widgets/reason_sheet.dart';
 import 'quick_visit_sheet.dart';
 import 'recap_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Replaces the old EntryScreen as the first tab.
 ///
@@ -141,11 +142,11 @@ class _TodayScreenState extends State<TodayScreen> {
     await _refresh();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: const Text('Visit logged'),
+      content: Text(context.l10n.visitLogged),
       // With an action, Flutter would otherwise keep it up until tapped.
       persist: false,
       action: SnackBarAction(
-        label: 'EDIT',
+        label: context.l10n.edit.toUpperCase(),
         onPressed: () => _openSheet(source.shift),
       ),
     ));
@@ -245,7 +246,7 @@ class _TodayScreenState extends State<TodayScreen> {
             if (!_isToday)
               TextButton(
                 onPressed: () => _selectDay(_now),
-                child: Text('TODAY',
+                child: Text(context.l10n.today.toUpperCase(),
                     style: AppType.label
                         .copyWith(color: c.accentTxt, fontSize: 11)),
               ),
@@ -253,7 +254,7 @@ class _TodayScreenState extends State<TodayScreen> {
             TextButton(
               onPressed: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const RecapScreen())),
-              child: Text('RECAP',
+              child: Text(context.l10n.recap.toUpperCase(),
                   style: AppType.label
                       .copyWith(color: c.accentTxt, fontSize: 11)),
             ),
@@ -262,11 +263,11 @@ class _TodayScreenState extends State<TodayScreen> {
       );
 
   String get _dayTitle {
-    if (_isToday) return 'Today';
+    if (_isToday) return context.l10n.today;
     if (DateUtils.isSameDay(_day, _now.subtract(const Duration(days: 1)))) {
-      return 'Yesterday';
+      return context.l10n.yesterday;
     }
-    return DateFormat('EEEE').format(_day);
+    return toBeginningOfSentenceCase(DateFormat('EEEE').format(_day));
   }
 
   // ── Week strip ──────────────────────────────────────────
@@ -307,7 +308,7 @@ class _TodayScreenState extends State<TodayScreen> {
                   ),
                   child: Column(
                     children: [
-                      Text(DateFormat('E').format(d)[0],
+                      Text(DateFormat('EEEEE').format(d).toUpperCase(),
                           style: AppType.label.copyWith(
                               fontSize: 9,
                               letterSpacing: 1,
@@ -370,7 +371,8 @@ class _TodayScreenState extends State<TodayScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionLabel(_hasVisit ? 'Add another' : 'Log a visit'),
+        SectionLabel(
+            _hasVisit ? context.l10n.addAnother : context.l10n.logAVisit),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
@@ -380,7 +382,7 @@ class _TodayScreenState extends State<TodayScreen> {
               // so a brand-new install never sees an empty promise.
               if (_lastVisit.isNotEmpty && !_hasVisit) ...[
                 BlockButton(
-                  label: 'Same as usual',
+                  label: context.l10n.sameAsUsual,
                   sublabel: _describe(_lastVisit.first),
                   icon: Icons.arrow_forward,
                   onTap: _repeatLast,
@@ -390,20 +392,24 @@ class _TodayScreenState extends State<TodayScreen> {
               Row(
                 children: [
                   Expanded(
-                      child: _shiftBlock(c, 'morning', 'Morning', morning)),
+                      child: _shiftBlock(c, 'morning', context.l10n.morning, morning)),
                   const SizedBox(width: 10),
                   Expanded(
-                      child: _shiftBlock(c, 'evening', 'Evening', evening)),
+                      child: _shiftBlock(c, 'evening', context.l10n.evening, evening)),
                 ],
               ),
               const SizedBox(height: 11),
               Row(
                 children: [
-                  _textAction(c, _isToday ? 'Nobody went today' : 'Nobody went',
+                  _textAction(
+                      c,
+                      _isToday
+                          ? context.l10n.nobodyWentToday
+                          : context.l10n.nobodyWent,
                       accent: true,
                       onTap: () => _logNonVisit(vacation: false)),
                   const SizedBox(width: 16),
-                  _textAction(c, 'On vacation',
+                  _textAction(c, context.l10n.onVacation,
                       onTap: () => _logNonVisit(vacation: true)),
                 ],
               ),
@@ -441,7 +447,10 @@ class _TodayScreenState extends State<TodayScreen> {
               ],
             ),
             const SizedBox(height: 2),
-            Text(logged ? _describe(entry, withShift: false) : 'Not logged',
+            Text(
+                logged
+                    ? _describe(entry, withShift: false)
+                    : context.l10n.notLogged,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppType.bodySm.copyWith(color: c.txt2)),
@@ -469,7 +478,8 @@ class _TodayScreenState extends State<TodayScreen> {
 
   String _describe(Entry e, {bool withShift = true}) {
     final parts = <String>[
-      if (withShift) e.shift == 'morning' ? 'Morning' : 'Evening',
+      if (withShift)
+        e.shift == 'morning' ? context.l10n.morning : context.l10n.evening,
       if (e.userList.isNotEmpty) e.userList.join(' & '),
       if (e.kidList.isNotEmpty) e.kidList.join(' & '),
       if (e.duration != null && e.duration!.isNotEmpty) e.duration!,
@@ -494,14 +504,19 @@ class _TodayScreenState extends State<TodayScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(entry.vacation ? 'ON VACATION' : 'NOBODY WENT',
+                  Text(
+                      (entry.vacation
+                              ? context.l10n.onVacation
+                              : context.l10n.nobodyWent)
+                          .toUpperCase(),
                       style: AppType.label
                           .copyWith(fontSize: 13, color: c.txt)),
                   const SizedBox(height: 3),
                   Text(
                       entry.excuse?.isNotEmpty == true
-                          ? '${entry.excuse} · tap to change'
-                          : 'Tap to change',
+                          ? context.l10n.reasonTapToChange(
+                              reasonsLabel(context.l10n, entry.excuse!))
+                          : context.l10n.tapToChange,
                       style: AppType.bodySm.copyWith(color: c.txt2)),
                 ],
               ),
@@ -520,8 +535,9 @@ class _TodayScreenState extends State<TodayScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionLabel(_isToday ? 'Planned for today' : 'Planned',
-            trailing: '$done of ${_recurring.length} done'),
+        SectionLabel(
+            _isToday ? context.l10n.plannedForToday : context.l10n.planned,
+            trailing: context.l10n.doneOfTotal(done, _recurring.length)),
         for (final r in _recurring)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
@@ -543,10 +559,13 @@ class _TodayScreenState extends State<TodayScreen> {
 
     if (resolved) {
       final statusText = r.isConfirmed
-          ? 'Confirmed · tap to edit'
+          ? context.l10n.confirmedTapToEdit
           : r.isSkipped
-              ? 'Skipped${r.log?.skipReason != null ? ' · ${r.log!.skipReason}' : ''}'
-              : 'Missed';
+              ? (r.log?.skipReason != null
+                  ? context.l10n.skippedBecause(
+                      reasonLabel(context.l10n, r.log!.skipReason!))
+                  : context.l10n.skipped)
+              : context.l10n.missed;
       return Block(
         recessed: true,
         onTap: r.entry == null
@@ -600,16 +619,16 @@ class _TodayScreenState extends State<TodayScreen> {
             ),
           ),
           const SizedBox(width: 10),
-          _pill(c, 'DONE', filled: true, onTap: () async {
+          _pill(c, context.l10n.done.toUpperCase(), filled: true, onTap: () async {
             await RecurringService.instance.confirm(
                 activity: a, date: _date, family: widget.family);
             await _refresh();
           }),
           const SizedBox(width: 6),
-          _pill(c, 'SKIP', onTap: () async {
+          _pill(c, context.l10n.skip.toUpperCase(), onTap: () async {
             final reason = await showReasonSheet(context,
-                title: 'Why skip?',
-                hint: 'Pick or write why “${a.title}” didn’t happen.');
+                title: context.l10n.whySkip,
+                hint: context.l10n.whySkipHint(a.title));
             if (reason == null) return;
             await RecurringService.instance
                 .skip(activity: a, date: _date, reason: reason);

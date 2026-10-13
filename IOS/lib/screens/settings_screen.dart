@@ -12,6 +12,8 @@ import 'display_settings_screen.dart';
 import 'log_screen.dart';
 import 'privacy_screen.dart';
 import 'recap_screen.dart';
+import '../l10n/l10n.dart';
+import '../settings/app_settings.dart';
 
 /// The fourth tab. Collects what the gear PopupMenuButton used to hold,
 /// minus Recap (now on Today) and Recurring Activities (now the Plans tab).
@@ -33,13 +35,15 @@ class SettingsScreen extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 6, 20, 14),
-          child: Text('Settings', style: AppType.title.copyWith(color: c.txt)),
+          child: Text(context.l10n.settings,
+              style: AppType.title.copyWith(color: c.txt)),
         ),
         const Rule(),
-        const SectionLabel('Family'),
+        SectionLabel(context.l10n.family),
         _Row(
-          label: 'Parents & kids',
-          value: '${family.parents.length} parents · ${family.kids.length} kids',
+          label: context.l10n.parentsAndKids,
+          value: '${context.l10n.parentsCount(family.parents.length)} · '
+              '${context.l10n.kidsCount(family.kids.length)}',
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(
@@ -57,56 +61,55 @@ class SettingsScreen extends StatelessWidget {
           ),
         ),
         _Row(
-          label: 'Family sync',
-          value: 'Share across Apple IDs',
+          label: context.l10n.familySync,
+          value: context.l10n.familySyncSub,
           onTap: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const InviteFamilyScreen())),
         ),
         const Rule(),
-        const SectionLabel('App'),
+        SectionLabel(context.l10n.app),
         _Row(
-          label: 'Reminders',
+          label: context.l10n.remindersSetting,
           onTap: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const NotificationsScreen())),
         ),
         _Row(
-          label: 'Date, time & theme',
+          label: context.l10n.languageDateTheme,
+          value: AppSettings.languageNames[AppSettings.instance.locale.languageCode]!,
           onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
                   builder: (_) => const DisplaySettingsScreen())),
         ),
         _Row(
-          label: 'Recap',
+          label: context.l10n.recap,
           onTap: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const RecapScreen())),
         ),
         _Row(
-          label: 'Privacy',
-          value: 'No data collected',
+          label: context.l10n.privacy,
+          value: context.l10n.noDataCollected,
           onTap: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const PrivacyScreen())),
         ),
         const Rule(),
-        const SectionLabel('Your data'),
+        SectionLabel(context.l10n.yourData),
         _Row(
-          label: 'Log',
-          value: 'Every visit, newest first',
+          label: context.l10n.log,
+          value: context.l10n.logSub,
           onTap: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => LogScreen(family: family))),
         ),
         _Row(
-          label: 'Delete all data',
-          value: 'On this iPhone and in iCloud',
+          label: context.l10n.deleteAllData,
+          value: context.l10n.deleteAllDataSub,
           onTap: () => _confirmDeleteAll(context),
         ),
         const Rule(),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),
           child: Text(
-              'Playground Tracker — a one-time App Store purchase. '
-              'No subscription, no account, no ads. Your log stays on your '
-              'devices and syncs through your own iCloud.',
+              context.l10n.aboutNote,
               style: AppType.bodySm.copyWith(color: c.txt2, height: 1.5)),
         ),
       ],
@@ -168,19 +171,16 @@ Future<void> _confirmDeleteAll(BuildContext context) async {
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Delete all data?'),
-      content: const Text(
-          'Every visit, plan, name and setting is deleted from this iPhone '
-          'and from your iCloud. If you share the log with family, they lose '
-          'it too. This can\'t be undone.'),
+      title: Text(ctx.l10n.deleteAllDataQuestion),
+      content: Text(ctx.l10n.deleteAllDataBody),
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel')),
+            child: Text(ctx.l10n.cancel)),
         TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete everything',
-                style: TextStyle(color: Colors.red))),
+            child: Text(ctx.l10n.deleteEverything,
+                style: const TextStyle(color: Colors.red))),
       ],
     ),
   );
@@ -190,15 +190,15 @@ Future<void> _confirmDeleteAll(BuildContext context) async {
   showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => const AlertDialog(
+    builder: (ctx) => AlertDialog(
       content: Row(
         children: [
-          SizedBox(
+          const SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(strokeWidth: 2)),
-          SizedBox(width: 16),
-          Text('Deleting\u2026'),
+          const SizedBox(width: 16),
+          Text(ctx.l10n.deleting),
         ],
       ),
     ),
@@ -214,14 +214,11 @@ Future<void> _confirmDeleteAll(BuildContext context) async {
   await showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Nothing was deleted'),
-      content: const Text(
-          'iCloud couldn\'t be reached, so your data was left as it is '
-          '(otherwise sync would bring it back). Try again when you\'re '
-          'online.'),
+      title: Text(ctx.l10n.nothingDeleted),
+      content: Text(ctx.l10n.nothingDeletedBody),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+            onPressed: () => Navigator.pop(ctx), child: Text(ctx.l10n.ok)),
       ],
     ),
   );

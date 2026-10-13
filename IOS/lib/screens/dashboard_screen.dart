@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../db/database_helper.dart';
 import '../models/dashboard_prefs.dart';
@@ -9,11 +10,7 @@ import '../theme.dart';
 import '../widgets/modernist.dart';
 import '../models/durations.dart';
 import 'dashboard_customise_screen.dart';
-
-const _monthNames = [
-  'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
-];
+import '../l10n/l10n.dart';
 
 /// The History tab.
 ///
@@ -97,7 +94,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   String get _periodLabel => switch (_period) {
-        'all' => 'All time',
+        'all' => context.l10n.allTime,
         'year' => _ref,
         'month' => AppSettings.instance.fmtMonth(_ref),
         'week' => AppSettings.instance.fmtWeekRange(_ref, _weekEnd(_ref)),
@@ -130,12 +127,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Row(
             children: [
               Expanded(
-                child: Text('History',
+                child: Text(context.l10n.history,
                     style: AppType.title.copyWith(color: c.txt)),
               ),
               Semantics(
                 button: true,
-                label: 'Customise dashboard',
+                label: context.l10n.customiseDashboard,
                 child: InkWell(
                   onTap: () => Navigator.push(
                     context,
@@ -181,11 +178,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   /// WEEK · MONTH · YEAR · ALL — selected cell fills solid ink.
   Widget _segmented(AppColors c) {
-    const labels = {
-      'week': 'Week',
-      'month': 'Month',
-      'year': 'Year',
-      'all': 'All',
+    final labels = {
+      'week': context.l10n.week,
+      'month': context.l10n.month,
+      'year': context.l10n.year,
+      'all': context.l10n.all,
     };
     final keys = labels.keys.toList();
 
@@ -279,26 +276,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final sections = <String, Widget?>{
       'parent_stats': _barBlock(
         c,
-        'Who took them',
+        context.l10n.whoTookThem,
         [for (final p in parents) (p, byUser[p] ?? 0)],
-        emptyNote: 'Nobody logged yet',
+        emptyNote: context.l10n.nobodyLoggedYet,
       ),
       'calendar': _calendarBlock(c, entries),
       'kid_stats': _barBlock(
         c,
-        'Kids outside',
+        context.l10n.kidsOutside,
         [for (final k in kids) (k, byKid[k] ?? 0)],
-        emptyNote: 'No kids logged yet',
+        emptyNote: context.l10n.noKidsLoggedYet,
       ),
       'time_stats': _timeBlock(c, durStats['avg']!, missed),
       'charts': _barBlock(
         c,
-        'Morning / evening',
+        context.l10n.morningEvening,
         [
-          ('Morning', shifts['morning'] ?? 0),
-          ('Evening', shifts['evening'] ?? 0),
+          (context.l10n.morning, shifts['morning'] ?? 0),
+          (context.l10n.evening, shifts['evening'] ?? 0),
         ],
-        emptyNote: 'No visits this period',
+        emptyNote: context.l10n.noVisitsThisPeriod,
       ),
       'activities': _activitiesBlock(c, entries),
       'missed_reasons': _reasonsBlock(c, entries, missed),
@@ -327,12 +324,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Expanded(
               flex: 4,
-              child: _figure(c, '$visits', 'Visits in $_periodLabel',
+              child: _figure(c, '$visits', context.l10n.visitsInPeriod(_periodLabel),
                   size: 58, color: c.green),
             ),
             Expanded(
               flex: 5,
-              child: _figure(c, _fmtMins(totalMins), 'Outside',
+              child: _figure(c, _fmtMins(totalMins), context.l10n.outside,
                   size: 28, color: c.txt),
             ),
           ],
@@ -430,7 +427,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             }()
         ];
         columns = 7;
-        label = 'This week  ·  one square per day';
+        label = '${context.l10n.thisWeek}  ·  ${context.l10n.oneSquarePerDayLower}';
 
       case 'year':
         // A year of days is unreadable at this size — one square per month,
@@ -445,7 +442,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         cells = [
           for (var m = 1; m <= 12; m++)
             (
-              _monthNames[m - 1],
+              DateFormat('LLL').format(DateTime(2000, m)).toUpperCase(),
               switch (byMonth[m] ?? 0) {
                 0 => _dayNone,
                 final v when peak > 0 && v >= peak * 0.6 => _dayBoth,
@@ -454,7 +451,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             )
         ];
         columns = 6;
-        label = '$_ref  ·  one square per month';
+        label = '$_ref  ·  ${context.l10n.oneSquarePerMonthLower}';
 
       default: // month
         final parts = _ref.split('-').map(int.parse).toList();
@@ -470,7 +467,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             }()
         ];
         columns = 7;
-        label = '${AppSettings.instance.fmtMonth(_ref)}  ·  one square per day';
+        label = '${AppSettings.instance.fmtMonth(_ref)}  ·  '
+            '${context.l10n.oneSquarePerDayLower}';
     }
 
     return Column(
@@ -509,10 +507,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             spacing: 14,
             runSpacing: 6,
             children: [
-              _legend(c, _dayBoth, _period == 'year' ? 'Busy' : 'Both'),
-              _legend(c, _dayOne, _period == 'year' ? 'Some' : 'One'),
-              _legend(c, _dayNone, 'None'),
-              if (_period != 'year') _legend(c, _dayVacation, 'Vacation'),
+              _legend(c, _dayBoth,
+                  _period == 'year' ? context.l10n.legendBusy : context.l10n.legendBoth),
+              _legend(c, _dayOne,
+                  _period == 'year' ? context.l10n.legendSome : context.l10n.legendOne),
+              _legend(c, _dayNone, context.l10n.legendNone),
+              if (_period != 'year')
+                _legend(c, _dayVacation, context.l10n.vacation),
             ],
           ),
         ),
@@ -608,27 +609,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ..sort((a, b) => b.value.compareTo(a.value));
     return _barBlock(
       c,
-      'Most played',
+      context.l10n.mostPlayed,
       [for (final kv in sorted.take(6)) (kv.key, kv.value)],
-      emptyNote: 'No activities logged yet',
+      emptyNote: context.l10n.noActivitiesLoggedYet,
     );
   }
 
   Widget _timeBlock(AppColors c, int avgMins, int missed) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SectionLabel('Time & missed days'),
+          SectionLabel(context.l10n.timeAndMissedDays),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
-                  child: _figure(c, _fmtMins(avgMins), 'Average visit',
+                  child: _figure(c, _fmtMins(avgMins), context.l10n.averageVisit,
                       size: 28, color: c.txt),
                 ),
                 Expanded(
-                  child: _figure(c, '$missed', 'Nobody went',
+                  child: _figure(c, '$missed', context.l10n.nobodyWent,
                       size: 28, color: missed == 0 ? c.txt : c.green),
                 ),
               ],
@@ -655,13 +656,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SectionLabel('Why nobody went'),
+        SectionLabel(context.l10n.whyNobodyWent),
         if (sorted.isEmpty)
           _note(
               c,
               missed == 0
-                  ? 'No missed days this period'
-                  : 'No reasons logged yet')
+                  ? context.l10n.noMissedDays
+                  : context.l10n.noReasonsLoggedYet)
         else
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
@@ -675,7 +676,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                     decoration:
                         Border.all(color: c.hairline, width: 2).toBoxDecoration(),
-                    child: Text('${kv.key.toUpperCase()}  ·  ${kv.value}',
+                    child: Text(
+                        '${reasonLabel(context.l10n, kv.key).toUpperCase()}  ·  ${kv.value}',
                         style: AppType.label
                             .copyWith(color: c.txt, fontSize: 10)),
                   ),

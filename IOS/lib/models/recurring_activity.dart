@@ -1,6 +1,7 @@
 import 'dart:convert';
 import '../settings/app_settings.dart';
 import 'entry.dart';
+import '../l10n/l10n.dart';
 
 // ── Recurring activity definition ─────────────────────────
 
@@ -119,14 +120,14 @@ class RecurringActivity {
   bool get isOneTime => dateFrom != null && dateFrom == dateTo;
 
   String get repeatDaysLabel {
-    if (isOneTime) return 'Once · ${AppSettings.instance.fmtDate(dateFrom!)}';
-    if (repeatDays.isEmpty) return 'No days';
-    const n = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final l = currentL10n;
+    if (isOneTime) return l.onceOn(AppSettings.instance.fmtDate(dateFrom!));
+    if (repeatDays.isEmpty) return l.noDays;
     final s = repeatDays.toSet();
-    if (s.length == 7) return 'Every day';
-    if ({0, 1, 2, 3, 4}.every(s.contains) && s.length == 5) return 'Weekdays';
-    if ({5, 6}.every(s.contains) && s.length == 2) return 'Weekends';
-    return ([...repeatDays]..sort()).map((d) => n[d]).join(', ');
+    if (s.length == 7) return l.everyDay;
+    if ({0, 1, 2, 3, 4}.every(s.contains) && s.length == 5) return l.weekdays;
+    if ({5, 6}.every(s.contains) && s.length == 2) return l.weekends;
+    return ([...repeatDays]..sort()).map(weekdayShort).join(', ');
   }
 
   /// Follows the 12/24-hour choice in Display settings.

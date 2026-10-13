@@ -1,0 +1,5 @@
+/* Permission prompts, shown by iOS in the phone's language. */
+"NSCalendarsUsageDescription" = "Añade tus planes a tu calendario cuando tocas Añadir al Calendario.";
+"NSCalendarsWriteOnlyAccessUsageDescription" = "Añade tus planes a tu calendario cuando tocas Añadir al Calendario.";
+"NSRemindersUsageDescription" = "Añade tus planes a Recordatorios cuando eliges Añadir a Recordatorios.";
+"NSRemindersFullAccessUsageDescription" = "Añade tus planes a Recordatorios cuando eliges Añadir a Recordatorios.";

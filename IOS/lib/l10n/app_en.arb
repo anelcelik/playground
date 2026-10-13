@@ -1,0 +1,592 @@
+{
+  "@@locale": "en",
+  "reasonRain": "Rain",
+  "reasonSick": "Sick",
+  "reasonTooLate": "Too late",
+  "reasonBusy": "Busy",
+  "reasonCancelled": "Cancelled",
+  "reasonOther": "Other",
+  "today": "Today",
+  "history": "History",
+  "plans": "Plans",
+  "settings": "Settings",
+  "visitLogged": "Visit logged",
+  "edit": "Edit",
+  "recap": "Recap",
+  "yesterday": "Yesterday",
+  "addAnother": "Add another",
+  "logAVisit": "Log a visit",
+  "sameAsUsual": "Same as usual",
+  "morning": "Morning",
+  "evening": "Evening",
+  "nobodyWentToday": "Nobody went today",
+  "nobodyWent": "Nobody went",
+  "onVacation": "On vacation",
+  "notLogged": "Not logged",
+  "reasonTapToChange": "{reason} · tap to change",
+  "@reasonTapToChange": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "tapToChange": "Tap to change",
+  "plannedForToday": "Planned for today",
+  "planned": "Planned",
+  "doneOfTotal": "{done} of {total} done",
+  "@doneOfTotal": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "confirmedTapToEdit": "Confirmed · tap to edit",
+  "skippedBecause": "Skipped · {reason}",
+  "@skippedBecause": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "skipped": "Skipped",
+  "missed": "Missed",
+  "done": "Done",
+  "skip": "Skip",
+  "whySkip": "Why skip?",
+  "whySkipHint": "Pick or write why “{title}” didn’t happen.",
+  "@whySkipHint": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "addActivity": "Add activity",
+  "addActivityHint": "e.g. Sandpit",
+  "cancel": "Cancel",
+  "add": "Add",
+  "morningVisit": "Morning visit",
+  "eveningVisit": "Evening visit",
+  "save": "Save",
+  "whoWent": "Who went",
+  "whyDidntGo": "Why didn’t {names} go?  ·  optional",
+  "@whyDidntGo": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "kids": "Kids",
+  "howLong": "How long",
+  "activitiesOptional": "Activities  ·  optional",
+  "addChip": "+ Add",
+  "onlyWhoWentRequired": "Only “who went” is required.",
+  "prefilledMorning": "Prefilled from your last morning visit.",
+  "prefilledEvening": "Prefilled from your last evening visit.",
+  "updateVisit": "Update visit",
+  "saveVisit": "Save visit",
+  "whyNot": "Why not?",
+  "whyNotHint": "Pick or write a reason to save the day as “nobody went”.",
+  "writeYourOwn": "+ Write your own",
+  "typeReasonHint": "e.g. Grandma visiting",
+  "editEntry": "Edit entry",
+  "changeReason": "Change reason",
+  "deleteEntry": "Delete entry",
+  "deleteEntryQuestion": "Delete entry?",
+  "deleteEntryBody": "{date}: this also removes it on synced devices.",
+  "@deleteEntryBody": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "delete": "Delete",
+  "entryDeleted": "Entry deleted",
+  "undo": "Undo",
+  "vacation": "Vacation",
+  "absentDidntGo": "{names} didn’t go · {reasons}",
+  "@absentDidntGo": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      },
+      "reasons": {
+        "type": "String"
+      }
+    }
+  },
+  "selectWhoWent": "Select who went",
+  "editEntryTitle": "Edit entry",
+  "whoWentQ": "Who went?",
+  "whenQ": "When?",
+  "howLongQ": "How long?",
+  "whichKidsQ": "Which kids?",
+  "activities": "Activities",
+  "addActivityEllipsis": "Add activity…",
+  "log": "Log",
+  "logEmpty": "Nothing logged yet. Visits you log on Today show up here, newest first.",
+  "thisMonth": "This month",
+  "thisYear": "This year",
+  "playgroundVisits": "{count, plural, =1{playground visit} other{playground visits}}",
+  "@playgroundVisits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "outsideAsFamily": "{time} outside as a family",
+  "@outsideAsFamily": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "daysCount": "{count, plural, =1{1 day} other{{count} days}}",
+  "@daysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "longestStreak": "Longest streak",
+  "topActivity": "Top activity",
+  "wentTheMost": "Went the most",
+  "kidOutsideMost": "{name} got outside the most",
+  "@kidOutsideMost": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "taglineLots": "That’s a lot of fresh air. Well done!",
+  "taglineSolid": "A solid {period} outside. Keep it up.",
+  "@taglineSolid": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "taglineEvery": "Every visit counts. Here’s to more of them.",
+  "recapEmpty": "Nothing logged yet for {period}",
+  "@recapEmpty": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "recapEmptyHint": "Log a visit and it’ll show up here.",
+  "allTime": "All time",
+  "customiseDashboard": "Customise dashboard",
+  "week": "Week",
+  "month": "Month",
+  "year": "Year",
+  "all": "All",
+  "whoTookThem": "Who took them",
+  "nobodyLoggedYet": "Nobody logged yet",
+  "kidsOutside": "Kids outside",
+  "noKidsLoggedYet": "No kids logged yet",
+  "morningEvening": "Morning / evening",
+  "noVisitsThisPeriod": "No visits this period",
+  "visitsInPeriod": "Visits in {period}",
+  "@visitsInPeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "outside": "Outside",
+  "thisWeek": "This week",
+  "oneSquarePerDayLower": "one square per day",
+  "oneSquarePerMonthLower": "one square per month",
+  "legendBusy": "Busy",
+  "legendBoth": "Both",
+  "legendSome": "Some",
+  "legendOne": "One",
+  "legendNone": "None",
+  "mostPlayed": "Most played",
+  "noActivitiesLoggedYet": "No activities logged yet",
+  "timeAndMissedDays": "Time & missed days",
+  "averageVisit": "Average visit",
+  "whyNobodyWent": "Why nobody went",
+  "noMissedDays": "No missed days this period",
+  "noReasonsLoggedYet": "No reasons logged yet",
+  "customiseDashboardTitle": "Customise History",
+  "reset": "Reset",
+  "dragToReorder": "Drag to reorder  ·  toggle to show or hide",
+  "oneSquarePerDay": "One square per day",
+  "onceOn": "Once · {date}",
+  "@onceOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "noDays": "No days",
+  "everyDay": "Every day",
+  "weekdays": "Weekdays",
+  "weekends": "Weekends",
+  "addedToReminders": "Added to Reminders",
+  "addedToCalendar": "Added to your calendar",
+  "remindersDenied": "Reminders access is off. Allow it in iPhone Settings.",
+  "calendarDenied": "Calendar access is off. Allow it in iPhone Settings.",
+  "planNoUpcomingDay": "This plan has no upcoming day to add",
+  "remindersUnavailable": "Reminders is only available on iPhone",
+  "calendarUnavailable": "Calendar is only available on iPhone",
+  "remindersError": "Could not add to Reminders",
+  "calendarError": "Could not add to Calendar",
+  "withKids": "With {names}",
+  "@withKids": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "editPlan": "Edit plan",
+  "addToCalendar": "Add to Calendar",
+  "addToCalendarSub": "Opens iPhone Calendar — add invitees there",
+  "addToReminders": "Add to Reminders",
+  "addToRemindersSub": "A reminder with an alert at the plan’s time",
+  "todayNotDoneYet": "Today · not done yet",
+  "planNoDaysYet": "No days yet. They show up here once the plan has started.",
+  "deletePlanQuestion": "Delete plan?",
+  "deletePlanBody": "“{title}” and its whole history will be permanently deleted.",
+  "@deletePlanBody": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "newPlan": "New plan",
+  "active": "Active",
+  "inactive": "Inactive",
+  "reminderAt": "Reminder {time}",
+  "@reminderAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "tapForHistory": "Tap for history, Calendar and Reminders",
+  "deactivate": "Deactivate",
+  "activate": "Activate",
+  "noPlansYet": "No plans yet",
+  "noPlansHint": "Add plans that repeat on certain days, or happen once.\nThey show up on Today.",
+  "addFirstPlan": "Add first plan",
+  "enterTitle": "Enter a title",
+  "pickADate": "Pick a date",
+  "selectAtLeastOneDay": "Select at least one day",
+  "notSet": "Not set",
+  "planTitle": "Title",
+  "planTitleHint": "e.g. Football",
+  "howOftenQ": "How often?",
+  "repeats": "Repeats",
+  "oneTime": "One time",
+  "dateLabel": "Date: {date}",
+  "@dateLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "repeatOn": "Repeat on",
+  "dateRangeOptional": "Date range (optional)",
+  "fromDate": "From: {date}",
+  "@fromDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "toDate": "To: {date}",
+  "@toDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "clearDates": "Clear dates",
+  "reminderNotification": "Reminder notification",
+  "reminderNotificationSub": "Send a notification on the plan’s days",
+  "notifyAt": "Notify at  {time}",
+  "@notifyAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "customMessageHint": "Custom message (optional)\ne.g. Time to head out!",
+  "leaveEmptyDefault": "Leave empty to use the default message.",
+  "timeAlreadyPassed": "This time has already passed, so no notification will come. Pick a later time.",
+  "alsoAddTo": "Also add to (optional)",
+  "calendar": "Calendar",
+  "remindersApp": "Reminders",
+  "alsoAddToHint": "When you save: Calendar opens with the plan filled in, so you can invite people. Reminders gets the plan with an alert at its time.",
+  "inactivePlansHidden": "Inactive plans are hidden from Today",
+  "themeModernistLight": "Modernist light",
+  "themeModernistLightSub": "Red and black on paper, the original",
+  "themeModernistDark": "Modernist dark",
+  "themeModernistDarkSub": "Coral on warm black",
+  "themeSwingLight": "Swing light",
+  "themeSwingLightSub": "Deep green and orange on sunny yellow",
+  "themeSwingDark": "Swing dark",
+  "themeSwingDarkSub": "Sunny yellow on deep green",
+  "themeBlackOnWhite": "Black on white",
+  "themeBlackOnWhiteSub": "Plain black on white",
+  "themeWhiteOnBlack": "White on black",
+  "themeWhiteOnBlackSub": "Plain white on black",
+  "themeMyColors": "My colors",
+  "themeMyColorsSub": "Your own background, text and accent",
+  "family": "Family",
+  "parentsAndKids": "Parents & kids",
+  "familySync": "Family sync",
+  "familySyncSub": "Share across Apple IDs",
+  "app": "App",
+  "remindersSetting": "Reminders",
+  "languageDateTheme": "Language, date & theme",
+  "privacy": "Privacy",
+  "noDataCollected": "No data collected",
+  "yourData": "Your data",
+  "logSub": "Every visit, newest first",
+  "deleteAllData": "Delete all data",
+  "deleteAllDataSub": "On this iPhone and in iCloud",
+  "aboutNote": "Playground Tracker is a one-time App Store purchase. No subscription, no account, no ads. Your log stays on your devices and syncs through your own iCloud.",
+  "deleteAllDataQuestion": "Delete all data?",
+  "deleteAllDataBody": "Every visit, plan, name and setting is deleted from this iPhone and from your iCloud. If you share the log with family, they lose it too. This can’t be undone.",
+  "deleteEverything": "Delete everything",
+  "deleting": "Deleting…",
+  "nothingDeleted": "Nothing was deleted",
+  "nothingDeletedBody": "iCloud couldn’t be reached, so your data was left as it is (otherwise sync would bring it back). Try again when you’re online.",
+  "ok": "OK",
+  "notificationsTitle": "Reminders",
+  "outdoorReminder": "Outdoor reminder",
+  "outdoorReminderSub": "Did you take the kids outside today? Comes once a day at the time you choose.",
+  "logReminder": "Log reminder",
+  "logReminderSub": "Don’t forget to log today’s playground visit. Comes once a day at the time you choose.",
+  "everyDayAt": "Every day at  {time}",
+  "@everyDayAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsBlocked": "Notifications are blocked. Open Settings › Playground Tracker › Notifications and allow them.",
+  "retry": "Retry",
+  "notificationsLocalNote": "Notifications are local, no internet needed. Each person in the family sets their own reminder times on their own phone.",
+  "language": "Language",
+  "phoneLanguage": "Phone language",
+  "colorTheme": "Color theme",
+  "editMyColors": "Edit my colors",
+  "timeFormat": "Time format",
+  "hour12": "12-hour",
+  "hour24": "24-hour",
+  "changesApplyImmediately": "Changes apply immediately throughout the app.",
+  "contrastTextWarning": "Text is hard to read on this background: contrast {ratio}:1, aim for 4.5:1 or more.",
+  "@contrastTextWarning": {
+    "placeholders": {
+      "ratio": {
+        "type": "String"
+      }
+    }
+  },
+  "contrastAccentWarning": "The accent is hard to see on this background: contrast {ratio}:1, aim for 3:1 or more.",
+  "@contrastAccentWarning": {
+    "placeholders": {
+      "ratio": {
+        "type": "String"
+      }
+    }
+  },
+  "sampleMom": "Mom",
+  "sampleDad": "Dad",
+  "colorBackground": "Background",
+  "colorText": "Text",
+  "colorAccent": "Accent (buttons, selections)",
+  "notifOutdoorTitle": "Playground reminder",
+  "notifOutdoorBody": "Did you take the kids outside today?",
+  "notifLogTitle": "Log your outdoor time",
+  "notifLogBody": "Don’t forget to log today’s playground visit.",
+  "notifPlanDefaultBody": "Time for your plan",
+  "addParentAndKid": "Add at least one parent and one kid",
+  "welcome": "Welcome",
+  "familyEditIntro": "Update your family members. Existing entries are not affected.",
+  "familySetupIntro": "Let’s set up your family. You can always add more people later.",
+  "parentsGrandparents": "Parents / grandparents",
+  "parentHint1": "e.g. Mom",
+  "parentHint2": "e.g. Dad",
+  "parentHintMore": "Parent or grandparent",
+  "addParent": "+ Add parent",
+  "kidHint1": "e.g. Emma",
+  "kidHint2": "e.g. Tom",
+  "kidHintMore": "Kid’s name",
+  "addKid": "+ Add kid",
+  "saveChanges": "Save changes",
+  "saveAndStart": "Save & start",
+  "minutesAgo": "{count} min ago",
+  "@minutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "{count} h ago",
+  "@hoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "daysAgo": "{count, plural, =1{1 day ago} other{{count} days ago}}",
+  "@daysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "removeAccessQuestion": "Remove access?",
+  "removeAccessBody": "{name} will no longer sync with this log. Their existing entries stay on their phone.",
+  "@removeAccessBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "remove": "Remove",
+  "couldNotRemove": "Could not remove. Try again.",
+  "connectedUser": "Connected user",
+  "inviteSomeone": "Invite someone",
+  "inviteSub": "Opens the iOS share sheet: send via Messages, WhatsApp, or copy the link",
+  "connected": "Connected",
+  "lastSynced": "Last synced {time}",
+  "@lastSynced": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "shareWithFamily": "Share with your family",
+  "shareWithFamilySub": "Each person uses their own Apple ID. No shared accounts needed.",
+  "owner": "Owner",
+  "invitePending": "Invite pending…",
+  "you": "You",
+  "noOneConnected": "No one connected yet",
+  "noOneConnectedHint": "Tap “Invite someone” above to share\nwith your partner or family.",
+  "howItWorks": "How it works",
+  "howStep1": "Tap “Invite someone” and the iOS share sheet opens",
+  "howStep2": "Send the link via Messages, WhatsApp, or copy it",
+  "howStep3": "They tap the link, then “Accept”. Done.",
+  "howStep4": "Both phones stay in sync automatically",
+  "onbParentsTitle": "Who takes the kids out?",
+  "onbParentsNote": "Real names aren’t needed: Mom and Dad, nicknames or initials work just as well. Names only appear in the app.",
+  "onbKidsTitle": "And the kids?",
+  "onbKidHint1": "e.g. Bean",
+  "onbKidHint2": "e.g. Tiger",
+  "onbKidsNote": "Nicknames are perfect here too. Everything stays on your iPhone and in your own iCloud, never with us.",
+  "getStarted": "Get started",
+  "startUsingApp": "Start using the app",
+  "skipForNow": "Skip for now",
+  "continueLabel": "Continue",
+  "back": "Back",
+  "onbWelcome1": "A quick log of your family’s outdoor time: who took the kids out, for how long, and what they did.",
+  "onbWelcome2": "The next few steps set up your family, optional reminders and plans. It takes about a minute, and everything can be changed later in Settings.",
+  "onbWelcomeNote": "No account, no ads, no tracking. Your log stays on your iPhone and in your own iCloud.",
+  "name": "Name",
+  "addAnotherChip": "+ Add another",
+  "onbRemindersIntro": "Optional. A gentle nudge once a day, at a time you choose. iOS asks for permission when you switch one on.",
+  "onbReminderOutside": "Time to go outside",
+  "onbReminderLog": "Log today’s visit",
+  "onbRemindersLater": "You can change these any time in Settings › Reminders.",
+  "everyDayAtChange": "Every day at {time} · change",
+  "@everyDayAtChange": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "onbPlansIntro": "Optional. Football every Monday, swimming on Saturdays, a birthday party next week: plans show up on Today, ready to tick off, and can remind you.",
+  "addAPlan": "Add a plan",
+  "addAnotherPlan": "Add another plan",
+  "onbPlansLater": "You can add more any time in the Plans tab.",
+  "onbLookTitle": "Your look",
+  "onbLookIntro": "Pick a color theme, or make your own. You can change it any time in Settings.",
+  "privInShortTitle": "In short",
+  "privInShort": "Playground Tracker does not collect personal data. There is no account, no server of ours, no analytics, no advertising and no tracking. The developer cannot see your log.",
+  "privStoresTitle": "What the app stores",
+  "privStores": "The names of the parents and kids you enter, your visits (date, morning or evening, who went, which kids, how long, activities, and any reason you give), your plans and how they went, and your settings. All of it is kept in the app’s private storage on your iPhone.",
+  "privICloudTitle": "iCloud sync and family sharing",
+  "privICloud": "If you are signed in to iCloud, the app keeps a copy in your own private iCloud database through Apple’s CloudKit, so it stays in sync across your devices. If you invite family members with a share link, the people you invite can see and edit the shared log until you stop sharing. iCloud data is handled by Apple under Apple’s privacy policy; the developer has no access to it.",
+  "privRemindersTitle": "Reminders",
+  "privReminders": "Reminder notifications are scheduled on your iPhone. Nothing about them is sent anywhere. The app asks for permission only when you turn a reminder on.",
+  "privCalendarTitle": "Calendar and Reminders",
+  "privCalendar": "Add to Calendar opens Apple’s own event editor with the plan filled in. The app does not read your calendar; the event is saved only if you tap Add. Add to Reminders saves the plan as one new reminder in your Reminders app. The app does not read your reminders and nothing is sent anywhere.",
+  "privChildrenTitle": "Children",
+  "privChildren": "The app is meant for parents. Children’s names stay on your iPhone and in your own iCloud. Nothing about children is sent to the developer or to anyone else.",
+  "privDeletingTitle": "Deleting your data",
+  "privDeleting": "Settings › Delete all data removes everything at once, from your iPhone and from your iCloud; if you share the log with family, it is removed for them too. You can also delete single entries at any time, and deleting the app removes everything stored on the iPhone. To stop sharing, use Family sync in Settings.",
+  "privChangesTitle": "Changes",
+  "privChanges": "If this policy changes, the new version ships with an app update and its effective date changes above.",
+  "privacyEffective": "Effective {date}",
+  "@privacyEffective": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "dashTapToChange": "— tap to change",
+  "hour24Time": "24-hour time",
+  "justNow": "just now",
+  "parentsCount": "{count, plural, =1{1 parent} other{{count} parents}}",
+  "@parentsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "kidsCount": "{count, plural, =1{1 kid} other{{count} kids}}",
+  "@kidsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "personRemoved": "{name} removed",
+  "@personRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
+}

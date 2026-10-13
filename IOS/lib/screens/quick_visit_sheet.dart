@@ -7,6 +7,7 @@ import '../models/family.dart';
 import '../theme.dart';
 import '../widgets/modernist.dart';
 import '../widgets/reason_sheet.dart';
+import '../l10n/l10n.dart';
 
 /// The second tap. Everything below "who went" is optional and prefilled
 /// from the last visit of the same shift, so Save is reachable immediately.
@@ -133,22 +134,22 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
     final value = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Add activity',
+        title: Text(context.l10n.addActivity,
             style: AppType.heading.copyWith(color: AppColors.of(ctx).txt)),
         content: TextField(
           controller: ctrl,
           autofocus: true,
           textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(hintText: 'e.g. Sandpit'),
+          decoration: InputDecoration(hintText: context.l10n.addActivityHint),
           onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('CANCEL')),
+              child: Text(context.l10n.cancel.toUpperCase())),
           TextButton(
               onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-              child: const Text('ADD')),
+              child: Text(context.l10n.add.toUpperCase())),
         ],
       ),
     );
@@ -163,7 +164,9 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    final title = '${widget.shift == 'morning' ? 'Morning' : 'Evening'} visit';
+    final title = widget.shift == 'morning'
+        ? context.l10n.morningVisit
+        : context.l10n.eveningVisit;
 
     return Container(
       margin: const EdgeInsets.only(top: 52),
@@ -186,7 +189,7 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
                   onTap: () => Navigator.pop(context),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Text('Cancel',
+                    child: Text(context.l10n.cancel,
                         style: AppType.body.copyWith(
                             fontWeight: FontWeight.w600, color: c.txt2)),
                   ),
@@ -201,7 +204,7 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
                   onTap: _canSave ? _save : null,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Text('Save',
+                    child: Text(context.l10n.save,
                         style: AppType.body.copyWith(
                             fontWeight: FontWeight.w800,
                             color: _canSave ? c.accentTxt : c.txt2)),
@@ -215,7 +218,7 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
               padding: EdgeInsets.zero,
               shrinkWrap: true,
               children: [
-                const SectionLabel('Who went'),
+                SectionLabel(context.l10n.whoWent),
                 _wrap([
                   for (final p in widget.family.parents)
                     SquareChip(
@@ -227,8 +230,7 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
                     ),
                 ]),
                 if (_users.isNotEmpty && _absent.isNotEmpty) ...[
-                  SectionLabel(
-                      "Why didn't ${_absent.join(' & ')} go?  ·  optional"),
+                  SectionLabel(context.l10n.whyDidntGo(_absent.join(' & '))),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
                     child: ReasonChips(
@@ -238,7 +240,7 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
                   ),
                 ],
                 if (widget.family.kids.isNotEmpty) ...[
-                  const SectionLabel('Kids'),
+                  SectionLabel(context.l10n.kids),
                   _wrap([
                     for (final k in widget.family.kids)
                       SquareChip(
@@ -250,12 +252,12 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
                       ),
                   ]),
                 ],
-                const SectionLabel('How long'),
+                SectionLabel(context.l10n.howLong),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: _durationGrid(c),
                 ),
-                const SectionLabel('Activities  ·  optional'),
+                SectionLabel(context.l10n.activitiesOptional),
                 _wrap([
                   for (final a in {..._activityTags, ..._activities})
                     SquareChip(
@@ -267,15 +269,15 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
                           : _activities.add(a)),
                     ),
                   SquareChip(
-                      label: '+ Add', small: true, onTap: _addActivity),
+                      label: context.l10n.addChip, small: true, onTap: _addActivity),
                 ]),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 6, 20, 18),
                   child: Text(
                       _source == null
-                          ? 'Only “who went” is required.'
-                          : 'Prefilled from your last ${widget.shift} visit. '
-                              'Only “who went” is required.',
+                          ? context.l10n.onlyWhoWentRequired
+                          : '${widget.shift == 'morning' ? context.l10n.prefilledMorning : context.l10n.prefilledEvening} '
+                              '${context.l10n.onlyWhoWentRequired}',
                       style: AppType.bodySm.copyWith(color: c.txt2)),
                 ),
               ],
@@ -287,7 +289,9 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
               border: Border(top: BorderSide(color: c.border, width: 2)),
             ),
             child: BlockButton(
-              label: widget.existing != null ? 'Update visit' : 'Save visit',
+              label: widget.existing != null
+                  ? context.l10n.updateVisit
+                  : context.l10n.saveVisit,
               icon: Icons.check,
               onTap: _canSave ? _save : null,
             ),

@@ -8,6 +8,7 @@ import '../sync/sync_service.dart';
 import '../theme.dart';
 import '../widgets/entry_row.dart';
 import '../widgets/modernist.dart';
+import '../l10n/l10n.dart';
 
 /// Settings › Log: every visit, vacation and nobody-went day, newest first,
 /// grouped by day. Tap one to edit or delete it. (Moved here from the Today
@@ -61,8 +62,8 @@ class _LogScreenState extends State<LogScreen> {
     return Scaffold(
       backgroundColor: c.bg,
       appBar: AppBar(
-        title: const Text('Log',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+        title: Text(context.l10n.log,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
       ),
       body: _loading
           ? const SizedBox.shrink()
@@ -70,8 +71,7 @@ class _LogScreenState extends State<LogScreen> {
               ? Padding(
                   padding: const EdgeInsets.all(20),
                   child: Text(
-                      'Nothing logged yet. Visits you log on Today show up '
-                      'here, newest first.',
+                      context.l10n.logEmpty,
                       style: AppType.body.copyWith(color: c.txt2)),
                 )
               : ListView.builder(

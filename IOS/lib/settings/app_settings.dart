@@ -9,6 +9,19 @@ class AppSettings extends ChangeNotifier {
   static final AppSettings instance = AppSettings._();
   AppSettings._();
 
+  /// The app's languages, as offered in onboarding and Settings.
+  static const languages = ['en', 'es', 'de', 'bs', 'cs'];
+
+  /// Each language's name in itself.
+  static const languageNames = {
+    'en': 'English',
+    'es': 'Español',
+    'de': 'Deutsch',
+    'bs': 'Bosanski',
+    'cs': 'Čeština',
+  };
+
+  String? _language; // null = follow the phone
   bool _use24h = false;
   bool _euDate = true; // true = European d MMM yyyy | false = US MMM d, yyyy
   AppPalette _palette = AppPalette.modernistLight;
@@ -16,6 +29,26 @@ class AppSettings extends ChangeNotifier {
   Color _customBg = Colors.white;
   Color _customTxt = Colors.black;
   Color _customAccent = const Color(0xFF1565C0);
+
+  /// The chosen language, or null while the app follows the phone.
+  String? get language => _language;
+
+  /// The language in use: the chosen one, else the phone's first supported
+  /// language, else English.
+  Locale get locale => Locale(_language ?? phoneLanguage);
+
+  bool get isEnglish => locale.languageCode == 'en';
+
+  /// The phone's first language the app speaks. Croatian and Serbian phones
+  /// get Bosnian, which they read without effort.
+  static String get phoneLanguage {
+    for (final l in PlatformDispatcher.instance.locales) {
+      final code = l.languageCode;
+      if (languages.contains(code)) return code;
+      if (code == 'hr' || code == 'sr') return 'bs';
+    }
+    return 'en';
+  }
 
   bool get use24h => _use24h;
   bool get euDate => _euDate;
@@ -30,6 +63,9 @@ class AppSettings extends ChangeNotifier {
       bg: _customBg, txt: _customTxt, accent: _customAccent);
 
   Future<void> load() async {
+    final lang = await DatabaseHelper.instance.getMeta('setting_language');
+    _language = languages.contains(lang) ? lang : null;
+    Intl.defaultLocale = locale.languageCode;
     _use24h   = await DatabaseHelper.instance.getMeta('setting_24h') == '1';
     final eu  = await DatabaseHelper.instance.getMeta('setting_eu_date');
     _euDate   = eu == null || eu == '1'; // default to European
@@ -58,6 +94,19 @@ class AppSettings extends ChangeNotifier {
         color(await DatabaseHelper.instance.getMeta('custom_accent')) ??
             const Color(0xFF1565C0);
   }
+
+  /// [code] from [languages], or null to follow the phone. Notifications are
+  /// rescheduled so their text switches too.
+  Future<void> setLanguage(String? code) async {
+    _language = code;
+    Intl.defaultLocale = locale.languageCode;
+    await DatabaseHelper.instance.setMeta('setting_language', code ?? 'phone');
+    notifyListeners();
+    await onLanguageChanged?.call();
+  }
+
+  /// Set by main(): reschedules notifications in the new language.
+  Future<void> Function()? onLanguageChanged;
 
   /// Re-reads every setting (after Delete all data) and redraws the app.
   Future<void> reload() async {
@@ -103,9 +152,13 @@ class AppSettings extends ChangeNotifier {
 
   // ── Date helpers ──────────────────────────────────────────
 
+  // English keeps the EU / US choice; every other language uses its own
+  // conventions (de "12. Okt. 2026", cs "12. 10. 2026").
+
   /// "3 Jun 2025"  /  "Jun 3, 2025"
   String fmtDate(String dateStr) {
     final d = DateTime.parse(dateStr);
+    if (!isEnglish) return DateFormat.yMMMd().format(d);
     return _euDate
         ? DateFormat('d MMM yyyy').format(d)
         : DateFormat('MMM d, yyyy').format(d);
@@ -114,6 +167,7 @@ class AppSettings extends ChangeNotifier {
   /// "Mon, 3 Jun 2025"  /  "Mon, Jun 3, 2025"
   String fmtDateFull(String dateStr) {
     final d = DateTime.parse(dateStr);
+    if (!isEnglish) return DateFormat.yMMMEd().format(d);
     return _euDate
         ? DateFormat('EEE, d MMM yyyy').format(d)
         : DateFormat('EEE, MMM d, yyyy').format(d);
@@ -122,6 +176,7 @@ class AppSettings extends ChangeNotifier {
   /// "3 Jun"  /  "Jun 3"
   String fmtDateShort(String dateStr) {
     final d = DateTime.parse(dateStr);
+    if (!isEnglish) return DateFormat.MMMd().format(d);
     return _euDate
         ? DateFormat('d MMM').format(d)
         : DateFormat('MMM d').format(d);
@@ -130,13 +185,19 @@ class AppSettings extends ChangeNotifier {
   /// "June 2025"  —  month label, same either way
   String fmtMonth(String yearMonth) {
     final p = yearMonth.split('-').map(int.parse).toList();
-    return DateFormat('MMMM yyyy').format(DateTime(p[0], p[1]));
+    final d = DateTime(p[0], p[1]);
+    return isEnglish
+        ? DateFormat('MMMM yyyy').format(d)
+        : DateFormat.yMMMM().format(d);
   }
 
   /// "3 – 9 Jun 2025"  /  "Jun 3 – 9, 2025"
   String fmtWeekRange(String start, String end) {
     final s = DateTime.parse(start);
     final e = DateTime.parse(end);
+    if (!isEnglish) {
+      return '${DateFormat.MMMd().format(s)} – ${DateFormat.yMMMd().format(e)}';
+    }
     if (_euDate) {
       if (s.month == e.month) {
         return '${s.day} – ${e.day} ${DateFormat('MMM yyyy').format(s)}';

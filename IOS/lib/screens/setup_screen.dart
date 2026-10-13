@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../db/database_helper.dart';
 
 import '../theme.dart';
+import '../l10n/l10n.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
 // _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
@@ -64,7 +65,7 @@ class _SetupScreenState extends State<SetupScreen> {
     final kids =
         _kids.map((c) => c.text.trim()).where((s) => s.isNotEmpty).toList();
     if (parents.isEmpty || kids.isEmpty) {
-      _toast('Add at least one parent and one kid');
+      _toast(context.l10n.addParentAndKid);
       return;
     }
     await DatabaseHelper.instance.saveFamily(parents, kids);
@@ -100,7 +101,7 @@ class _SetupScreenState extends State<SetupScreen> {
       backgroundColor: kBg,
       appBar: AppBar(
         title: const Text(
-          'Playground Tracker',
+          'Playground Tracker', // the app's name, never translated
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
         ),
       ),
@@ -115,7 +116,7 @@ class _SetupScreenState extends State<SetupScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.isEditing ? 'Family Settings' : 'Welcome',
+                  widget.isEditing ? context.l10n.parentsAndKids : context.l10n.welcome,
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
@@ -125,39 +126,47 @@ class _SetupScreenState extends State<SetupScreen> {
                 const SizedBox(height: 6),
                 Text(
                   widget.isEditing
-                      ? 'Update your family members. Existing entries are not affected.'
-                      : "Let's set up your family. You can always add more people later.",
+                      ? context.l10n.familyEditIntro
+                      : context.l10n.familySetupIntro,
                   style: TextStyle(fontSize: 14, color: kTxt2, height: 1.5),
                 ),
                 const SizedBox(height: 18),
-                const _SectionLabel('Parents / Grandparents'),
+                _SectionLabel(context.l10n.parentsGrandparents),
                 const SizedBox(height: 8),
                 ..._parents.asMap().entries.map(
                   (e) => _PersonRow(
                     key: ValueKey('p${e.key}'),
                     controller: e.value,
-                    placeholder: e.key == 0 ? 'e.g. Mum' : e.key == 1 ? 'e.g. Dad' : 'Parent / grandparent name',
+                    placeholder: e.key == 0
+                        ? context.l10n.parentHint1
+                        : e.key == 1
+                            ? context.l10n.parentHint2
+                            : context.l10n.parentHintMore,
                     onRemove: () => _removeCtrl(_parents, e.key),
                   ),
                 ),
                 _AddButton(
-                  label: '+ Add parent',
+                  label: context.l10n.addParent,
                   onTap: () => setState(
                       () => _parents.add(TextEditingController())),
                 ),
                 const SizedBox(height: 16),
-                const _SectionLabel('Kids'),
+                _SectionLabel(context.l10n.kids),
                 const SizedBox(height: 8),
                 ..._kids.asMap().entries.map(
                   (e) => _PersonRow(
                     key: ValueKey('k${e.key}'),
                     controller: e.value,
-                    placeholder: e.key == 0 ? 'e.g. Emma' : e.key == 1 ? 'e.g. Tom' : 'Kid name',
+                    placeholder: e.key == 0
+                        ? context.l10n.kidHint1
+                        : e.key == 1
+                            ? context.l10n.kidHint2
+                            : context.l10n.kidHintMore,
                     onRemove: () => _removeCtrl(_kids, e.key),
                   ),
                 ),
                 _AddButton(
-                  label: '+ Add kid',
+                  label: context.l10n.addKid,
                   onTap: () =>
                       setState(() => _kids.add(TextEditingController())),
                 ),
@@ -174,7 +183,7 @@ class _SetupScreenState extends State<SetupScreen> {
                           borderRadius: BorderRadius.zero),
                     ),
                     child: Text(
-                      widget.isEditing ? 'Save Changes' : 'Save & Start',
+                      widget.isEditing ? context.l10n.saveChanges : context.l10n.saveAndStart,
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold),
                     ),

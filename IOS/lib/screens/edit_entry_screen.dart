@@ -6,6 +6,7 @@ import '../models/family.dart';
 
 import '../theme.dart';
 import '../widgets/reason_sheet.dart';
+import '../l10n/l10n.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
 // _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
@@ -89,7 +90,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
 
   Future<void> _save() async {
     if (_selUsers.isEmpty) {
-      _toast('Select who went');
+      _toast(context.l10n.selectWhoWent);
       return;
     }
     setState(() => _saving = true);
@@ -154,8 +155,8 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Entry',
-            style: TextStyle(
+        title: Text(context.l10n.editEntryTitle,
+            style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 17)),
         actions: [
@@ -167,7 +168,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                     height: 18,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: _kAccentTxt))
-                : Text('Save',
+                : Text(context.l10n.save,
                     style: TextStyle(
                         color: _kAccentTxt,
                         fontWeight: FontWeight.bold,
@@ -184,7 +185,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
             _card(Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _clabel('Who went?'),
+                _clabel(context.l10n.whoWentQ),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -205,7 +206,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
               _card(Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _clabel("Why didn't ${_absent.join(' & ')} go? (optional)"),
+                  _clabel(context.l10n.whyDidntGo(_absent.join(' & '))),
                   ReasonChips(
                     selected: _absentReason,
                     onChanged: (r) => setState(() => _absentReason = r),
@@ -217,21 +218,21 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
             _card(Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _clabel('When?'),
+                _clabel(context.l10n.whenQ),
                 Row(children: [
                   Expanded(
                     child: GestureDetector(
                       onTap: () => setState(() => _shift = 'morning'),
-                      child: _togChip(
-                          'Morning', _shift == 'morning', _kAmber),
+                      child: _togChip(context.l10n.morning,
+                          _shift == 'morning', _kAmber),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: GestureDetector(
                       onTap: () => setState(() => _shift = 'evening'),
-                      child: _togChip(
-                          'Evening', _shift == 'evening', _kBlue),
+                      child: _togChip(context.l10n.evening,
+                          _shift == 'evening', _kBlue),
                     ),
                   ),
                 ]),
@@ -242,7 +243,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
             _card(Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _clabel('How long?'),
+                _clabel(context.l10n.howLongQ),
                 Wrap(
                   spacing: 7,
                   runSpacing: 7,
@@ -276,7 +277,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
             _card(Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _clabel('Which kids?'),
+                _clabel(context.l10n.whichKidsQ),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -327,7 +328,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
             _card(Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _clabel('Activities'),
+                _clabel(context.l10n.activities),
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
@@ -360,7 +361,7 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                     child: TextField(
                       controller: _actCtrl,
                       decoration: InputDecoration(
-                        hintText: 'Add activity...',
+                        hintText: context.l10n.addActivityEllipsis,
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 11, vertical: 8),
                         enabledBorder: OutlineInputBorder(

@@ -17,6 +17,7 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:playground_tracker/db/database_helper.dart';
+import 'package:playground_tracker/l10n/app_localizations.dart';
 import 'package:playground_tracker/main.dart';
 import 'package:playground_tracker/models/entry.dart';
 import 'package:playground_tracker/models/recurring_activity.dart';
@@ -136,7 +137,9 @@ Future<void> _seed() async {
       repeatDays: [DateTime.parse(party).weekday - 1],
       dateFrom: party,
       dateTo: party));
-  // Football mostly happened; skipped once (sick), missed once.
+  // Football mostly happened: its 3rd day back was skipped (sick) and its
+  // 6th missed, whatever weekday the screenshots are made on.
+  var football = 0;
   for (var ago = 1; ago <= 60; ago++) {
     final day = DateTime.now().subtract(Duration(days: ago));
     final plan = switch (day.weekday) {
@@ -144,13 +147,16 @@ Future<void> _seed() async {
       DateTime.saturday => 'p2',
       _ => null,
     };
-    if (plan == null || (ago >= 52 && ago <= 58) || ago == 19) continue;
+    if (plan == null || (ago >= 52 && ago <= 58)) continue;
+    if (plan == 'p1') football++;
+    final skipped = plan == 'p1' && football == 3;
+    if (plan == 'p1' && football == 6) continue; // missed
     await db.upsertRecurringLog(RecurringLog(
         id: 'log$ago',
         activityId: plan,
         date: _d(ago),
-        status: ago == 12 ? 'skipped' : 'confirmed',
-        skipReason: ago == 12 ? 'sick' : null));
+        status: skipped ? 'skipped' : 'confirmed',
+        skipReason: skipped ? 'sick' : null));
   }
 }
 
@@ -357,6 +363,12 @@ class Rec {
   }
 
   Future<void> tap(Finder f, {int after = 18}) async {
+    // Off screen (or under the tab bar): scroll it into view first.
+    final r = t.getRect(f.first);
+    if (r.top < _top + 40 || r.bottom > _logical.height - 90) {
+      await t.ensureVisible(f.first);
+      await run(8);
+    }
     final p = t.getCenter(f.first);
     _touch.value = (p, false);
     await run(4);
@@ -401,7 +413,8 @@ Finder _nav(String label) => find.text(label).last;
 
 // ── Setup ────────────────────────────────────────────────────────────
 
-Future<void> _boot(WidgetTester t, AppPalette palette, {bool seed = true}) async {
+Future<void> _boot(WidgetTester t, AppPalette palette,
+    {bool seed = true, String lang = 'en'}) async {
   t.view.physicalSize = _logical * _dpr;
   t.view.devicePixelRatio = _dpr;
   t.view.padding = const FakeViewPadding(top: _top * _dpr, bottom: _bottom * _dpr);
@@ -424,6 +437,7 @@ Future<void> _boot(WidgetTester t, AppPalette palette, {bool seed = true}) async
     }
     await AppSettings.instance.load();
     await AppSettings.instance.setPalette(palette);
+    await AppSettings.instance.setLanguage(lang);
     await AppSettings.instance.setUse24h(true);
     await AppSettings.instance.setEuDate(true);
   });
@@ -431,8 +445,9 @@ Future<void> _boot(WidgetTester t, AppPalette palette, {bool seed = true}) async
   await settle(t);
   // The first frame after boot can miss the loaded data; open Today again.
   if (seed) {
-    await t.tap(_nav('TODAY'));
-    await until(t, find.text('RECAP'));
+    final l = lookupAppLocalizations(Locale(lang));
+    await t.tap(_nav(l.today.toUpperCase()));
+    await until(t, find.text(l.recap.toUpperCase()));
   } else {
     await settle(t, 20);
   }
@@ -473,7 +488,7 @@ void main() {
     await until(t, find.text('RECAP'));
     await t.tap(find.text('RECAP'));
     await shot(t, '05-recap');
-    await t.pageBack();
+    await t.tap(find.byType(BackButton).last);
     await settle(t);
 
     await t.tap(_nav('PLANS'));
@@ -546,7 +561,10 @@ void main() {
     final r = Rec(t, 'themes', ratio: 1.25);
     await r.run(1);
     await r.tap(_nav('SETTINGS'), after: 8);
-    await r.tap(find.text('Date, time & theme'), after: 14);
+    await r.tap(find.text('Language, date & theme'), after: 14);
+    // The language list comes first; bring the themes up.
+    await r.drag(find.text('Phone language'), const Offset(0, -380),
+        steps: 14, after: 8);
     for (final name in [
       'Swing dark',
       'Modernist light',
@@ -584,7 +602,7 @@ void main() {
     await r.run(6);
     await r.tap(find.text('RECAP'), after: 16);
     r.hold(24);
-    await r.tap(find.text('This Month'), after: 10);
+    await r.tap(find.text('This month'), after: 10);
     r.hold(30);
   });
 
@@ -623,4 +641,83 @@ void main() {
     await r.run(10);
     r.hold(30);
   });
+
+  // ── Every language: the main screens at 1x, for checking translations ──
+  // (an overflowing text fails the test, so these double as a layout check)
+
+  Future<void> small(WidgetTester t, String lang, String name) async {
+    await settle(t);
+    await _png(t, '$_out/lang/$lang/$name.png', 1);
+  }
+
+  for (final lang in ['en', 'es', 'de', 'bs', 'cs']) {
+    testWidgets('lang $lang', (t) async {
+      final l = lookupAppLocalizations(Locale(lang));
+      await _boot(t, AppPalette.swingLight, lang: lang);
+      await small(t, lang, '01-today');
+      await t.tap(find.text(l.evening.toUpperCase()));
+      await small(t, lang, '02-visit');
+      await t.tap(find.text(l.cancel).first);
+      await settle(t);
+      await t.tap(_nav(l.history.toUpperCase()));
+      await settle(t);
+      await t.tap(find.byIcon(Icons.chevron_left).first);
+      await small(t, lang, '03-history');
+      final y = t.getTopLeft(find.text(l.whoTookThem.toUpperCase())).dy;
+      await t.drag(find.byType(Scrollable).first, Offset(0, -(y - 236)));
+      await small(t, lang, '04-stats');
+      await t.tap(_nav(l.plans.toUpperCase()));
+      await settle(t);
+      await small(t, lang, '05-plans');
+      await t.tap(find.text('Football').first);
+      await small(t, lang, '06-plan');
+      await t.tap(find.byType(BackButton).last);
+      await settle(t);
+      await t.tap(find.byIcon(Icons.add).first);
+      await small(t, lang, '07-new-plan');
+      await t.drag(find.byType(Scrollable).first, const Offset(0, -700));
+      await small(t, lang, '08-new-plan-2');
+      await t.tap(find.byType(BackButton).last);
+      await settle(t);
+      await t.tap(_nav(l.settings.toUpperCase()));
+      await small(t, lang, '09-settings');
+      await t.tap(find.text(l.languageDateTheme));
+      await small(t, lang, '10-display');
+      await t.tap(find.byType(BackButton).last);
+      await settle(t);
+      await t.tap(find.text(l.remindersSetting).first);
+      await small(t, lang, '11-reminders');
+      await t.tap(find.byType(BackButton).last);
+      await settle(t);
+      await t.tap(_nav(l.today.toUpperCase()));
+      await until(t, find.text(l.recap.toUpperCase()));
+      await t.tap(find.text(l.recap.toUpperCase()));
+      await small(t, lang, '12-recap');
+    });
+
+    testWidgets('lang $lang onboarding', (t) async {
+      final l = lookupAppLocalizations(Locale(lang));
+      await _boot(t, AppPalette.swingLight, seed: false, lang: lang);
+      Future<void> next() async {
+        await t.tap(find.textContaining(RegExp('^(${[
+          l.getStarted, l.continueLabel, l.skipForNow
+        ].map((x) => RegExp.escape(x.toUpperCase())).join('|')})\$')));
+        await settle(t);
+      }
+
+      await small(t, lang, 'o1-welcome');
+      await next();
+      await t.enterText(find.byType(TextField).at(0), l.sampleMom);
+      await small(t, lang, 'o2-parents');
+      await next();
+      await t.enterText(find.byType(TextField).at(0), 'Mia');
+      await small(t, lang, 'o3-kids');
+      await next();
+      await small(t, lang, 'o4-reminders');
+      await next();
+      await small(t, lang, 'o5-plans');
+      await next();
+      await small(t, lang, 'o6-look');
+    });
+  }
 }

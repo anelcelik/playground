@@ -6,6 +6,7 @@ import 'package:playground_tracker/db/database_helper.dart';
 import 'package:playground_tracker/main.dart';
 import 'package:playground_tracker/screens/onboarding_screen.dart';
 import 'package:playground_tracker/theme.dart';
+import 'package:playground_tracker/l10n/app_localizations.dart';
 
 void main() {
   setUpAll(() {
@@ -66,6 +67,8 @@ void main() {
   testWidgets('names are required before continuing', (tester) async {
     await tester.pumpWidget(MaterialApp(
       theme: buildTheme(AppColors.modernistLight),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: OnboardingScreen(onComplete: () {}),
     ));
     await tester.pump();

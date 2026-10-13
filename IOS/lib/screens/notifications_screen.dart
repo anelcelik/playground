@@ -5,6 +5,7 @@ import '../notifications/notification_service.dart';
 import '../settings/app_settings.dart';
 import '../theme.dart';
 import '../widgets/modernist.dart';
+import '../l10n/l10n.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
 // _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
@@ -94,9 +95,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
-        title: const Text(
-          'Notifications',
-          style: TextStyle(
+        title: Text(
+          context.l10n.notificationsTitle,
+          style: const TextStyle(
               fontWeight: FontWeight.bold, fontSize: 17),
         ),
       ),
@@ -123,9 +124,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   // ── Outdoor reminder ──────────────────────
                   _NotifCard(
                     icon: Icons.park_outlined,
-                    title: 'Outdoor reminder',
-                    description:
-                        'Did you take the kids outside today? Fires once a day at the time you choose.',
+                    title: context.l10n.outdoorReminder,
+                    description: context.l10n.outdoorReminderSub,
                     enabled: _prefs.outdoorEnabled,
                     time: TimeOfDay(
                         hour: _prefs.outdoorHour,
@@ -150,9 +150,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   // ── Log reminder ──────────────────────────
                   _NotifCard(
                     icon: Icons.edit_note_rounded,
-                    title: 'Log entry reminder',
-                    description:
-                        "Don't forget to log today's playground visit. Fires once a day at the time you choose.",
+                    title: context.l10n.logReminder,
+                    description: context.l10n.logReminderSub,
                     enabled: _prefs.logEnabled,
                     time: TimeOfDay(
                         hour: _prefs.logHour, minute: _prefs.logMinute),
@@ -270,7 +269,7 @@ class _NotifCard extends StatelessWidget {
                         size: 18, color: enabled ? AppColors.of(context).green : kTxt2),
                     const SizedBox(width: 8),
                     Text(
-                      'Every day at  ${_fmt(time)}',
+                      context.l10n.everyDayAt(_fmt(time)),
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -279,11 +278,14 @@ class _NotifCard extends StatelessWidget {
                     ),
                     if (enabled) ...[
                       const SizedBox(width: 8),
-                      Text('— tap to change',
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: kTxt2,
-                              fontStyle: FontStyle.italic)),
+                      Flexible(
+                        child: Text(context.l10n.dashTapToChange,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: kTxt2,
+                                fontStyle: FontStyle.italic)),
+                      ),
                     ],
                   ],
                 ),
@@ -318,10 +320,10 @@ class _PermissionBanner extends StatelessWidget {
       child: Row(
         children: [
           Icon(Icons.warning_amber_rounded, size: 18, color: AppColors.of(context).green),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Notifications are blocked. Open Settings → Playground Tracker → Allow Notifications.',
-              style: TextStyle(
+              context.l10n.notificationsBlocked,
+              style: const TextStyle(
                   fontSize: 13,
                   color: Color(0xFF7B3F00),
                   height: 1.5),
@@ -329,7 +331,7 @@ class _PermissionBanner extends StatelessWidget {
           ),
           TextButton(
             onPressed: onRetry,
-            child: Text('Retry',
+            child: Text(context.l10n.retry,
                 style: TextStyle(
                     color: AppColors.of(context).green, fontWeight: FontWeight.w700)),
           ),
@@ -363,8 +365,7 @@ class _InfoNote extends StatelessWidget {
           const Text('ℹ️  ', style: TextStyle(fontSize: 16)),
           Expanded(
             child: Text(
-              'Notifications are local — no internet needed. '
-              'Each person in the family sets their own reminder times on their own device.',
+              context.l10n.notificationsLocalNote,
               style: TextStyle(fontSize: 13, color: kTxt2, height: 1.5),
             ),
           ),

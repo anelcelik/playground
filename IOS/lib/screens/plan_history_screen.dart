@@ -9,6 +9,7 @@ import '../settings/app_settings.dart';
 import '../theme.dart';
 import '../widgets/modernist.dart';
 import 'recurring_activity_form.dart';
+import '../l10n/l10n.dart';
 
 /// One plan: how often it actually happened, every past day with its
 /// outcome, and "Add to Calendar". Opened by tapping a plan in Plans.
@@ -80,7 +81,7 @@ class _PlanHistoryScreenState extends State<PlanHistoryScreen> {
     final missed = _days.where((d) => d.status == 'missed').length;
     final when = [
       _a.repeatDaysLabel,
-      _a.shift == 'evening' ? 'Evening' : 'Morning',
+      _a.shift == 'evening' ? context.l10n.evening : context.l10n.morning,
       if (_a.notifyEnabled && _a.notifyHour != null) _a.notifyTimeLabel,
       if (_a.kidNames.isNotEmpty) _a.kidNames.join(' & '),
     ].join(' · ');
@@ -92,7 +93,7 @@ class _PlanHistoryScreenState extends State<PlanHistoryScreen> {
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
           IconButton(
-            tooltip: 'Edit plan',
+            tooltip: context.l10n.editPlan,
             icon: const Icon(Icons.edit_outlined),
             onPressed: _edit,
           ),
@@ -117,17 +118,17 @@ class _PlanHistoryScreenState extends State<PlanHistoryScreen> {
                   ),
                   child: Row(
                     children: [
-                      _figure(c, done, 'Done', c.green),
-                      _figure(c, skipped, 'Skipped', c.txt),
-                      _figure(c, missed, 'Missed', c.txt2, last: true),
+                      _figure(c, done, context.l10n.done, c.green),
+                      _figure(c, skipped, context.l10n.skipped, c.txt),
+                      _figure(c, missed, context.l10n.missed, c.txt2, last: true),
                     ],
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
                   child: BlockButton(
-                    label: 'Add to Calendar',
-                    sublabel: 'Opens iPhone Calendar — add invitees there',
+                    label: context.l10n.addToCalendar,
+                    sublabel: context.l10n.addToCalendarSub,
                     icon: Icons.event_outlined,
                     onTap: () => _addTo(reminders: false),
                   ),
@@ -135,20 +136,20 @@ class _PlanHistoryScreenState extends State<PlanHistoryScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
                   child: BlockButton(
-                    label: 'Add to Reminders',
-                    sublabel: 'A reminder with an alert at the plan\'s time',
+                    label: context.l10n.addToReminders,
+                    sublabel: context.l10n.addToRemindersSub,
                     icon: Icons.checklist_rounded,
                     outlined: true,
                     onTap: () => _addTo(reminders: true),
                   ),
                 ),
-                SectionLabel('History',
-                    trailing: _days.isEmpty ? null : '${_days.length} days'),
+                SectionLabel(context.l10n.history,
+                    trailing:
+                        _days.isEmpty ? null : context.l10n.daysCount(_days.length)),
                 if (_days.isEmpty)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                    child: Text('No days yet — they show up here once the '
-                        'plan has started.',
+                    child: Text(context.l10n.planNoDaysYet,
                         style: AppType.bodySm.copyWith(color: c.txt2)),
                   )
                 else ...[
@@ -190,15 +191,15 @@ class _PlanHistoryScreenState extends State<PlanHistoryScreen> {
 
   Widget _row(AppColors c, PlanOccurrence d) {
     final (String status, IconData icon) = switch (d.status) {
-      'confirmed' => ('Done', Icons.check),
+      'confirmed' => (context.l10n.done, Icons.check),
       'skipped' => (
           d.reason != null && d.reason!.isNotEmpty
-              ? 'Skipped · ${d.reason}'
-              : 'Skipped',
+              ? context.l10n.skippedBecause(reasonLabel(context.l10n, d.reason!))
+              : context.l10n.skipped,
           Icons.remove
         ),
-      'pending' => ('Today · not done yet', Icons.schedule),
-      _ => ('Missed', Icons.close),
+      'pending' => (context.l10n.todayNotDoneYet, Icons.schedule),
+      _ => (context.l10n.missed, Icons.close),
     };
     final faded = d.status == 'missed' || d.status == 'pending';
     return Padding(

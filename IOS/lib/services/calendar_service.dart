@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 
 import '../models/recurring_activity.dart';
+import '../l10n/l10n.dart';
 
 /// "Add to Calendar" and "Add to Reminders" for a plan, iOS only
 /// (CalendarBridge in AppDelegate.swift). Calendar opens the system New Event
@@ -29,13 +30,13 @@ class CalendarService {
 
   /// The line shown after adding, or null when there is nothing to say.
   static String? message(String result, {required bool reminders}) {
-    final app = reminders ? 'Reminders' : 'Calendar';
+    final l = currentL10n;
     return switch (result) {
-      'saved' => reminders ? 'Added to Reminders' : 'Added to your calendar',
-      'denied' => '$app access is off. Allow it in iPhone Settings.',
-      'none' => 'This plan has no upcoming day to add',
-      'unavailable' => '$app is only available on iPhone',
-      'error' => 'Could not add to $app',
+      'saved' => reminders ? l.addedToReminders : l.addedToCalendar,
+      'denied' => reminders ? l.remindersDenied : l.calendarDenied,
+      'none' => l.planNoUpcomingDay,
+      'unavailable' => reminders ? l.remindersUnavailable : l.calendarUnavailable,
+      'error' => reminders ? l.remindersError : l.calendarError,
       _ => null, // cancelled
     };
   }
@@ -47,7 +48,8 @@ class CalendarService {
     try {
       final result = await _channel.invokeMethod<String>(method, {
         'title': a.title,
-        if (a.kidNames.isNotEmpty) 'notes': 'With ${a.kidNames.join(', ')}',
+        if (a.kidNames.isNotEmpty)
+          'notes': currentL10n.withKids(a.kidNames.join(', ')),
         'startMs': start.millisecondsSinceEpoch,
         'durationMin': 60,
         if (!a.isOneTime) 'weekdays': a.repeatDays, // 0 = Mon … 6 = Sun

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:quick_actions/quick_actions.dart';
+import '../l10n/l10n.dart';
 
 /// iOS long-press app-icon shortcuts ("Log a Visit" / "View Dashboard") —
 /// registered once at startup. HomeScreen listens for [lastAction] and
@@ -37,9 +38,15 @@ class QuickActionService {
   Future<void> init() async {
     if (!_isSupported) return;
     _plugin.initialize((type) => lastAction.value = type);
-    await _plugin.setShortcutItems(const [
-      ShortcutItem(type: logEntryType, localizedTitle: 'Log a Visit'),
-      ShortcutItem(type: dashboardType, localizedTitle: 'View Dashboard'),
+    await setTitles();
+  }
+
+  /// The shortcut titles in the current language (again when it changes).
+  Future<void> setTitles() async {
+    if (!_isSupported) return;
+    await _plugin.setShortcutItems([
+      ShortcutItem(type: logEntryType, localizedTitle: currentL10n.logAVisit),
+      ShortcutItem(type: dashboardType, localizedTitle: currentL10n.history),
     ]);
   }
 }

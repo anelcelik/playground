@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import '../sync/sync_service.dart';
 import '../theme.dart';
+import '../l10n/l10n.dart';
 
-/// "just now" / "3m ago" / "2h ago" / "5d ago".
+/// "just now" / "3 min ago" / "2 h ago" / "5 days ago".
 String _relTime(DateTime t) {
   final diff = DateTime.now().difference(t);
-  if (diff.inSeconds < 60) return 'just now';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-  if (diff.inHours < 24) return '${diff.inHours}h ago';
-  return '${diff.inDays}d ago';
+  final l = currentL10n;
+  if (diff.inSeconds < 60) return l.justNow;
+  if (diff.inMinutes < 60) return l.minutesAgo(diff.inMinutes);
+  if (diff.inHours < 24) return l.hoursAgo(diff.inHours);
+  return l.daysAgo(diff.inDays);
 }
 
 class InviteFamilyScreen extends StatefulWidget {
@@ -46,18 +48,16 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Remove access?'),
-        content: Text(
-            '$name will no longer be able to sync with this journal. '
-            'Their existing entries stay on their device.'),
+        title: Text(context.l10n.removeAccessQuestion),
+        content: Text(context.l10n.removeAccessBody(name)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+              child: Text(context.l10n.cancel)),
           TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Remove',
-                  style: TextStyle(color: Colors.red))),
+              child: Text(context.l10n.remove,
+                  style: const TextStyle(color: Colors.red))),
         ],
       ),
     );
@@ -65,10 +65,10 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
     final success = await SyncService.instance
         .revokeParticipant(participant['id'] as String);
     if (success && mounted) {
-      _toast('$name removed');
+      _toast(context.l10n.personRemoved(name));
       _load();
     } else if (mounted) {
-      _toast('Could not remove — try again');
+      _toast(context.l10n.couldNotRemove);
     }
   }
 
@@ -77,7 +77,7 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
     final email = p['email'] as String? ?? '';
     if (name.isNotEmpty && name != 'Unknown') return name;
     if (email.isNotEmpty) return email;
-    return 'Connected user';
+    return currentL10n.connectedUser;
   }
 
   void _toast(String msg) {
@@ -99,8 +99,8 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
     return Scaffold(
       backgroundColor: c.bg,
       appBar: AppBar(
-        title: const Text('Family Sync',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+        title: Text(context.l10n.familySync,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
       ),
       body: ListView(
         padding: const EdgeInsets.all(14),
@@ -116,8 +116,8 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
               child: ElevatedButton.icon(
                 onPressed: _openShareSheet,
                 icon: const Icon(Icons.person_add_alt_1_rounded),
-                label: const Text('Invite someone',
-                    style: TextStyle(
+                label: Text(context.l10n.inviteSomeone,
+                    style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.of(context).green,
@@ -131,7 +131,7 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
             const SizedBox(height: 6),
             Center(
               child: Text(
-                'Opens iOS share sheet — send via Messages, WhatsApp, copy link…',
+                context.l10n.inviteSub,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 12, color: c.txt2),
               ),
@@ -141,7 +141,7 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
 
           // ── Connected people ──────────────────────────
           Text(
-            'CONNECTED',
+            context.l10n.connected.toUpperCase(),
             style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -171,7 +171,8 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
             const SizedBox(height: 10),
             Center(
               child: Text(
-                'Last synced ${_relTime(SyncService.instance.lastSyncedAt!)}',
+                context.l10n.lastSynced(
+                    _relTime(SyncService.instance.lastSyncedAt!)),
                 style: TextStyle(fontSize: 12, color: c.txt2),
               ),
             ),
@@ -209,15 +210,14 @@ class _HeroCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Share with your family',
+                Text(context.l10n.shareWithFamily,
                     style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
                         color: c.txt)),
                 const SizedBox(height: 4),
                 Text(
-                  'Each person uses their own Apple ID — '
-                  'no shared accounts needed.',
+                  context.l10n.shareWithFamilySub,
                   style: TextStyle(
                       fontSize: 13, color: c.txt2, height: 1.4),
                 ),
@@ -290,10 +290,10 @@ class _ParticipantTile extends StatelessWidget {
                       color: c.txt)),
               Text(
                 isOwner
-                    ? 'Owner'
+                    ? context.l10n.owner
                     : isPending
-                        ? 'Invite pending…'
-                        : 'Connected',
+                        ? context.l10n.invitePending
+                        : context.l10n.connected,
                 style: TextStyle(
                     fontSize: 12,
                     color: isPending ? AppColors.of(context).txt : c.txt2),
@@ -309,7 +309,7 @@ class _ParticipantTile extends StatelessWidget {
               color: AppColors.of(context).greenTint,
               borderRadius: BorderRadius.zero,
             ),
-            child: Text('You',
+            child: Text(context.l10n.you,
                 style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -322,8 +322,8 @@ class _ParticipantTile extends StatelessWidget {
                 foregroundColor: Colors.red,
                 padding: const EdgeInsets.symmetric(
                     horizontal: 10, vertical: 4)),
-            child: const Text('Remove',
-                style: TextStyle(fontSize: 13)),
+            child: Text(context.l10n.remove,
+                style: const TextStyle(fontSize: 13)),
           ),
       ]),
     );
@@ -343,14 +343,14 @@ class _EmptyParticipants extends StatelessWidget {
           borderRadius: BorderRadius.zero,
         ),
         child: Column(children: [
-          Text('No one connected yet',
+          Text(context.l10n.noOneConnected,
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: c.txt)),
           const SizedBox(height: 6),
           Text(
-            'Tap "Invite someone" above to share\nwith your partner or family.',
+            context.l10n.noOneConnectedHint,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: c.txt2),
           ),
@@ -372,17 +372,17 @@ class _HowItWorks extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('How it works',
+            Text(context.l10n.howItWorks,
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: c.txt)),
             const SizedBox(height: 10),
             ...[
-              ('1', 'Tap "Invite someone" — iOS share sheet opens'),
-              ('2', 'Send the link via Messages, WhatsApp, or copy it'),
-              ('3', 'They tap the link → "Accept" → done'),
-              ('4', 'Both phones stay in sync automatically'),
+              ('1', context.l10n.howStep1),
+              ('2', context.l10n.howStep2),
+              ('3', context.l10n.howStep3),
+              ('4', context.l10n.howStep4),
             ].map((e) => Padding(
                   padding: const EdgeInsets.only(bottom: 7),
                   child: Row(children: [

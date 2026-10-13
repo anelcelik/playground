@@ -7,6 +7,8 @@ import 'plan_history_screen.dart';
 import 'recurring_activity_form.dart';
 
 import '../theme.dart';
+import '../l10n/l10n.dart';
+import '../settings/app_settings.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
 // _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
@@ -73,17 +75,16 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Delete activity?'),
-        content: Text(
-            '"${a.title}" and all its logs will be permanently deleted.'),
+        title: Text(context.l10n.deletePlanQuestion),
+        content: Text(context.l10n.deletePlanBody(a.title)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+              child: Text(context.l10n.cancel)),
           TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete',
-                  style: TextStyle(color: Colors.red))),
+              child: Text(context.l10n.delete,
+                  style: const TextStyle(color: Colors.red))),
         ],
       ),
     );
@@ -115,14 +116,14 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
-        title: const Text('Recurring Activities',
-            style: TextStyle(
+        title: Text(context.l10n.plans,
+            style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 17)),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openForm(),
-        tooltip: 'New recurring activity',
+        tooltip: context.l10n.newPlan,
         child: const Icon(Icons.add),
       ),
       body: _loading
@@ -204,7 +205,7 @@ class _ActivityTile extends StatelessWidget {
                 borderRadius: BorderRadius.zero,
               ),
               child: Text(
-                a.isActive ? 'Active' : 'Inactive',
+                a.isActive ? context.l10n.active : context.l10n.inactive,
                 style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -223,13 +224,14 @@ class _ActivityTile extends StatelessWidget {
                     style: TextStyle(fontSize: 13, color: kTxt2)),
               if (!a.isOneTime && (a.dateFrom != null || a.dateTo != null))
                 Text(
-                  '${a.dateFrom ?? '…'} → ${a.dateTo ?? '…'}',
+                  '${a.dateFrom == null ? '…' : AppSettings.instance.fmtDate(a.dateFrom!)}'
+                  ' → ${a.dateTo == null ? '…' : AppSettings.instance.fmtDate(a.dateTo!)}',
                   style: TextStyle(fontSize: 12, color: kTxt2),
                 ),
               if (a.notifyEnabled && a.notifyHour != null)
-                Text('Reminder ${a.notifyTimeLabel}',
+                Text(context.l10n.reminderAt(a.notifyTimeLabel),
                     style: TextStyle(fontSize: 12, color: kTxt2)),
-              Text('Tap for history & calendar',
+              Text(context.l10n.tapForHistory,
                   style: TextStyle(fontSize: 11, color: kTxt2)),
             ],
           ),
@@ -238,17 +240,19 @@ class _ActivityTile extends StatelessWidget {
         const Divider(height: 1, indent: 16, endIndent: 16),
         Row(children: [
           _TileAction(
-              icon: Icons.edit_outlined, label: 'Edit', onTap: onEdit),
+              icon: Icons.edit_outlined,
+              label: context.l10n.edit,
+              onTap: onEdit),
           _TileAction(
             icon: a.isActive
                 ? Icons.pause_circle_outline
                 : Icons.play_circle_outline,
-            label: a.isActive ? 'Deactivate' : 'Activate',
+            label: a.isActive ? context.l10n.deactivate : context.l10n.activate,
             onTap: onToggleActive,
           ),
           _TileAction(
               icon: Icons.delete_outline,
-              label: 'Delete',
+              label: context.l10n.delete,
               color: Colors.red,
               onTap: onDelete),
         ]),
@@ -301,21 +305,21 @@ class _EmptyState extends StatelessWidget {
           children: [
             Icon(Icons.repeat_rounded, size: 40, color: kTxt2),
             const SizedBox(height: 12),
-            Text('No recurring activities yet',
+            Text(context.l10n.noPlansYet,
                 style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
                     color: kTxt)),
             const SizedBox(height: 6),
             Text(
-                'Add activities that repeat on specific days\nand they\'ll appear in the daily log.',
+                context.l10n.noPlansHint,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: kTxt2)),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: onAdd,
               icon: const Icon(Icons.add),
-              label: const Text('Add first activity'),
+              label: Text(context.l10n.addFirstPlan),
               style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.of(context).green,
                   foregroundColor: AppColors.of(context).onAccent,

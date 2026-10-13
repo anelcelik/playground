@@ -268,6 +268,20 @@ void main() {
     expect(AppSettings.instance.palette, AppPalette.modernistLight);
   });
 
+  test('the language choice is saved; none follows the phone', () async {
+    await AppSettings.instance.setLanguage('cs');
+    await AppSettings.instance.load();
+    expect(AppSettings.instance.language, 'cs');
+    expect(AppSettings.instance.locale.languageCode, 'cs');
+    expect(AppSettings.instance.isEnglish, isFalse);
+
+    await AppSettings.instance.setLanguage(null);
+    await AppSettings.instance.load();
+    expect(AppSettings.instance.language, isNull);
+    // The test platform speaks English.
+    expect(AppSettings.instance.locale.languageCode, 'en');
+  });
+
   test('My colors are saved and kept readable', () async {
     // A bright yellow accent on white is the hard case.
     await AppSettings.instance.setCustomColors(
