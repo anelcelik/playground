@@ -1,0 +1,9 @@
+# flutter gen-l10n: English is the template; es, de, bs, cs must have every
+# key (untranslated keys fail the build via required-resource-attributes).
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-dir: lib/l10n
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false
+untranslated-messages-file: build/untranslated.json

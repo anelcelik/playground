@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../settings/app_settings.dart';
 import '../theme.dart';
 import 'custom_theme_screen.dart';
+import '../l10n/l10n.dart';
 
 class DisplaySettingsScreen extends StatelessWidget {
   const DisplaySettingsScreen({super.key});
@@ -18,16 +19,40 @@ class DisplaySettingsScreen extends StatelessWidget {
         return Scaffold(
           backgroundColor: c.bg,
           appBar: AppBar(
-            title: const Text('Display Settings',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+            title: Text(context.l10n.languageDateTheme,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
           ),
           body: ListView(
             padding: const EdgeInsets.all(14),
             children: [
 
+              // ── Language ───────────────────────────────────
+              // Follow the phone until someone picks one.
+              _SectionHeader(context.l10n.language, c),
+              _card(c, Column(children: [
+                _RadioRow(
+                  c: c,
+                  title: context.l10n.phoneLanguage,
+                  subtitle: AppSettings.languageNames[AppSettings.phoneLanguage]!,
+                  selected: s.language == null,
+                  onTap: () => s.setLanguage(null),
+                ),
+                for (final code in AppSettings.languages) ...[
+                  Divider(height: 1, color: c.border),
+                  _RadioRow(
+                    c: c,
+                    title: AppSettings.languageNames[code]!,
+                    selected: s.language == code,
+                    onTap: () => s.setLanguage(code),
+                  ),
+                ],
+              ])),
+
+              const SizedBox(height: 16),
+
               // ── Colour theme ─────────────────────────────────
               // One flat list: every theme is fully light or dark.
-              _SectionHeader('Color theme', c),
+              _SectionHeader(context.l10n.colorTheme, c),
               _card(c, Column(children: [
                 for (final p in AppPalette.values) ...[
                   if (p.index > 0) Divider(height: 1, color: c.border),
@@ -50,18 +75,18 @@ class DisplaySettingsScreen extends StatelessWidget {
                         MaterialPageRoute(
                             builder: (_) => const CustomThemeScreen())),
                     icon: const Icon(Icons.palette_outlined),
-                    label: const Text('Edit my colors'),
+                    label: Text(context.l10n.editMyColors),
                   ),
                 ),
 
               const SizedBox(height: 16),
 
               // ── Time ─────────────────────────────────────────
-              _SectionHeader('Time format', c),
+              _SectionHeader(context.l10n.timeFormat, c),
               _card(c, Column(children: [
                 _RadioRow(
                   c: c,
-                  title: '12-hour',
+                  title: context.l10n.hour12,
                   subtitle: '3:30 PM  ·  8:00 AM',
                   selected: !s.use24h,
                   onTap: () => s.setUse24h(false),
@@ -69,7 +94,7 @@ class DisplaySettingsScreen extends StatelessWidget {
                 Divider(height: 1, color: c.border),
                 _RadioRow(
                   c: c,
-                  title: '24-hour',
+                  title: context.l10n.hour24,
                   subtitle: '15:30  ·  08:00',
                   selected: s.use24h,
                   onTap: () => s.setUse24h(true),
@@ -79,6 +104,8 @@ class DisplaySettingsScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               // ── Date ─────────────────────────────────────────
+              // English only: other languages write dates their own way.
+              if (s.isEnglish) ...[
               _SectionHeader('Date format', c),
               _card(c, Column(children: [
                 _RadioRow(
@@ -97,11 +124,12 @@ class DisplaySettingsScreen extends StatelessWidget {
                   onTap: () => s.setEuDate(false),
                 ),
               ])),
+              ],
 
               const SizedBox(height: 24),
               Center(
                 child: Text(
-                  'Changes apply immediately throughout the app.',
+                  context.l10n.changesApplyImmediately,
                   style: TextStyle(fontSize: 12, color: c.txt2),
                 ),
               ),
@@ -154,7 +182,7 @@ class _SectionHeader extends StatelessWidget {
 class _RadioRow extends StatelessWidget {
   final AppColors c;
   final String title;
-  final String subtitle;
+  final String? subtitle;
   final List<Color> swatches; // a colour theme's preview chips
   final bool selected;
   final VoidCallback onTap;
@@ -162,7 +190,7 @@ class _RadioRow extends StatelessWidget {
   const _RadioRow({
     required this.c,
     required this.title,
-    required this.subtitle,
+    this.subtitle,
     this.swatches = const [],
     required this.selected,
     required this.onTap,
@@ -193,9 +221,11 @@ class _RadioRow extends StatelessWidget {
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: c.txt)),
-                  const SizedBox(height: 2),
-                  Text(subtitle,
-                      style: TextStyle(fontSize: 13, color: c.txt2)),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(subtitle!,
+                        style: TextStyle(fontSize: 13, color: c.txt2)),
+                  ],
                 ],
               ),
             ),

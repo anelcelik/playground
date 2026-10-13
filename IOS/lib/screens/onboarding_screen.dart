@@ -10,6 +10,7 @@ import '../theme.dart';
 import '../widgets/modernist.dart';
 import 'custom_theme_screen.dart';
 import 'recurring_activity_form.dart';
+import '../l10n/l10n.dart';
 
 /// First launch: welcome, the family's names (nicknames welcome), optional
 /// reminders, optional plans, and the look. SetupScreen stays for editing
@@ -97,21 +98,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   _welcome(c),
                   _namesPage(
                     c,
-                    title: 'Who takes the kids out?',
+                    title: context.l10n.onbParentsTitle,
                     fields: _parents,
-                    hints: const ['e.g. Mom', 'e.g. Dad'],
-                    note: 'Real names aren\'t needed: Mom and Dad, nicknames '
-                        'or initials work just as well. Names only appear '
-                        'in the app.',
+                    hints: [context.l10n.parentHint1, context.l10n.parentHint2],
+                    note: context.l10n.onbParentsNote,
                   ),
                   _namesPage(
                     c,
-                    title: 'And the kids?',
+                    title: context.l10n.onbKidsTitle,
                     fields: _kids,
-                    hints: const ['e.g. Bean', 'e.g. Tiger'],
-                    note: 'Nicknames are perfect here too. Everything stays '
-                        'on your iPhone and in your own iCloud, never with '
-                        'us.',
+                    hints: [context.l10n.onbKidHint1, context.l10n.onbKidHint2],
+                    note: context.l10n.onbKidsNote,
                   ),
                   _remindersPage(c),
                   _plansPage(c),
@@ -151,10 +148,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             !_reminders.logEnabled) ||
         (_step == 4 && _plans.isEmpty);
     final label = switch (_step) {
-      0 => 'Get started',
-      _ when last => 'Start using the app',
-      _ when optional && nothingSet => 'Skip for now',
-      _ => 'Continue',
+      0 => context.l10n.getStarted,
+      _ when last => context.l10n.startUsingApp,
+      _ when optional && nothingSet => context.l10n.skipForNow,
+      _ => context.l10n.continueLabel,
     };
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
@@ -166,7 +163,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           if (_step > 0) ...[
             TextButton(
               onPressed: _finishing ? null : () => _go(_step - 1),
-              child: const Text('Back'),
+              child: Text(context.l10n.back),
             ),
             const SizedBox(width: 8),
           ],
@@ -203,19 +200,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   // ── Steps ───────────────────────────────────────────────
 
+  // The app's name stays English; the language choice comes first so
+  // someone who doesn't read English can switch before anything else.
   Widget _welcome(AppColors c) => _page(c, 'Playground Tracker', [
-        _para(c,
-            'A quick log of your family\'s outdoor time: who took the kids '
-            'out, for how long, and what they did.'),
-        _para(c,
-            'The next few steps set up your family, optional reminders and '
-            'plans. It takes about a minute, and everything can be changed '
-            'later in Settings.'),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final code in AppSettings.languages)
+              SquareChip(
+                label: AppSettings.languageNames[code]!,
+                small: true,
+                selected:
+                    AppSettings.instance.locale.languageCode == code,
+                onTap: () => AppSettings.instance.setLanguage(code),
+              ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        _para(c, context.l10n.onbWelcome1),
+        _para(c, context.l10n.onbWelcome2),
         Block(
           recessed: true,
           child: Text(
-              'No account, no ads, no tracking. Your log stays on your iPhone '
-              'and in your own iCloud.',
+              context.l10n.onbWelcomeNote,
               style: AppType.bodySm.copyWith(color: c.txt)),
         ),
       ]);
@@ -242,12 +250,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     textInputAction: TextInputAction.next,
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
-                        hintText: i < hints.length ? hints[i] : 'Name'),
+                        hintText: i < hints.length ? hints[i] : context.l10n.name),
                   ),
                 ),
                 if (fields.length > 1)
                   IconButton(
-                    tooltip: 'Remove',
+                    tooltip: context.l10n.remove,
                     icon: Icon(Icons.close, color: c.txt2),
                     onPressed: () {
                       final removed = fields[i];
@@ -263,20 +271,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         Align(
           alignment: Alignment.centerLeft,
           child: SquareChip(
-            label: '+ Add another',
+            label: context.l10n.addAnotherChip,
             small: true,
             onTap: () => setState(() => fields.add(TextEditingController())),
           ),
         ),
       ]);
 
-  Widget _remindersPage(AppColors c) => _page(c, 'Reminders', [
-        _para(c,
-            'Optional. A gentle nudge once a day, at a time you choose. '
-            'iOS asks for permission when you switch one on.'),
+  Widget _remindersPage(AppColors c) => _page(c, context.l10n.remindersSetting, [
+        _para(c, context.l10n.onbRemindersIntro),
         _reminderRow(
           c,
-          title: 'Time to go outside',
+          title: context.l10n.onbReminderOutside,
           enabled: _reminders.outdoorEnabled,
           hour: _reminders.outdoorHour,
           minute: _reminders.outdoorMinute,
@@ -288,7 +294,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         const SizedBox(height: 10),
         _reminderRow(
           c,
-          title: 'Log today\'s visit',
+          title: context.l10n.onbReminderLog,
           enabled: _reminders.logEnabled,
           hour: _reminders.logHour,
           minute: _reminders.logMinute,
@@ -297,7 +303,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               logHour: t.hour, logMinute: t.minute)),
         ),
         const SizedBox(height: 14),
-        _para(c, 'You can change these any time in Settings › Reminders.'),
+        _para(c, context.l10n.onbRemindersLater),
       ]);
 
   void _setReminders(NotifPrefs prefs, bool switchedOn) {
@@ -341,7 +347,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Text(
-                          'Every day at ${AppSettings.instance.fmtHM(hour, minute)} · change',
+                          context.l10n.everyDayAtChange(
+                              AppSettings.instance.fmtHM(hour, minute)),
                           style: AppType.bodySm.copyWith(color: c.accentTxt)),
                     ),
                   ),
@@ -364,11 +371,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (mounted) setState(() => _plans = plans);
   }
 
-  Widget _plansPage(AppColors c) => _page(c, 'Plans', [
-        _para(c,
-            'Optional. Football every Monday, swimming on Saturdays, a '
-            'birthday party next week: plans show up on Today, ready to tick '
-            'off, and can remind you.'),
+  Widget _plansPage(AppColors c) => _page(c, context.l10n.plans, [
+        _para(c, context.l10n.onbPlansIntro),
         for (final p in _plans)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -388,21 +392,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         const SizedBox(height: 4),
         BlockButton(
-          label: _plans.isEmpty ? 'Add a plan' : 'Add another plan',
+          label: _plans.isEmpty
+              ? context.l10n.addAPlan
+              : context.l10n.addAnotherPlan,
           icon: Icons.add,
           outlined: true,
           onTap: _addPlan,
         ),
         const SizedBox(height: 14),
-        _para(c, 'You can add more any time in the Plans tab.'),
+        _para(c, context.l10n.onbPlansLater),
       ]);
 
   Widget _lookPage(AppColors c) {
     final s = AppSettings.instance;
-    return _page(c, 'Your look', [
-      _para(c,
-          'Pick a color theme, or make your own. You can change it any time '
-          'in Settings.'),
+    return _page(c, context.l10n.onbLookTitle, [
+      _para(c, context.l10n.onbLookIntro),
       for (final p in AppPalette.values) ...[
         Block(
           recessed: s.palette == p,
@@ -451,7 +455,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: Row(
           children: [
             Expanded(
-              child: Text('24-hour time',
+              child: Text(context.l10n.hour24Time,
                   style: AppType.body
                       .copyWith(color: c.txt, fontWeight: FontWeight.w700)),
             ),

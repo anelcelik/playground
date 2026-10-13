@@ -42,7 +42,7 @@ SHARE WITH YOUR FAMILY
 Invite your partner with a link. Your log stays in sync on both phones through iCloud.
 
 MAKE IT YOURS
-Choose the Modernist or Swing color theme, light or dark mode, and 12- or 24-hour time.
+Seven color themes or your own colors, 12- or 24-hour time, and five languages: English, Spanish, German, Bosnian and Czech.
 
 PRIVATE BY DESIGN
 No account. No ads. No tracking. No analytics. Your log stays on your iPhone and in your own iCloud, and we never see it.

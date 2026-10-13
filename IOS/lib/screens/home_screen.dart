@@ -11,6 +11,7 @@ import 'today_screen.dart';
 import 'dashboard_screen.dart';
 import 'manage_recurring_screen.dart';
 import 'settings_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Four destinations in a bottom tab bar, replacing the green AppBar +
 /// top TabBar + gear PopupMenuButton. Recap and Recurring Activities used
@@ -94,22 +95,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   _Tab(
                       icon: Icons.calendar_today_outlined,
-                      label: 'Today',
+                      label: context.l10n.today,
                       selected: _index == 0,
                       onTap: () => setState(() => _index = 0)),
                   _Tab(
                       icon: Icons.bar_chart_rounded,
-                      label: 'History',
+                      label: context.l10n.history,
                       selected: _index == 1,
                       onTap: () => setState(() => _index = 1)),
                   _Tab(
                       icon: Icons.repeat_rounded,
-                      label: 'Plans',
+                      label: context.l10n.plans,
                       selected: _index == 2,
                       onTap: () => setState(() => _index = 2)),
                   _Tab(
                       icon: Icons.settings_outlined,
-                      label: 'Settings',
+                      label: context.l10n.settings,
                       selected: _index == 3,
                       onTap: () => setState(() => _index = 3),
                       // The sync dot moved out of the AppBar and onto the

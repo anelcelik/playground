@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'l10n/l10n.dart';
 
 // ── Modernist palette ─────────────────────────────────────
 // Flat, architectural, one accent. No gradients, no radii, 2px rules.
@@ -235,19 +236,41 @@ double contrastRatio(Color a, Color b) {
 /// The colour themes in Display settings: one flat list, each entry fully
 /// light or fully dark. [custom] gets its colours from AppSettings.
 enum AppPalette {
-  modernistLight('Modernist light', 'Red and black on paper, the original',
-      AppColors.modernistLight),
-  modernistDark('Modernist dark', 'Coral on warm black', AppColors.modernistDark),
-  swingLight('Swing light', 'Deep green and orange on sunny yellow',
-      AppColors.swingLight),
-  swingDark('Swing dark', 'Sunny yellow on deep green', AppColors.swingDark),
-  blackOnWhite('Black on white', 'Plain black on white', AppColors.blackOnWhite),
-  whiteOnBlack('White on black', 'Plain white on black', AppColors.whiteOnBlack),
-  custom('My colors', 'Your own background, text and accent', null);
+  modernistLight(AppColors.modernistLight),
+  modernistDark(AppColors.modernistDark),
+  swingLight(AppColors.swingLight),
+  swingDark(AppColors.swingDark),
+  blackOnWhite(AppColors.blackOnWhite),
+  whiteOnBlack(AppColors.whiteOnBlack),
+  custom(null);
 
-  const AppPalette(this.label, this.description, this.fixed);
-  final String label;
-  final String description;
+  const AppPalette(this.fixed);
+
+  String get label {
+    final l = currentL10n;
+    return switch (this) {
+      modernistLight => l.themeModernistLight,
+      modernistDark => l.themeModernistDark,
+      swingLight => l.themeSwingLight,
+      swingDark => l.themeSwingDark,
+      blackOnWhite => l.themeBlackOnWhite,
+      whiteOnBlack => l.themeWhiteOnBlack,
+      custom => l.themeMyColors,
+    };
+  }
+
+  String get description {
+    final l = currentL10n;
+    return switch (this) {
+      modernistLight => l.themeModernistLightSub,
+      modernistDark => l.themeModernistDarkSub,
+      swingLight => l.themeSwingLightSub,
+      swingDark => l.themeSwingDarkSub,
+      blackOnWhite => l.themeBlackOnWhiteSub,
+      whiteOnBlack => l.themeWhiteOnBlackSub,
+      custom => l.themeMyColorsSub,
+    };
+  }
 
   /// The colours of every palette except [custom].
   final AppColors? fixed;

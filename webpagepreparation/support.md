@@ -64,9 +64,11 @@ accepts, both phones stay in sync automatically.
 Check **Settings > Reminders** in the app, then make sure notifications are
 allowed in iOS: **Settings > Notifications > Playground Tracker**.
 
-### How do I change the colors, dark mode or the time format?
+### How do I change the language, colors or time format?
 
-**Settings > Date, time & theme** in the app.
+**Settings > Language, date & theme** in the app. The app speaks English,
+Spanish, German, Bosnian and Czech. It follows your iPhone's language until you
+pick one, and the very first screen of the app lets you choose too.
 
 ### Where is my data stored, and who can see it?
 

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../db/database_helper.dart';
 import '../models/entry.dart';
 import '../models/durations.dart';
 import '../theme.dart';
+import '../l10n/l10n.dart';
 
 /// A "your month/year so far" snapshot — a fun, shareable-feeling summary,
 /// distinct from the regular Dashboard's data-dense insights. Reuses the
@@ -43,17 +45,15 @@ class _RecapScreenState extends State<RecapScreen> {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final now = DateTime.now();
-    const monthNames = [
-      '', 'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
-    ];
-    final periodLabel = _period == 'month' ? monthNames[now.month] : '${now.year}';
+    final periodLabel = _period == 'month'
+        ? toBeginningOfSentenceCase(DateFormat('LLLL').format(now))
+        : '${now.year}';
 
     return Scaffold(
       backgroundColor: c.bg,
       appBar: AppBar(
-        title: const Text('Recap',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+        title: Text(context.l10n.recap,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -70,9 +70,9 @@ class _RecapScreenState extends State<RecapScreen> {
 
   Widget _segmented(AppColors c) => Row(
         children: [
-          Expanded(child: _seg('month', 'This Month', c)),
+          Expanded(child: _seg('month', context.l10n.thisMonth, c)),
           const SizedBox(width: 8),
-          Expanded(child: _seg('year', 'This Year', c)),
+          Expanded(child: _seg('year', context.l10n.thisYear, c)),
         ],
       );
 
@@ -150,11 +150,11 @@ class _RecapBody extends StatelessWidget {
                     fontSize: 56,
                     fontWeight: FontWeight.w900,
                     height: 1)),
-            Text(totalVisits == 1 ? 'playground visit' : 'playground visits',
+            Text(context.l10n.playgroundVisits(totalVisits),
                 style: TextStyle(color: c.onAccent, fontSize: 16)),
             if (totalMinutes > 0) ...[
               const SizedBox(height: 14),
-              Text('${_fmtMins(totalMinutes)} outside as a family',
+              Text(context.l10n.outsideAsFamily(_fmtMins(totalMinutes)),
                   style: TextStyle(
                       color: c.onAccent,
                       fontSize: 15,
@@ -167,15 +167,15 @@ class _RecapBody extends StatelessWidget {
         // Stat row
         Row(children: [
           if (streak > 1) ...[
-            Expanded(child: _statCard('$streak days', 'Longest streak', c)),
+            Expanded(child: _statCard(context.l10n.daysCount(streak), context.l10n.longestStreak, c)),
             const SizedBox(width: 10),
           ],
           if (topActivity != null) ...[
-            Expanded(child: _statCard(topActivity, 'Top activity', c)),
+            Expanded(child: _statCard(topActivity, context.l10n.topActivity, c)),
             const SizedBox(width: 10),
           ],
           if (topParent != null)
-            Expanded(child: _statCard(topParent, 'Went the most', c)),
+            Expanded(child: _statCard(topParent, context.l10n.wentTheMost, c)),
         ]),
 
         if (topKid != null) ...[
@@ -191,7 +191,7 @@ class _RecapBody extends StatelessWidget {
               Icon(Icons.emoji_people_outlined, size: 20, color: c.green),
               const SizedBox(width: 10),
               Expanded(
-                child: Text('$topKid got outside the most',
+                child: Text(context.l10n.kidOutsideMost(topKid),
                     style: TextStyle(
                         fontSize: 14, fontWeight: FontWeight.w600, color: c.txt)),
               ),
@@ -202,7 +202,7 @@ class _RecapBody extends StatelessWidget {
         const SizedBox(height: 20),
         Center(
           child: Text(
-            _tagline(totalVisits, periodLabel),
+            _tagline(context, totalVisits, periodLabel),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: c.txt2, fontStyle: FontStyle.italic),
           ),
@@ -273,10 +273,10 @@ class _RecapBody extends StatelessWidget {
     return '${mn}m';
   }
 
-  String _tagline(int visits, String period) {
-    if (visits >= 20) return "That's a lot of fresh air — well done.";
-    if (visits >= 8) return 'A solid $period outside. Keep it up.';
-    return 'Every visit counts — here\'s to more of them.';
+  String _tagline(BuildContext context, int visits, String period) {
+    if (visits >= 20) return context.l10n.taglineLots;
+    if (visits >= 8) return context.l10n.taglineSolid(period);
+    return context.l10n.taglineEvery;
   }
 }
 
@@ -291,10 +291,10 @@ class _EmptyRecap extends StatelessWidget {
         child: Column(children: [
           Icon(Icons.park_outlined, size: 40, color: c.txt2),
           const SizedBox(height: 16),
-          Text('Nothing logged yet for $periodLabel',
+          Text(context.l10n.recapEmpty(periodLabel),
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: c.txt)),
           const SizedBox(height: 6),
-          Text('Log a visit and it\'ll show up here.',
+          Text(context.l10n.recapEmptyHint,
               style: TextStyle(fontSize: 13, color: c.txt2)),
         ]),
       );

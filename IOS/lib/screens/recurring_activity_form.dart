@@ -10,13 +10,13 @@ import '../services/calendar_service.dart';
 import '../settings/app_settings.dart';
 import '../theme.dart';
 import '../widgets/modernist.dart';
+import '../l10n/l10n.dart';
 
 // Brand accent colours — intentionally fixed in both light and dark mode
 // _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
 
 
 
-const _dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 class RecurringActivityForm extends StatefulWidget {
   final Family family;
@@ -92,9 +92,12 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
 
   Future<void> _save() async {
     final title = _titleCtrl.text.trim();
-    if (title.isEmpty) { _toast('Enter a title'); return; }
-    if (_oneTime && _onDate == null) { _toast('Pick a date'); return; }
-    if (!_oneTime && _selDays.isEmpty) { _toast('Select at least one day'); return; }
+    if (title.isEmpty) { _toast(context.l10n.enterTitle); return; }
+    if (_oneTime && _onDate == null) { _toast(context.l10n.pickADate); return; }
+    if (!_oneTime && _selDays.isEmpty) {
+      _toast(context.l10n.selectAtLeastOneDay);
+      return;
+    }
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
 
@@ -218,7 +221,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
   }
 
   String _fmtDate(String? d) =>
-      d == null ? 'Not set' : DateFormat('d MMM yyyy').format(DateTime.parse(d));
+      d == null ? context.l10n.notSet : AppSettings.instance.fmtDate(d);
 
   String _fmtTime() => AppSettings.instance.fmtHM(_notifyHour, _notifyMinute);
 
@@ -229,7 +232,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
     final isNew = widget.existing == null;
     return Scaffold(
       appBar: AppBar(
-        title: Text(isNew ? 'New Recurring Activity' : 'Edit Activity',
+        title: Text(isNew ? context.l10n.newPlan : context.l10n.editPlan,
             style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 17)),
@@ -241,7 +244,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                     width: 18, height: 18,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: _kAccentTxt))
-                : Text('Save',
+                : Text(context.l10n.save,
                     style: TextStyle(
                         color: _kAccentTxt,
                         fontWeight: FontWeight.bold,
@@ -255,11 +258,11 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
 
           // Title
           _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _clabel('Activity Title'),
+            _clabel(context.l10n.planTitle),
             TextField(
               controller: _titleCtrl,
               decoration: InputDecoration(
-                hintText: 'e.g. Recurring activity',
+                hintText: context.l10n.planTitleHint,
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.zero,
                   borderSide: BorderSide(color: _kBorder, width: 2),
@@ -276,27 +279,27 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
 
           // Repeats on weekdays, or happens once
           _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _clabel('How often?'),
+            _clabel(context.l10n.howOftenQ),
             Row(children: [
               Expanded(
                 child: GestureDetector(
                   onTap: () => setState(() => _oneTime = false),
-                  child: _shiftChip('Repeats', !_oneTime, _kGreen),
+                  child: _shiftChip(context.l10n.repeats, !_oneTime, _kGreen),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: GestureDetector(
                   onTap: () => setState(() => _oneTime = true),
-                  child: _shiftChip('One time', _oneTime, _kGreen),
+                  child: _shiftChip(context.l10n.oneTime, _oneTime, _kGreen),
                 ),
               ),
             ]),
             const SizedBox(height: 12),
             if (_oneTime)
-              _dateBtn('Date: ${_fmtDate(_onDate)}', _pickOnDate)
+              _dateBtn(context.l10n.dateLabel(_fmtDate(_onDate)), _pickOnDate)
             else ...[
-              _clabel('Repeat on'),
+              _clabel(context.l10n.repeatOn),
               Wrap(
                 spacing: 6, runSpacing: 6,
                 children: List.generate(7, (i) {
@@ -311,7 +314,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                         border: Border.all(color: sel ? _kGreen : _kBorder, width: 2),
                         borderRadius: BorderRadius.zero,
                       ),
-                      child: _checkText(_dayLabels[i], sel,
+                      child: _checkText(weekdayShort(i), sel,
                           style: TextStyle(
                               color: sel ? _kOn : _kTxt,
                               fontWeight: FontWeight.w600,
@@ -325,12 +328,12 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
 
           // Shift — morning or evening
           _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _clabel('When?'),
+            _clabel(context.l10n.whenQ),
             Row(children: [
               Expanded(
                 child: GestureDetector(
                   onTap: () => setState(() => _shift = 'morning'),
-                  child: _shiftChip('Morning', _shift == 'morning',
+                  child: _shiftChip(context.l10n.morning, _shift == 'morning',
                       _kGreen),
                 ),
               ),
@@ -338,7 +341,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
               Expanded(
                 child: GestureDetector(
                   onTap: () => setState(() => _shift = 'evening'),
-                  child: _shiftChip('Evening', _shift == 'evening',
+                  child: _shiftChip(context.l10n.evening, _shift == 'evening',
                       _kGreen),
                 ),
               ),
@@ -348,7 +351,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
           // Kids
           if (widget.family.kids.isNotEmpty)
             _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              _clabel('Which kids?'),
+              _clabel(context.l10n.whichKidsQ),
               Wrap(
                 spacing: 8, runSpacing: 8,
                 children: widget.family.kids.map((k) {
@@ -389,12 +392,12 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
           // Date range
           if (!_oneTime)
             _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              _clabel('Date range (optional)'),
+              _clabel(context.l10n.dateRangeOptional),
               Row(children: [
-                Expanded(child: _dateBtn('From: ${_fmtDate(_dateFrom)}',
+                Expanded(child: _dateBtn(context.l10n.fromDate(_fmtDate(_dateFrom)),
                     () => _pickDate(true))),
                 const SizedBox(width: 8),
-                Expanded(child: _dateBtn('To: ${_fmtDate(_dateTo)}',
+                Expanded(child: _dateBtn(context.l10n.toDate(_fmtDate(_dateTo)),
                     () => _pickDate(false))),
               ]),
               if (_dateFrom != null || _dateTo != null)
@@ -403,7 +406,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                   child: TextButton(
                     onPressed: () =>
                         setState(() { _dateFrom = null; _dateTo = null; }),
-                    child: Text('Clear dates',
+                    child: Text(context.l10n.clearDates,
                         style: TextStyle(color: _kTxt2, fontSize: 12)),
                   ),
                 ),
@@ -414,8 +417,8 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
             Row(children: [
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  _clabel('Reminder notification'),
-                  Text('Send a notification on activity days',
+                  _clabel(context.l10n.reminderNotification),
+                  Text(context.l10n.reminderNotificationSub,
                       style: TextStyle(fontSize: 13, color: _kTxt2)),
                 ]),
               ),
@@ -442,16 +445,19 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                   child: Row(children: [
                     Icon(Icons.access_time_rounded, size: 18, color: _kGreen),
                     const SizedBox(width: 8),
-                    Text('Notify at  ${_fmtTime()}',
+                    Text(context.l10n.notifyAt(_fmtTime()),
                         style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: _kGreen)),
                     const SizedBox(width: 8),
-                    Text('— tap to change',
-                        style: TextStyle(
-                            fontSize: 12, color: _kTxt2,
-                            fontStyle: FontStyle.italic)),
+                    Flexible(
+                      child: Text(context.l10n.dashTapToChange,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 12, color: _kTxt2,
+                              fontStyle: FontStyle.italic)),
+                    ),
                   ]),
                 ),
               ),
@@ -460,7 +466,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                 controller: _notifyMsgCtrl,
                 maxLines: 2,
                 decoration: InputDecoration(
-                  hintText: 'Custom message (optional)\ne.g. Time to head out!',
+                  hintText: context.l10n.customMessageHint,
                   contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 10),
                   enabledBorder: OutlineInputBorder(
@@ -478,7 +484,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  'Leave empty to use the default message.',
+                  context.l10n.leaveEmptyDefault,
                   style: TextStyle(fontSize: 11, color: _kTxt2),
                 ),
               ),
@@ -486,8 +492,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    'This time has already passed, so no notification will '
-                    'come. Pick a later time.',
+                    context.l10n.timeAlreadyPassed,
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -501,28 +506,26 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
           // own page has the same two buttons for later.
           if (isNew)
             _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              _clabel('Also add to (optional)'),
+              _clabel(context.l10n.alsoAddTo),
               Row(children: [
                 Expanded(
                   child: GestureDetector(
                     onTap: () => setState(() => _toCalendar = !_toCalendar),
-                    child: _shiftChip('Calendar', _toCalendar, _kGreen),
+                    child: _shiftChip(context.l10n.calendar, _toCalendar, _kGreen),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: GestureDetector(
                     onTap: () => setState(() => _toReminders = !_toReminders),
-                    child: _shiftChip('Reminders', _toReminders, _kGreen),
+                    child: _shiftChip(context.l10n.remindersApp, _toReminders, _kGreen),
                   ),
                 ),
               ]),
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'When you save: Calendar opens with the plan filled in, so '
-                  'you can invite people. Reminders gets the plan with an '
-                  'alert at its time.',
+                  context.l10n.alsoAddToHint,
                   style: TextStyle(fontSize: 12, color: _kTxt2),
                 ),
               ),
@@ -533,12 +536,19 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
             _card(Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('Active',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                  Text('Inactive activities are hidden from the daily log',
-                      style: TextStyle(fontSize: 12, color: _kTxt2)),
-                ]),
+                // Expanded: translations run longer than the English.
+                Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(context.l10n.active,
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w600)),
+                        Text(context.l10n.inactivePlansHidden,
+                            style: TextStyle(fontSize: 12, color: _kTxt2)),
+                      ]),
+                ),
+                const SizedBox(width: 12),
                 SquareSwitch(
                   value: _isActive,
                   onChanged: (v) => setState(() => _isActive = v),

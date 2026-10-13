@@ -1,12 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/timezone.dart' as tz_local;
 
 import 'db/database_helper.dart';
+import 'l10n/l10n.dart';
 import 'models/dashboard_prefs.dart';
 import 'notifications/notification_service.dart';
 import 'screens/onboarding_screen.dart';
@@ -43,8 +45,15 @@ Future<void> main() async {
     tz_local.setLocalLocation(tz_local.getLocation(localTz));
   }); // falls back to UTC (e.g. on Linux desktop)
 
-  // Load display preferences (date/time format) + dashboard layout
+  // Month and day names for every language, before anything formats a date.
+  await _startupStep('date names', () => initializeDateFormatting());
+
+  // Load display preferences (language, date/time format) + dashboard layout
   await _startupStep('settings', AppSettings.instance.load);
+  AppSettings.instance.onLanguageChanged = () async {
+    await NotificationService.instance.restoreSchedule();
+    await QuickActionService.instance.setTitles();
+  };
   await _startupStep('dashboard prefs', DashboardPrefs.instance.load);
 
   // Local notifications (no-op on unsupported platforms)
@@ -83,6 +92,10 @@ class PlaygroundTrackerApp extends StatelessWidget {
       builder: (_, __) => MaterialApp(
         title: 'Playground Tracker',
         debugShowCheckedModeBanner: false,
+        // The chosen language (onboarding, Settings), else the phone's.
+        locale: AppSettings.instance.locale,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
         // One theme, fully light or dark, picked in Settings (no System
         // / Light / Dark switch any more).
         theme: buildTheme(AppSettings.instance.colors),

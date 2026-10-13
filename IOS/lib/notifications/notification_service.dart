@@ -6,6 +6,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../db/database_helper.dart';
 import '../models/recurring_activity.dart';
+import '../l10n/l10n.dart';
 
 /// zonedSchedule() works on iOS, macOS, Android — NOT on Linux or Windows.
 bool get _supportsScheduled =>
@@ -55,7 +56,7 @@ class NotificationService {
     await _plugin.initialize(settings);
 
     // Restore any previously saved schedule after a cold restart
-    await _restoreSchedule();
+    await restoreSchedule();
   }
 
   /// Whether notifications are allowed, without ever showing the prompt.
@@ -74,14 +75,15 @@ class NotificationService {
     return await ios?.requestPermissions(alert: true, sound: true) ?? false;
   }
 
-  /// Reads saved prefs and re-schedules all enabled notifications.
-  Future<void> _restoreSchedule() async {
+  /// Reads saved prefs and re-schedules all enabled notifications (also when
+  /// the language changes, so their text follows).
+  Future<void> restoreSchedule() async {
     final p = await DatabaseHelper.instance.getNotifPrefs();
     if (p.outdoorEnabled) {
       await _schedule(
         id: _kIdOutdoor,
-        title: 'Playground reminder',
-        body: 'Did you take the kids outside today?',
+        title: currentL10n.notifOutdoorTitle,
+        body: currentL10n.notifOutdoorBody,
         hour: p.outdoorHour,
         minute: p.outdoorMinute,
       );
@@ -89,8 +91,8 @@ class NotificationService {
     if (p.logEnabled) {
       await _schedule(
         id: _kIdLog,
-        title: 'Log your outdoor time',
-        body: "Don't forget to log today's playground visit",
+        title: currentL10n.notifLogTitle,
+        body: currentL10n.notifLogBody,
         hour: p.logHour,
         minute: p.logMinute,
       );
@@ -102,16 +104,16 @@ class NotificationService {
 
   Future<void> scheduleOutdoor(int hour, int minute) => _schedule(
         id: _kIdOutdoor,
-        title: 'Playground reminder',
-        body: 'Did you take the kids outside today?',
+        title: currentL10n.notifOutdoorTitle,
+        body: currentL10n.notifOutdoorBody,
         hour: hour,
         minute: minute,
       );
 
   Future<void> scheduleLog(int hour, int minute) => _schedule(
         id: _kIdLog,
-        title: 'Log your outdoor time',
-        body: "Don't forget to log today's playground visit",
+        title: currentL10n.notifLogTitle,
+        body: currentL10n.notifLogBody,
         hour: hour,
         minute: minute,
       );
@@ -135,7 +137,7 @@ class NotificationService {
 
     final body = (activity.notifyMessage?.trim().isNotEmpty == true)
         ? activity.notifyMessage!.trim()
-        : 'Time for your recurring activity';
+        : currentL10n.notifPlanDefaultBody;
 
     final now = tz.TZDateTime.now(tz.local);
     if (activity.dateTo != null) {

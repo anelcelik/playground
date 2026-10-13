@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../settings/app_settings.dart';
 import '../theme.dart';
 import '../widgets/modernist.dart';
+import '../l10n/l10n.dart';
 
 /// Display settings › My colors: pick background, text and accent; every
 /// other colour is derived (AppColors.custom). Changes apply at once, so the
@@ -80,8 +81,8 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
     return Scaffold(
       backgroundColor: c.bg,
       appBar: AppBar(
-        title: const Text('My colors',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+        title: Text(context.l10n.themeMyColors,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
       ),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 32),
@@ -89,12 +90,10 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
           _preview(c),
           if (textContrast < 4.5)
             _warning(c,
-                'Text is hard to read on this background: contrast '
-                '${textContrast.toStringAsFixed(1)}:1, aim for 4.5:1 or more.'),
+                context.l10n.contrastTextWarning(textContrast.toStringAsFixed(1))),
           if (accentContrast < 3)
             _warning(c,
-                'The accent is hard to see on this background: contrast '
-                '${accentContrast.toStringAsFixed(1)}:1, aim for 3:1 or more.'),
+                context.l10n.contrastAccentWarning(accentContrast.toStringAsFixed(1))),
           for (final r in _Role.values) _picker(c, r),
         ],
       ),
@@ -111,7 +110,7 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Today', style: AppType.title.copyWith(color: c.txt)),
+            Text(context.l10n.today, style: AppType.title.copyWith(color: c.txt)),
             const SizedBox(height: 12),
             Block(
               recessed: true,
@@ -121,11 +120,11 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('MORNING',
+                        Text(context.l10n.morning.toUpperCase(),
                             style: AppType.label
                                 .copyWith(fontSize: 13, color: c.txt)),
                         const SizedBox(height: 2),
-                        Text('Mom · Mia & Leo · 1h',
+                        Text('${context.l10n.sampleMom} · Mia & Leo · 1h',
                             style: AppType.bodySm.copyWith(color: c.txt2)),
                       ],
                     ),
@@ -135,17 +134,18 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            const Wrap(
+            Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                SquareChip(label: 'Mom', selected: true),
-                SquareChip(label: 'Dad'),
+                SquareChip(label: context.l10n.sampleMom, selected: true),
+                SquareChip(label: context.l10n.sampleDad),
               ],
             ),
             const SizedBox(height: 12),
             // An action, so it draws enabled like the real one.
-            BlockButton(label: 'Save visit', icon: Icons.check, onTap: () {}),
+            BlockButton(
+                label: context.l10n.saveVisit, icon: Icons.check, onTap: () {}),
           ],
         ),
       );
@@ -167,9 +167,9 @@ class _CustomThemeScreenState extends State<CustomThemeScreen> {
   Widget _picker(AppColors c, _Role r) {
     final current = _colorOf(r);
     final title = switch (r) {
-      _Role.background => 'Background',
-      _Role.text => 'Text',
-      _Role.accent => 'Accent (buttons, selections)',
+      _Role.background => context.l10n.colorBackground,
+      _Role.text => context.l10n.colorText,
+      _Role.accent => context.l10n.colorAccent,
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

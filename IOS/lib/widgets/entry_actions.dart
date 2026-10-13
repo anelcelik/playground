@@ -6,6 +6,7 @@ import '../models/family.dart';
 import '../screens/edit_entry_screen.dart';
 import '../settings/app_settings.dart';
 import 'reason_sheet.dart';
+import '../l10n/l10n.dart';
 
 /// Edit/Delete bottom sheet for a log entry — shared by Today's Log and
 /// the dashboard log. Vacation entries have nothing meaningful to edit, so
@@ -33,19 +34,19 @@ Future<void> showEntryActions(
           if (canEdit)
             ListTile(
               leading: const Icon(Icons.edit_outlined),
-              title: const Text('Edit entry'),
+              title: Text(ctx.l10n.editEntry),
               onTap: () => Navigator.pop(ctx, 'edit'),
             ),
           if (entry.noPlayground)
             ListTile(
               leading: const Icon(Icons.edit_outlined),
-              title: const Text('Change reason'),
+              title: Text(ctx.l10n.changeReason),
               onTap: () => Navigator.pop(ctx, 'reason'),
             ),
           ListTile(
             leading: const Icon(Icons.delete_outline, color: Colors.red),
-            title: const Text('Delete entry',
-                style: TextStyle(color: Colors.red)),
+            title: Text(ctx.l10n.deleteEntry,
+                style: const TextStyle(color: Colors.red)),
             onTap: () => Navigator.pop(ctx, 'delete'),
           ),
           const SizedBox(height: 8),
@@ -81,17 +82,17 @@ Future<void> showEntryActions(
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Delete entry?'),
-      content: Text(
-          '${AppSettings.instance.fmtDateFull(entry.date)} — this also '
-          'removes it on synced devices.'),
+      title: Text(ctx.l10n.deleteEntryQuestion),
+      content: Text(ctx.l10n.deleteEntryBody(
+          AppSettings.instance.fmtDateFull(entry.date))),
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel')),
+            child: Text(ctx.l10n.cancel)),
         TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red))),
+            child: Text(ctx.l10n.delete,
+                style: const TextStyle(color: Colors.red))),
       ],
     ),
   );
@@ -100,7 +101,7 @@ Future<void> showEntryActions(
   onChanged();
   if (!context.mounted) return;
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-    content: const Text('Entry deleted'),
+    content: Text(context.l10n.entryDeleted),
     behavior: SnackBarBehavior.floating,
     duration: const Duration(seconds: 4),
     // Flutter keeps a snack bar with an action up until it is tapped unless
@@ -108,7 +109,7 @@ Future<void> showEntryActions(
     persist: false,
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
     action: SnackBarAction(
-      label: 'Undo',
+      label: context.l10n.undo,
       onPressed: () async {
         await DatabaseHelper.instance.restoreEntry(entry.id!);
         onChanged();

@@ -1,17 +1,18 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../db/database_helper.dart';
+import '../l10n/l10n.dart';
 
-// ── Section metadata (label + icon, never persisted) ─────
+// ── Section icons (labels come from the translations; never persisted) ──
 
-const kSectionMeta = <String, ({String label, IconData icon})>{
-  'parent_stats':    (label: 'Who took them',              icon: Icons.people_outline),
-  'calendar':        (label: 'One square per day',        icon: Icons.grid_on_rounded),
-  'kid_stats':       (label: 'Kids outside',              icon: Icons.child_care_rounded),
-  'time_stats':      (label: 'Time & missed days',        icon: Icons.timer_outlined),
-  'charts':          (label: 'Charts',                    icon: Icons.pie_chart_outline),
-  'activities':      (label: 'Top Activities',            icon: Icons.local_activity_outlined),
-  'missed_reasons':  (label: 'No Playground Reasons',     icon: Icons.cancel_outlined),
+const kSectionIcons = <String, IconData>{
+  'parent_stats':   Icons.people_outline,
+  'calendar':       Icons.grid_on_rounded,
+  'kid_stats':      Icons.child_care_rounded,
+  'time_stats':     Icons.timer_outlined,
+  'charts':         Icons.pie_chart_outline,
+  'activities':     Icons.local_activity_outlined,
+  'missed_reasons': Icons.cancel_outlined,
 };
 
 // Default order (shown when no prefs are saved yet)
@@ -36,8 +37,22 @@ class SectionConfig {
   factory SectionConfig.fromMap(Map<String, dynamic> m) =>
       SectionConfig(id: m['id'] as String, visible: m['visible'] as bool? ?? true);
 
-  String get label => kSectionMeta[id]?.label ?? id;
-  IconData get icon => kSectionMeta[id]?.icon ?? Icons.widgets_outlined;
+  /// The section's title on History, in the current language.
+  String get label {
+    final l = currentL10n;
+    return switch (id) {
+      'parent_stats' => l.whoTookThem,
+      'calendar' => l.oneSquarePerDay,
+      'kid_stats' => l.kidsOutside,
+      'time_stats' => l.timeAndMissedDays,
+      'charts' => l.morningEvening,
+      'activities' => l.mostPlayed,
+      'missed_reasons' => l.whyNobodyWent,
+      _ => id,
+    };
+  }
+
+  IconData get icon => kSectionIcons[id] ?? Icons.widgets_outlined;
 }
 
 // ── DashboardPrefs singleton ──────────────────────────────
@@ -77,7 +92,7 @@ class DashboardPrefs extends ChangeNotifier {
         if (!saved.any((s) => s.id == id)) saved.add(SectionConfig(id: id));
       }
       // Remove obsolete sections
-      saved.removeWhere((s) => !kSectionMeta.containsKey(s.id));
+      saved.removeWhere((s) => !kSectionIcons.containsKey(s.id));
 
       _sections = saved;
     } catch (_) {

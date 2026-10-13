@@ -125,7 +125,7 @@ void main() {
 
     test('names the parent who stayed home', () {
       expect(visit(excuse: 'Work').absentNote(['Mom', 'Dad']),
-          "Dad didn't go · Work");
+          'Dad didn’t go · Work');
     });
 
     test('empty without a reason, or for a nobody-went day', () {

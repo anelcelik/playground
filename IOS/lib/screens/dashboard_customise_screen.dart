@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/dashboard_prefs.dart';
 import '../theme.dart';
 import '../widgets/modernist.dart';
+import '../l10n/l10n.dart';
 
 class DashboardCustomiseScreen extends StatefulWidget {
   const DashboardCustomiseScreen({super.key});
@@ -36,8 +37,8 @@ class _DashboardCustomiseScreenState
     return Scaffold(
       backgroundColor: c.bg,
       appBar: AppBar(
-        title: const Text('Customise Dashboard',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+        title: Text(context.l10n.customiseDashboardTitle,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
           TextButton(
             onPressed: () {
@@ -64,7 +65,7 @@ class _DashboardCustomiseScreenState
                 }
               }
             },
-            child: Text('Reset',
+            child: Text(context.l10n.reset,
                 style: TextStyle(color: AppColors.of(context).accentTxt)),
           ),
         ],
@@ -78,7 +79,7 @@ class _DashboardCustomiseScreenState
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             color: c.card,
             child: Text(
-              'Drag to reorder  ·  toggle to show/hide',
+              context.l10n.dragToReorder,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: c.txt2),
             ),

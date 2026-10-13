@@ -1,4 +1,5 @@
 import 'dart:math';
+import '../l10n/l10n.dart';
 
 class Entry {
   final int? id;
@@ -111,9 +112,11 @@ class Entry {
   String absentNote(List<String> parents) {
     if (noPlayground || vacation || (excuse?.isEmpty ?? true)) return '';
     final absent = parents.where((p) => !userList.contains(p)).toList();
+    final l = currentL10n;
+    final reasons = reasonsLabel(l, excuse!);
     return absent.isEmpty
-        ? excuse!
-        : "${absent.join(' & ')} didn't go · $excuse";
+        ? reasons
+        : l.absentDidntGo(absent.join(' & '), reasons);
   }
 
   List<String> get activityList =>

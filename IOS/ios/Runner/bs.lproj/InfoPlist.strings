@@ -1,0 +1,5 @@
+/* Permission prompts, shown by iOS in the phone's language. */
+"NSCalendarsUsageDescription" = "Dodaje tvoje planove u kalendar kad dodirneš „Dodaj u Kalendar“.";
+"NSCalendarsWriteOnlyAccessUsageDescription" = "Dodaje tvoje planove u kalendar kad dodirneš „Dodaj u Kalendar“.";
+"NSRemindersUsageDescription" = "Dodaje tvoje planove u Podsjetnike kad odabereš „Dodaj u Podsjetnike“.";
+"NSRemindersFullAccessUsageDescription" = "Dodaje tvoje planove u Podsjetnike kad odabereš „Dodaj u Podsjetnike“.";

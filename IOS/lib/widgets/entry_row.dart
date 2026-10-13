@@ -4,6 +4,7 @@ import '../models/entry.dart';
 import '../models/family.dart';
 import '../theme.dart';
 import 'entry_actions.dart';
+import '../l10n/l10n.dart';
 
 /// One logged entry: who, when, how long, which kids, activities. Tapping it
 /// opens Edit / Delete (entry_actions.dart). Used by Settings › Log.
@@ -27,15 +28,18 @@ class EntryRow extends StatelessWidget {
     final e = entry;
     final who = e.userList.isEmpty ? e.user : e.userList.join(' & ');
     final tag = e.noPlayground
-        ? 'Nobody went'
+        ? context.l10n.nobodyWent
         : e.vacation
-            ? 'Vacation'
-            : (e.shift == 'morning' ? 'Morning' : 'Evening');
+            ? context.l10n.vacation
+            : (e.shift == 'morning'
+                ? context.l10n.morning
+                : context.l10n.evening);
     final visit = !e.vacation && !e.noPlayground;
     final detail = <String>[
       if (visit && e.duration != null) e.duration!,
       if (visit && e.kidList.isNotEmpty) e.kidList.join(' & '),
-      if (e.noPlayground && (e.excuse?.isNotEmpty ?? false)) e.excuse!,
+      if (e.noPlayground && (e.excuse?.isNotEmpty ?? false))
+        reasonsLabel(context.l10n, e.excuse!),
       if (e.absentNote(family.parents).isNotEmpty) e.absentNote(family.parents),
     ];
 

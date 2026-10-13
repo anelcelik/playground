@@ -1,0 +1,5 @@
+/* Permission prompts, shown by iOS in the phone's language. */
+"NSCalendarsUsageDescription" = "Přidá vaše plány do kalendáře, když klepnete na „Přidat do Kalendáře“.";
+"NSCalendarsWriteOnlyAccessUsageDescription" = "Přidá vaše plány do kalendáře, když klepnete na „Přidat do Kalendáře“.";
+"NSRemindersUsageDescription" = "Přidá vaše plány do Připomínek, když zvolíte „Přidat do Připomínek“.";
+"NSRemindersFullAccessUsageDescription" = "Přidá vaše plány do Připomínek, když zvolíte „Přidat do Připomínek“.";
