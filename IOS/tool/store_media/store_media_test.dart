@@ -137,7 +137,9 @@ Future<void> _seed() async {
       repeatDays: [DateTime.parse(party).weekday - 1],
       dateFrom: party,
       dateTo: party));
-  // Football mostly happened; skipped once (sick), missed once.
+  // Football mostly happened: its 3rd day back was skipped (sick) and its
+  // 6th missed, whatever weekday the screenshots are made on.
+  var football = 0;
   for (var ago = 1; ago <= 60; ago++) {
     final day = DateTime.now().subtract(Duration(days: ago));
     final plan = switch (day.weekday) {
@@ -145,13 +147,16 @@ Future<void> _seed() async {
       DateTime.saturday => 'p2',
       _ => null,
     };
-    if (plan == null || (ago >= 52 && ago <= 58) || ago == 19) continue;
+    if (plan == null || (ago >= 52 && ago <= 58)) continue;
+    if (plan == 'p1') football++;
+    final skipped = plan == 'p1' && football == 3;
+    if (plan == 'p1' && football == 6) continue; // missed
     await db.upsertRecurringLog(RecurringLog(
         id: 'log$ago',
         activityId: plan,
         date: _d(ago),
-        status: ago == 12 ? 'skipped' : 'confirmed',
-        skipReason: ago == 12 ? 'sick' : null));
+        status: skipped ? 'skipped' : 'confirmed',
+        skipReason: skipped ? 'sick' : null));
   }
 }
 
@@ -358,6 +363,12 @@ class Rec {
   }
 
   Future<void> tap(Finder f, {int after = 18}) async {
+    // Off screen (or under the tab bar): scroll it into view first.
+    final r = t.getRect(f.first);
+    if (r.top < _top + 40 || r.bottom > _logical.height - 90) {
+      await t.ensureVisible(f.first);
+      await run(8);
+    }
     final p = t.getCenter(f.first);
     _touch.value = (p, false);
     await run(4);
@@ -551,6 +562,9 @@ void main() {
     await r.run(1);
     await r.tap(_nav('SETTINGS'), after: 8);
     await r.tap(find.text('Language, date & theme'), after: 14);
+    // The language list comes first; bring the themes up.
+    await r.drag(find.text('Phone language'), const Offset(0, -380),
+        steps: 14, after: 8);
     for (final name in [
       'Swing dark',
       'Modernist light',
@@ -588,7 +602,7 @@ void main() {
     await r.run(6);
     await r.tap(find.text('RECAP'), after: 16);
     r.hold(24);
-    await r.tap(find.text('This Month'), after: 10);
+    await r.tap(find.text('This month'), after: 10);
     r.hold(30);
   });
 
