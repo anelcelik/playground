@@ -1174,4 +1174,111 @@ class AppLocalizationsBs extends AppLocalizations {
   String personRemoved(String name) {
     return '$name uklonjen/a';
   }
+
+  @override
+  String get advanced => 'Napredno';
+
+  @override
+  String get startTime => 'Početak';
+
+  @override
+  String get endTime => 'Kraj';
+
+  @override
+  String get endAfterStart => 'Kraj mora biti poslije početka';
+
+  @override
+  String timeOutside(String time) {
+    return '$time napolju';
+  }
+
+  @override
+  String streakDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'dana zaredom',
+      few: 'dana zaredom',
+      one: 'dan zaredom',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get streakDoneToday => 'Za danas urađeno';
+
+  @override
+  String get streakKeepGoing => 'Izađi danas i niz se nastavlja';
+
+  @override
+  String get streakAtRisk => 'Jučer propušteno. Izađi danas ili niz prestaje';
+
+  @override
+  String get streakStart => 'Izađi danas i započni niz';
+
+  @override
+  String get streakRule =>
+      'Niz broji dane kad ste bili napolju. Jedan propušten dan se oprašta, dva zaredom ga prekidaju. Odmor ga pauzira.';
+
+  @override
+  String get goal => 'Cilj';
+
+  @override
+  String get setAGoal => 'Postavi cilj za vrijeme napolju';
+
+  @override
+  String goalOf(String done, String target) {
+    return '$done od $target';
+  }
+
+  @override
+  String get goalReached => 'Cilj ostvaren';
+
+  @override
+  String get goalOnTrack => 'Po planu';
+
+  @override
+  String goalBehind(String time) {
+    return '$time zaostatka';
+  }
+
+  @override
+  String get outdoorGoal => 'Cilj boravka napolju';
+
+  @override
+  String get goalPeriod => 'Period';
+
+  @override
+  String get hoursOutside => 'Sati napolju';
+
+  @override
+  String get otherAmount => 'Drugo';
+
+  @override
+  String get hoursHint => 'Sati, npr. 12';
+
+  @override
+  String get goalNote =>
+      'Računa trajanje svake upisane posjete. Popularan cilj je 1000 sati godišnje: oko 2 sata i 45 minuta dnevno.';
+
+  @override
+  String get turnOffGoal => 'Isključi cilj';
+
+  @override
+  String get goalOff => 'Isključeno';
+
+  @override
+  String goalAWeek(String time) {
+    return '$time sedmično';
+  }
+
+  @override
+  String goalAMonth(String time) {
+    return '$time mjesečno';
+  }
+
+  @override
+  String goalAYear(String time) {
+    return '$time godišnje';
+  }
 }

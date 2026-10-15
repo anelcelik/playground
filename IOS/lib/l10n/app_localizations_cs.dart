@@ -1175,4 +1175,112 @@ class AppLocalizationsCs extends AppLocalizations {
   String personRemoved(String name) {
     return '$name odebrán/a';
   }
+
+  @override
+  String get advanced => 'Pokročilé';
+
+  @override
+  String get startTime => 'Začátek';
+
+  @override
+  String get endTime => 'Konec';
+
+  @override
+  String get endAfterStart => 'Konec musí být po začátku';
+
+  @override
+  String timeOutside(String time) {
+    return '$time venku';
+  }
+
+  @override
+  String streakDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'dní v řadě',
+      few: 'dny v řadě',
+      one: 'den v řadě',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get streakDoneToday => 'Pro dnešek splněno';
+
+  @override
+  String get streakKeepGoing => 'Vyrazte dnes ven, ať série pokračuje';
+
+  @override
+  String get streakAtRisk =>
+      'Včera vynecháno. Vyrazte dnes ven, jinak série skončí';
+
+  @override
+  String get streakStart => 'Vyrazte dnes ven a začněte sérii';
+
+  @override
+  String get streakRule =>
+      'Série počítá dny, kdy jste byli venku. Jeden vynechaný den se odpouští, dva po sobě ji ukončí. Dovolená ji pozastaví.';
+
+  @override
+  String get goal => 'Cíl';
+
+  @override
+  String get setAGoal => 'Nastavte si cíl pro čas venku';
+
+  @override
+  String goalOf(String done, String target) {
+    return '$done z $target';
+  }
+
+  @override
+  String get goalReached => 'Cíl splněn';
+
+  @override
+  String get goalOnTrack => 'Podle plánu';
+
+  @override
+  String goalBehind(String time) {
+    return '$time pozadu';
+  }
+
+  @override
+  String get outdoorGoal => 'Cíl času venku';
+
+  @override
+  String get goalPeriod => 'Období';
+
+  @override
+  String get hoursOutside => 'Hodin venku';
+
+  @override
+  String get otherAmount => 'Jiné';
+
+  @override
+  String get hoursHint => 'Hodiny, např. 12';
+
+  @override
+  String get goalNote =>
+      'Počítá délku každé zapsané návštěvy. Oblíbený cíl je 1000 hodin ročně: asi 2 hodiny 45 minut denně.';
+
+  @override
+  String get turnOffGoal => 'Vypnout cíl';
+
+  @override
+  String get goalOff => 'Vypnuto';
+
+  @override
+  String goalAWeek(String time) {
+    return '$time týdně';
+  }
+
+  @override
+  String goalAMonth(String time) {
+    return '$time měsíčně';
+  }
+
+  @override
+  String goalAYear(String time) {
+    return '$time ročně';
+  }
 }

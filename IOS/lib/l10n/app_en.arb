@@ -588,5 +588,85 @@
         "type": "String"
       }
     }
+  },
+  "advanced": "Advanced",
+  "startTime": "Start",
+  "endTime": "End",
+  "endAfterStart": "End has to be after start",
+  "timeOutside": "{time} outside",
+  "@timeOutside": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "streakDays": "{count, plural, =1{day streak} other{day streak}}",
+  "@streakDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "streakDoneToday": "Done for today",
+  "streakKeepGoing": "Go out today to keep it going",
+  "streakAtRisk": "Missed yesterday. Go out today to keep it",
+  "streakStart": "Go out today to start one",
+  "streakRule": "A streak counts the days you went out. One missed day is forgiven, two in a row end it. Vacation days pause it.",
+  "goal": "Goal",
+  "setAGoal": "Set an outdoor goal",
+  "goalOf": "{done} of {target}",
+  "@goalOf": {
+    "placeholders": {
+      "done": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "goalReached": "Goal reached",
+  "goalOnTrack": "On track",
+  "goalBehind": "{time} behind",
+  "@goalBehind": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "outdoorGoal": "Outdoor goal",
+  "goalPeriod": "Period",
+  "hoursOutside": "Hours outside",
+  "otherAmount": "Other",
+  "hoursHint": "Hours, e.g. 12",
+  "goalNote": "Counts the length of every visit you log. A popular goal is 1000 hours a year: about 2 hours 45 minutes a day.",
+  "turnOffGoal": "Turn off goal",
+  "goalOff": "Off",
+  "goalAWeek": "{time} a week",
+  "@goalAWeek": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "goalAMonth": "{time} a month",
+  "@goalAMonth": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "goalAYear": "{time} a year",
+  "@goalAYear": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
   }
 }

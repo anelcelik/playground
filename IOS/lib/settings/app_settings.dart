@@ -3,6 +3,7 @@ import 'dart:ui' show PlatformDispatcher;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../db/database_helper.dart';
+import '../models/goal.dart';
 import '../theme.dart';
 
 class AppSettings extends ChangeNotifier {
@@ -29,6 +30,9 @@ class AppSettings extends ChangeNotifier {
   Color _customBg = Colors.white;
   Color _customTxt = Colors.black;
   Color _customAccent = const Color(0xFF1565C0);
+  // Visit sheet: exact start / end times instead of a preset length.
+  bool _exactTimes = false;
+  OutdoorGoal? _goal;
 
   /// The chosen language, or null while the app follows the phone.
   String? get language => _language;
@@ -56,6 +60,10 @@ class AppSettings extends ChangeNotifier {
   Color get customBg => _customBg;
   Color get customTxt => _customTxt;
   Color get customAccent => _customAccent;
+  bool get exactTimes => _exactTimes;
+
+  /// The family's outdoor-time goal, or null when none is set.
+  OutdoorGoal? get goal => _goal;
 
   /// The colours in use: the chosen palette's, or the user's own.
   AppColors get colors => _palette.fixed ?? customColors;
@@ -93,6 +101,11 @@ class AppSettings extends ChangeNotifier {
     _customAccent =
         color(await DatabaseHelper.instance.getMeta('custom_accent')) ??
             const Color(0xFF1565C0);
+    _exactTimes =
+        await DatabaseHelper.instance.getMeta('setting_exact_times') == '1';
+    _goal = OutdoorGoal.parse(
+        await DatabaseHelper.instance.getMeta('goal_period'),
+        await DatabaseHelper.instance.getMeta('goal_minutes'));
   }
 
   /// [code] from [languages], or null to follow the phone. Notifications are
@@ -142,6 +155,21 @@ class AppSettings extends ChangeNotifier {
       await db.setMeta('custom_accent', '${accent.toARGB32()}');
     }
     await setPalette(AppPalette.custom);
+  }
+
+  /// Remembered so the visit sheet opens the way it was last used.
+  Future<void> setExactTimes(bool v) async {
+    _exactTimes = v;
+    // No notifyListeners: nothing on screen depends on it.
+    await DatabaseHelper.instance.setMeta('setting_exact_times', v ? '1' : '0');
+  }
+
+  /// [g], or null to turn the goal off.
+  Future<void> setGoal(OutdoorGoal? g) async {
+    _goal = g;
+    await DatabaseHelper.instance.setMeta('goal_period', g?.period.name ?? '');
+    await DatabaseHelper.instance.setMeta('goal_minutes', '${g?.minutes ?? 0}');
+    notifyListeners();
   }
 
   Future<void> setPalette(AppPalette p) async {
@@ -225,4 +253,15 @@ class AppSettings extends ChangeNotifier {
 
   /// Format from Flutter's TimeOfDay
   String fmtTimeOfDay(TimeOfDay t) => fmtHM(t.hour, t.minute);
+
+  /// Stored "15:10" → 15:10 / 3:10 PM; the stored text if malformed.
+  String fmtClock(String hm) {
+    final p = hm.split(':').map(int.tryParse).toList();
+    if (p.length != 2 || p.contains(null)) return hm;
+    return fmtHM(p[0]!, p[1]!);
+  }
+
+  /// "15:10–16:40"  /  "3:10 PM–4:40 PM"
+  String fmtClockRange(String start, String end) =>
+      '${fmtClock(start)}–${fmtClock(end)}';
 }

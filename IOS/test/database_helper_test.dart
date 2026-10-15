@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:playground_tracker/db/database_helper.dart';
 import 'package:playground_tracker/models/entry.dart';
+import 'package:playground_tracker/models/goal.dart';
 import 'package:playground_tracker/models/recurring_activity.dart';
 import 'package:playground_tracker/services/data_reset.dart';
 import 'package:playground_tracker/settings/app_settings.dart';
@@ -305,6 +308,8 @@ void main() {
     await db.saveFamily(['Mom'], ['Bean']);
     await db.insertEntry(entry());
     await AppSettings.instance.setPalette(AppPalette.swingDark);
+    await AppSettings.instance.setGoal(const OutdoorGoal(GoalPeriod.week, 420));
+    await AppSettings.instance.setExactTimes(true);
 
     expect(await deleteAllData(), isTrue);
 
@@ -312,6 +317,115 @@ void main() {
     expect(await db.getEntriesForDate('2026-06-01'), isEmpty);
     // Nothing chosen any more: the default follows the (light) test platform.
     expect(AppSettings.instance.palette, AppPalette.modernistLight);
+    expect(AppSettings.instance.goal, isNull);
+    expect(AppSettings.instance.exactTimes, isFalse);
+  });
+
+  test('the goal and the advanced-log choice are saved', () async {
+    await AppSettings.instance.setGoal(const OutdoorGoal(GoalPeriod.year, 60000));
+    await AppSettings.instance.setExactTimes(true);
+    await AppSettings.instance.load();
+    expect(AppSettings.instance.goal, const OutdoorGoal(GoalPeriod.year, 60000));
+    expect(AppSettings.instance.exactTimes, isTrue);
+
+    await AppSettings.instance.setGoal(null);
+    await AppSettings.instance.setExactTimes(false);
+    await AppSettings.instance.load();
+    expect(AppSettings.instance.goal, isNull);
+    expect(AppSettings.instance.exactTimes, isFalse);
+  });
+
+  test('a version 7 database upgrades and keeps its visits', () async {
+    final dir = Directory.systemTemp.createTempSync('playground_v7');
+    final path = '${dir.path}/playground.db';
+    final old = await databaseFactory.openDatabase(path,
+        options: OpenDatabaseOptions(
+          version: 7,
+          onCreate: (d, _) async {
+            // The entries table as version 7 created it.
+            await d.execute('''
+              CREATE TABLE entries (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                uuid          TEXT NOT NULL UNIQUE,
+                date          TEXT NOT NULL,
+                shift         TEXT NOT NULL,
+                user          TEXT NOT NULL,
+                vacation      INTEGER DEFAULT 0,
+                no_playground INTEGER DEFAULT 0,
+                duration      TEXT,
+                kids          TEXT,
+                activities    TEXT,
+                excuse        TEXT,
+                last_modified INTEGER NOT NULL,
+                is_deleted    INTEGER DEFAULT 0,
+                needs_push    INTEGER DEFAULT 1,
+                created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+              )
+            ''');
+          },
+        ));
+    await old.insert('entries', {
+      'uuid': 'old-1',
+      'date': '2026-06-01',
+      'shift': 'morning',
+      'user': 'Mom',
+      'duration': '1h',
+      'last_modified': 5,
+    });
+    await old.close();
+
+    await DatabaseHelper.resetForTests();
+    DatabaseHelper.databasePathOverride = path;
+    addTearDown(() async {
+      await DatabaseHelper.resetForTests();
+      DatabaseHelper.databasePathOverride = inMemoryDatabasePath;
+      dir.deleteSync(recursive: true);
+    });
+
+    final kept = await db.getEntryByUuid('old-1');
+    expect(kept!.duration, '1h');
+    expect(kept.hasTimes, isFalse);
+    final timed = await db.insertEntry(const Entry(
+        date: '2026-06-02',
+        shift: 'evening',
+        user: 'Mom',
+        vacation: false,
+        startTime: '16:00',
+        endTime: '17:30'));
+    expect(timed.startTime, '16:00');
+  });
+
+  test('exact start and end times are saved, synced in and cleared', () async {
+    const timed = Entry(
+      uuid: 't1',
+      date: '2026-06-01',
+      shift: 'evening',
+      user: 'Mom',
+      vacation: false,
+      duration: '1h 25m',
+      startTime: '15:10',
+      endTime: '16:35',
+      lastModified: 1000,
+    );
+    final saved = await db.insertEntry(timed);
+    expect(saved.startTime, '15:10');
+    expect(saved.endTime, '16:35');
+    expect(saved.duration, '1h 25m');
+
+    // Another device switched it back to a preset length.
+    await db.mergeFromJson(remoteSnapshot(entries: [
+      {...timed.toJsonMap(), 'duration': '1h', 'start_time': null,
+        'end_time': null, 'last_modified': 2000},
+    ]));
+    final back = await db.getEntryByUuid('t1');
+    expect(back!.hasTimes, isFalse);
+    expect(back.duration, '1h');
+
+    // And a new timed visit arrives from it.
+    await db.mergeFromJson(remoteSnapshot(entries: [
+      {...timed.toJsonMap(), 'uuid': 't2'},
+    ]));
+    expect((await db.getEntryByUuid('t2'))!.startTime, '15:10');
   });
 
   test('the log lists every entry newest day first, without deleted ones',

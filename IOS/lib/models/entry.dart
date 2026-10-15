@@ -13,6 +13,10 @@ class Entry {
   final String? kids;
   final String? activities;
   final String? excuse;
+  // Advanced log only: when the visit started and ended, "15:10". Null for
+  // a visit logged with a preset length.
+  final String? startTime;
+  final String? endTime;
   final int lastModified;   // Unix ms — last-write-wins on conflict
   final bool isDeleted;     // soft-delete so sync propagates deletions
   final String? createdAt;
@@ -29,6 +33,8 @@ class Entry {
     this.kids,
     this.activities,
     this.excuse,
+    this.startTime,
+    this.endTime,
     this.lastModified = 0,   // 0 → DatabaseHelper uses DateTime.now()
     this.isDeleted = false,
     this.createdAt,
@@ -47,6 +53,8 @@ class Entry {
       kids: map['kids'] as String?,
       activities: map['activities'] as String?,
       excuse: map['excuse'] as String?,
+      startTime: map['start_time'] as String?,
+      endTime: map['end_time'] as String?,
       lastModified: map['last_modified'] as int? ?? 0,
       isDeleted: (map['is_deleted'] as int? ?? 0) == 1,
       createdAt: map['created_at'] as String?,
@@ -64,6 +72,8 @@ class Entry {
         'kids': kids,
         'activities': activities,
         'excuse': excuse,
+        'start_time': startTime,
+        'end_time': endTime,
         'last_modified': lastModified,
         'is_deleted': isDeleted ? 1 : 0,
       };
@@ -79,6 +89,8 @@ class Entry {
         'kids': kids,
         'activities': activities,
         'excuse': excuse,
+        'start_time': startTime,
+        'end_time': endTime,
         'last_modified': lastModified,
         'is_deleted': isDeleted,
         'created_at': createdAt,
@@ -96,10 +108,15 @@ class Entry {
         kids: kids,
         activities: activities,
         excuse: excuse ?? this.excuse,
+        startTime: startTime,
+        endTime: endTime,
         lastModified: lastModified ?? this.lastModified,
         isDeleted: isDeleted ?? this.isDeleted,
         createdAt: createdAt,
       );
+
+  /// True for a visit logged with start and end times (advanced log).
+  bool get hasTimes => startTime != null && endTime != null;
 
   List<String> get userList =>
       user.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
