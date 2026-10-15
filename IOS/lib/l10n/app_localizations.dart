@@ -2311,6 +2311,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Done counts as time outside. Turn off for things like piano lessons.'**
   String get outdoorActivitySub;
+
+  /// No description provided for @goalSince.
+  ///
+  /// In en, this message translates to:
+  /// **'Since {date}'**
+  String goalSince(String date);
 }
 
 class _AppLocalizationsDelegate

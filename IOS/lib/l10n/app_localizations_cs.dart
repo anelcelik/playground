@@ -1290,4 +1290,9 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get outdoorActivitySub =>
       'Splněno se počítá jako čas venku. Vypněte u věcí jako hodiny klavíru.';
+
+  @override
+  String goalSince(String date) {
+    return 'Od $date';
+  }
 }

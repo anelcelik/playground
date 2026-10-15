@@ -367,5 +367,6 @@
   "goalAMonth": "{time} pro Monat",
   "goalAYear": "{time} pro Jahr",
   "outdoorActivity": "Aktivität draußen",
-  "outdoorActivitySub": "Erledigt zählt als Zeit draußen. Für Dinge wie Klavierunterricht ausschalten."
+  "outdoorActivitySub": "Erledigt zählt als Zeit draußen. Für Dinge wie Klavierunterricht ausschalten.",
+  "goalSince": "Seit {date}"
 }

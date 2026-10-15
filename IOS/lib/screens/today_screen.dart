@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../db/database_helper.dart';
+import '../models/calendar_days.dart';
 import '../models/durations.dart';
 import '../models/entry.dart';
 import '../models/family.dart';
@@ -470,11 +471,13 @@ class _TodayScreenState extends State<TodayScreen> {
     }
 
     final p = goalProgress(goal, _all, _now);
-    final title = switch (goal.period) {
-      GoalPeriod.week => l.thisWeek,
-      GoalPeriod.month => l.thisMonth,
-      GoalPeriod.year => l.thisYear,
-    };
+    final title = p.since != null
+        ? l.goalSince(AppSettings.instance.fmtDateShort(dayKey(p.since!)))
+        : switch (goal.period) {
+            GoalPeriod.week => l.thisWeek,
+            GoalPeriod.month => l.thisMonth,
+            GoalPeriod.year => l.thisYear,
+          };
     final status = p.reached
         ? l.goalReached
         : p.behind > 0

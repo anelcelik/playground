@@ -670,5 +670,13 @@
     }
   },
   "outdoorActivity": "Outdoor activity",
-  "outdoorActivitySub": "Done counts as time outside. Turn off for things like piano lessons."
+  "outdoorActivitySub": "Done counts as time outside. Turn off for things like piano lessons.",
+  "goalSince": "Since {date}",
+  "@goalSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  }
 }

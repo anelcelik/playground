@@ -1283,4 +1283,9 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get outdoorActivitySub =>
       'Al marcarla como hecha cuenta como tiempo al aire libre. Desactívalo para cosas como clases de piano.';
+
+  @override
+  String goalSince(String date) {
+    return 'Desde el $date';
+  }
 }

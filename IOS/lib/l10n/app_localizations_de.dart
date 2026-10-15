@@ -1289,4 +1289,9 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get outdoorActivitySub =>
       'Erledigt zählt als Zeit draußen. Für Dinge wie Klavierunterricht ausschalten.';
+
+  @override
+  String goalSince(String date) {
+    return 'Seit $date';
+  }
 }

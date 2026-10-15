@@ -1288,4 +1288,9 @@ class AppLocalizationsBs extends AppLocalizations {
   @override
   String get outdoorActivitySub =>
       'Kad je urađeno, računa se kao vrijeme napolju. Isključi za stvari kao što su časovi klavira.';
+
+  @override
+  String goalSince(String date) {
+    return 'Od $date';
+  }
 }

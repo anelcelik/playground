@@ -367,5 +367,6 @@
   "goalAMonth": "{time} měsíčně",
   "goalAYear": "{time} ročně",
   "outdoorActivity": "Aktivita venku",
-  "outdoorActivitySub": "Splněno se počítá jako čas venku. Vypněte u věcí jako hodiny klavíru."
+  "outdoorActivitySub": "Splněno se počítá jako čas venku. Vypněte u věcí jako hodiny klavíru.",
+  "goalSince": "Od {date}"
 }
