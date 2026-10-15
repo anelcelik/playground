@@ -1235,14 +1235,6 @@ class AppLocalizationsBs extends AppLocalizations {
   String get goalReached => 'Cilj ostvaren';
 
   @override
-  String get goalOnTrack => 'Po planu';
-
-  @override
-  String goalBehind(String time) {
-    return '$time zaostatka';
-  }
-
-  @override
   String get outdoorGoal => 'Cilj boravka napolju';
 
   @override
@@ -1290,7 +1282,7 @@ class AppLocalizationsBs extends AppLocalizations {
       'Kad je urađeno, računa se kao vrijeme napolju. Isključi za stvari kao što su časovi klavira.';
 
   @override
-  String goalSince(String date) {
-    return 'Od $date';
+  String goalToGo(String time) {
+    return 'Još $time';
   }
 }

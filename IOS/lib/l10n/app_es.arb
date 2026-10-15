@@ -353,8 +353,6 @@
   "setAGoal": "Fija una meta al aire libre",
   "goalOf": "{done} de {target}",
   "goalReached": "Meta cumplida",
-  "goalOnTrack": "Al día",
-  "goalBehind": "{time} de retraso",
   "outdoorGoal": "Meta al aire libre",
   "goalPeriod": "Periodo",
   "hoursOutside": "Horas al aire libre",
@@ -368,5 +366,5 @@
   "goalAYear": "{time} al año",
   "outdoorActivity": "Actividad al aire libre",
   "outdoorActivitySub": "Al marcarla como hecha cuenta como tiempo al aire libre. Desactívalo para cosas como clases de piano.",
-  "goalSince": "Desde el {date}"
+  "goalToGo": "Faltan {time}"
 }

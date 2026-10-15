@@ -2222,18 +2222,6 @@ abstract class AppLocalizations {
   /// **'Goal reached'**
   String get goalReached;
 
-  /// No description provided for @goalOnTrack.
-  ///
-  /// In en, this message translates to:
-  /// **'On track'**
-  String get goalOnTrack;
-
-  /// No description provided for @goalBehind.
-  ///
-  /// In en, this message translates to:
-  /// **'{time} behind'**
-  String goalBehind(String time);
-
   /// No description provided for @outdoorGoal.
   ///
   /// In en, this message translates to:
@@ -2312,11 +2300,11 @@ abstract class AppLocalizations {
   /// **'Done counts as time outside. Turn off for things like piano lessons.'**
   String get outdoorActivitySub;
 
-  /// No description provided for @goalSince.
+  /// No description provided for @goalToGo.
   ///
   /// In en, this message translates to:
-  /// **'Since {date}'**
-  String goalSince(String date);
+  /// **'{time} to go'**
+  String goalToGo(String time);
 }
 
 class _AppLocalizationsDelegate

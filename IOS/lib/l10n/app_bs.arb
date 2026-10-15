@@ -353,8 +353,6 @@
   "setAGoal": "Postavi cilj za vrijeme napolju",
   "goalOf": "{done} od {target}",
   "goalReached": "Cilj ostvaren",
-  "goalOnTrack": "Po planu",
-  "goalBehind": "{time} zaostatka",
   "outdoorGoal": "Cilj boravka napolju",
   "goalPeriod": "Period",
   "hoursOutside": "Sati napolju",
@@ -368,5 +366,5 @@
   "goalAYear": "{time} godišnje",
   "outdoorActivity": "Aktivnost napolju",
   "outdoorActivitySub": "Kad je urađeno, računa se kao vrijeme napolju. Isključi za stvari kao što su časovi klavira.",
-  "goalSince": "Od {date}"
+  "goalToGo": "Još {time}"
 }

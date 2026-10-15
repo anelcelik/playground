@@ -353,8 +353,6 @@
   "setAGoal": "Nastavte si cíl pro čas venku",
   "goalOf": "{done} z {target}",
   "goalReached": "Cíl splněn",
-  "goalOnTrack": "Podle plánu",
-  "goalBehind": "{time} pozadu",
   "outdoorGoal": "Cíl času venku",
   "goalPeriod": "Období",
   "hoursOutside": "Hodin venku",
@@ -368,5 +366,5 @@
   "goalAYear": "{time} ročně",
   "outdoorActivity": "Aktivita venku",
   "outdoorActivitySub": "Splněno se počítá jako čas venku. Vypněte u věcí jako hodiny klavíru.",
-  "goalSince": "Od {date}"
+  "goalToGo": "Zbývá {time}"
 }

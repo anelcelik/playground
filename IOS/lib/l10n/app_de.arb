@@ -353,8 +353,6 @@
   "setAGoal": "Setz dir ein Ziel für draußen",
   "goalOf": "{done} von {target}",
   "goalReached": "Ziel erreicht",
-  "goalOnTrack": "Im Plan",
-  "goalBehind": "{time} im Rückstand",
   "outdoorGoal": "Ziel für draußen",
   "goalPeriod": "Zeitraum",
   "hoursOutside": "Stunden draußen",
@@ -368,5 +366,5 @@
   "goalAYear": "{time} pro Jahr",
   "outdoorActivity": "Aktivität draußen",
   "outdoorActivitySub": "Erledigt zählt als Zeit draußen. Für Dinge wie Klavierunterricht ausschalten.",
-  "goalSince": "Seit {date}"
+  "goalToGo": "Noch {time}"
 }

@@ -61,62 +61,26 @@ class GoalProgress {
   final int done;
   final int target;
 
-  /// Minutes behind an even pace through yesterday; 0 when on track.
-  final int behind;
-
-  /// Set when the log starts inside the period: [target] is then the
-  /// goal's share from this day on.
-  final DateTime? since;
-
-  const GoalProgress(
-      {required this.done,
-      required this.target,
-      required this.behind,
-      this.since});
+  const GoalProgress({required this.done, required this.target});
 
   bool get reached => done >= target;
   double get ratio => target <= 0 ? 0 : min(1, done / target);
+
+  /// Minutes still to go; 0 once reached.
+  int get left => max(0, target - done);
 }
 
 /// Where the family stands on [goal] on [today]: the logged length of every
-/// visit in the period. Pace only counts days already over, so Monday
-/// morning is never "behind".
-///
-/// When the log starts inside the period (a new install, or a yearly goal
-/// set in October with nothing logged before), it counts from the log's
-/// first day against that share of the goal, instead of starting hundreds
-/// of hours behind.
+/// visit in the period, against the goal exactly as set.
 GoalProgress goalProgress(
     OutdoorGoal goal, Iterable<Entry> entries, DateTime today) {
-  final (periodStart, end) = goal.rangeFor(today);
-  final from = dayKey(periodStart), to = dayKey(end);
-  var first = dayKey(today);
+  final (start, end) = goal.rangeFor(today);
+  final from = dayKey(start), to = dayKey(end);
   var done = 0;
   for (final e in entries) {
-    if (e.isDeleted) continue;
-    if (e.date.compareTo(first) < 0) first = e.date;
-    if (e.vacation || e.noPlayground) continue;
+    if (e.isDeleted || e.vacation || e.noPlayground) continue;
     if (e.date.compareTo(from) < 0 || e.date.compareTo(to) > 0) continue;
     done += durationMinutes(e.duration);
   }
-
-  final firstDay = DateTime.parse(first);
-  final partial = firstDay.isAfter(periodStart);
-  final start = partial ? firstDay : periodStart;
-  final days = daysBetween(start, end) + 1;
-  final target = partial
-      ? _roundTarget(goal.minutes * days / (daysBetween(periodStart, end) + 1))
-      : goal.minutes;
-  final pace = (target * daysBetween(start, today) / days).round();
-  return GoalProgress(
-      done: done,
-      target: target,
-      behind: max(0, pace - done),
-      since: partial ? start : null);
+  return GoalProgress(done: done, target: goal.minutes);
 }
-
-/// A share of a goal, rounded the way people would set one: whole hours
-/// from 10 hours up, else 5 minutes.
-int _roundTarget(double minutes) => minutes >= 600
-    ? (minutes / 60).round() * 60
-    : max(5, (minutes / 5).round() * 5);

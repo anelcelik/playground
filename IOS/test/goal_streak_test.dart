@@ -128,56 +128,25 @@ void main() {
       ], thursday);
       expect(p.done, 145);
       expect(p.target, 420);
+      expect(p.left, 275);
       expect(p.reached, isFalse);
-      // Mon–Wed are over: 3/7 of 7h is 3h, so 35 minutes behind.
-      expect(p.behind, 35);
     });
 
-    test('Monday morning is never behind', () {
+    test('the target is the goal as set, whenever it was set', () {
+      // 500h a year set on 15 Oct with nothing logged is still 500h.
       final p = goalProgress(
-          const OutdoorGoal(GoalPeriod.week, 420), [], DateTime(2026, 10, 12, 8));
-      expect(p.behind, 0);
+          const OutdoorGoal(GoalPeriod.year, 500 * 60), [], thursday);
+      expect(p.target, 500 * 60);
+      expect(p.left, 500 * 60);
       expect(p.ratio, 0);
     });
 
-    test('reached caps the bar at full', () {
+    test('reached caps the bar at full and nothing is left', () {
       final p = goalProgress(const OutdoorGoal(GoalPeriod.week, 60),
           [visit('2026-10-12', duration: '2h')], thursday);
       expect(p.reached, isTrue);
       expect(p.ratio, 1);
-    });
-
-    test('a log that starts mid-period counts from its first day', () {
-      // The report: 500h a year, set on 15 Oct with nothing logged yet,
-      // showed 393h behind.
-      final fresh = goalProgress(
-          const OutdoorGoal(GoalPeriod.year, 500 * 60), [], thursday);
-      expect(fresh.since, DateTime(2026, 10, 15));
-      expect(fresh.target, 107 * 60); // 500h x 78 / 365 days
-      expect(fresh.behind, 0);
-
-      // Logging since 1 Oct: that share, and its pace through yesterday.
-      final october = goalProgress(const OutdoorGoal(GoalPeriod.year, 500 * 60),
-          [nobodyWent('2026-10-01'), visit('2026-10-02', duration: '2h')],
-          thursday);
-      expect(october.since, DateTime(2026, 10, 1));
-      expect(october.target, 126 * 60); // 500h x 92 / 365
-      expect(october.done, 120);
-      expect(october.behind, (126 * 60 * 14 / 92).round() - 120);
-
-      // A week started on Thursday: four of its seven days.
-      final week = goalProgress(
-          const OutdoorGoal(GoalPeriod.week, 7 * 60), [], thursday);
-      expect(week.target, 4 * 60);
-      expect(week.behind, 0);
-    });
-
-    test('a log older than the period uses the whole goal', () {
-      final p = goalProgress(const OutdoorGoal(GoalPeriod.year, 500 * 60),
-          [visit('2025-12-31', duration: '1h')], thursday);
-      expect(p.since, isNull);
-      expect(p.target, 500 * 60);
-      expect(p.done, 0);
+      expect(p.left, 0);
     });
 
     test('parses what Settings stores; off or broken is no goal', () {
