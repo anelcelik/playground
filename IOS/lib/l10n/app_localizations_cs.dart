@@ -1237,14 +1237,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get goalReached => 'Cíl splněn';
 
   @override
-  String get goalOnTrack => 'Podle plánu';
-
-  @override
-  String goalBehind(String time) {
-    return '$time pozadu';
-  }
-
-  @override
   String get outdoorGoal => 'Cíl času venku';
 
   @override
@@ -1282,5 +1274,17 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String goalAYear(String time) {
     return '$time ročně';
+  }
+
+  @override
+  String get outdoorActivity => 'Aktivita venku';
+
+  @override
+  String get outdoorActivitySub =>
+      'Splněno se počítá jako čas venku. Vypněte u věcí jako hodiny klavíru.';
+
+  @override
+  String goalToGo(String time) {
+    return 'Zbývá $time';
   }
 }

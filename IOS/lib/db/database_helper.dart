@@ -40,7 +40,7 @@ class DatabaseHelper {
         join(await getDatabasesPath(), 'playground.db');
     return openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -112,6 +112,7 @@ class DatabaseHelper {
         date_from      TEXT,
         date_to        TEXT,
         shift          TEXT NOT NULL DEFAULT 'morning',
+        outdoor        INTEGER DEFAULT 1,
         is_active      INTEGER DEFAULT 1,
         notify_enabled INTEGER DEFAULT 0,
         notify_hour    INTEGER,
@@ -175,6 +176,13 @@ class DatabaseHelper {
       // Advanced log: exact start and end of a visit, "15:10".
       await db.execute('ALTER TABLE entries ADD COLUMN start_time TEXT');
       await db.execute('ALTER TABLE entries ADD COLUMN end_time TEXT');
+    }
+    if (oldVersion < 9 &&
+        !await _columnExists(db, 'recurring_activities', 'outdoor')) {
+      // Plans that aren't time outside (piano lessons). Existing plans were
+      // all logged as visits, so they stay outdoor.
+      await db.execute(
+          'ALTER TABLE recurring_activities ADD COLUMN outdoor INTEGER DEFAULT 1');
     }
     if (oldVersion < 2) {
       // Add sync columns to existing entries table

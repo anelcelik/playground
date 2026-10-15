@@ -61,19 +61,17 @@ class GoalProgress {
   final int done;
   final int target;
 
-  /// Minutes behind an even pace through yesterday; 0 when on track.
-  final int behind;
-
-  const GoalProgress(
-      {required this.done, required this.target, required this.behind});
+  const GoalProgress({required this.done, required this.target});
 
   bool get reached => done >= target;
   double get ratio => target <= 0 ? 0 : min(1, done / target);
+
+  /// Minutes still to go; 0 once reached.
+  int get left => max(0, target - done);
 }
 
 /// Where the family stands on [goal] on [today]: the logged length of every
-/// visit in the period. Pace only counts days already over, so Monday
-/// morning is never "behind".
+/// visit in the period, against the goal exactly as set.
 GoalProgress goalProgress(
     OutdoorGoal goal, Iterable<Entry> entries, DateTime today) {
   final (start, end) = goal.rangeFor(today);
@@ -84,9 +82,5 @@ GoalProgress goalProgress(
     if (e.date.compareTo(from) < 0 || e.date.compareTo(to) > 0) continue;
     done += durationMinutes(e.duration);
   }
-  final pace =
-      (goal.minutes * daysBetween(start, today) / (daysBetween(start, end) + 1))
-          .round();
-  return GoalProgress(
-      done: done, target: goal.minutes, behind: max(0, pace - done));
+  return GoalProgress(done: done, target: goal.minutes);
 }

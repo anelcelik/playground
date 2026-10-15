@@ -128,23 +128,25 @@ void main() {
       ], thursday);
       expect(p.done, 145);
       expect(p.target, 420);
+      expect(p.left, 275);
       expect(p.reached, isFalse);
-      // Mon–Wed are over: 3/7 of 7h is 3h, so 35 minutes behind.
-      expect(p.behind, 35);
     });
 
-    test('Monday morning is never behind', () {
+    test('the target is the goal as set, whenever it was set', () {
+      // 500h a year set on 15 Oct with nothing logged is still 500h.
       final p = goalProgress(
-          const OutdoorGoal(GoalPeriod.week, 420), [], DateTime(2026, 10, 12, 8));
-      expect(p.behind, 0);
+          const OutdoorGoal(GoalPeriod.year, 500 * 60), [], thursday);
+      expect(p.target, 500 * 60);
+      expect(p.left, 500 * 60);
       expect(p.ratio, 0);
     });
 
-    test('reached caps the bar at full', () {
+    test('reached caps the bar at full and nothing is left', () {
       final p = goalProgress(const OutdoorGoal(GoalPeriod.week, 60),
           [visit('2026-10-12', duration: '2h')], thursday);
       expect(p.reached, isTrue);
       expect(p.ratio, 1);
+      expect(p.left, 0);
     });
 
     test('parses what Settings stores; off or broken is no goal', () {

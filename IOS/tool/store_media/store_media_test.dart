@@ -549,7 +549,8 @@ void main() {
     await r.tap(text('Evening'), after: 6);
     await r.tap(text('Mia'), after: 8);
     await r.drag(find.text('WHEN?'), const Offset(0, -420), steps: 14, after: 8);
-    await r.tap(find.byType(SquareSwitch).first, after: 10);
+    // The second switch: the first is Outdoor activity.
+    await r.tap(find.byType(SquareSwitch).at(1), after: 10);
     await r.drag(find.text('WHEN?'), const Offset(0, -380), steps: 12, after: 8);
     await r.tap(text('Reminders'), after: 10);
     await r.tap(find.text('Save'), after: 30);

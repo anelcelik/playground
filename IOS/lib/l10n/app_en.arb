@@ -628,15 +628,6 @@
     }
   },
   "goalReached": "Goal reached",
-  "goalOnTrack": "On track",
-  "goalBehind": "{time} behind",
-  "@goalBehind": {
-    "placeholders": {
-      "time": {
-        "type": "String"
-      }
-    }
-  },
   "outdoorGoal": "Outdoor goal",
   "goalPeriod": "Period",
   "hoursOutside": "Hours outside",
@@ -663,6 +654,16 @@
   },
   "goalAYear": "{time} a year",
   "@goalAYear": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "outdoorActivity": "Outdoor activity",
+  "outdoorActivitySub": "Done counts as time outside. Turn off for things like piano lessons.",
+  "goalToGo": "{time} to go",
+  "@goalToGo": {
     "placeholders": {
       "time": {
         "type": "String"

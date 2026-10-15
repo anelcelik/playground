@@ -1230,14 +1230,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get goalReached => 'Meta cumplida';
 
   @override
-  String get goalOnTrack => 'Al día';
-
-  @override
-  String goalBehind(String time) {
-    return '$time de retraso';
-  }
-
-  @override
   String get outdoorGoal => 'Meta al aire libre';
 
   @override
@@ -1275,5 +1267,17 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String goalAYear(String time) {
     return '$time al año';
+  }
+
+  @override
+  String get outdoorActivity => 'Actividad al aire libre';
+
+  @override
+  String get outdoorActivitySub =>
+      'Al marcarla como hecha cuenta como tiempo al aire libre. Desactívalo para cosas como clases de piano.';
+
+  @override
+  String goalToGo(String time) {
+    return 'Faltan $time';
   }
 }
