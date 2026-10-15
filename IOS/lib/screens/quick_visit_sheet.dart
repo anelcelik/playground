@@ -1,9 +1,13 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../db/database_helper.dart';
+import '../models/calendar_days.dart';
 import '../models/durations.dart';
 import '../models/entry.dart';
 import '../models/family.dart';
+import '../settings/app_settings.dart';
 import '../theme.dart';
 import '../widgets/modernist.dart';
 import '../widgets/reason_sheet.dart';
@@ -60,6 +64,11 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
   late Set<String> _kids;
   late Set<String> _activities;
   String? _duration;
+  // Advanced: the exact start and end instead of a preset length, in
+  // minutes after midnight. The choice is remembered for the next visit.
+  late bool _exact;
+  int? _start;
+  int? _end;
   // Why the parents who are not ticked stayed home. Only kept while
   // someone is unticked; never prefilled from the last visit.
   String? _absentReason;
@@ -82,8 +91,73 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
     if (_kids.isEmpty) _kids = {...widget.family.kids};
     _activities = {...?s?.activityList};
     _duration = normalizeDuration(s?.duration);
+    final existing = widget.existing;
+    // An existing visit opens the way it was logged.
+    _exact = existing != null
+        ? existing.hasTimes
+        : AppSettings.instance.exactTimes;
+    if (existing != null && existing.hasTimes) {
+      _start = clockMinutes(existing.startTime);
+      _end = clockMinutes(existing.endTime);
+    }
+    if (_exact && (_start == null || _end == null)) _defaultTimes();
     _absentReason = widget.existing?.excuse;
     _loadTags();
+  }
+
+  /// Today: ending now, as long as the chosen preset (or an hour). An
+  /// earlier day has no "now", so it starts at a typical time instead.
+  void _defaultTimes() {
+    final length = durationMinutes(_duration) > 0 ? durationMinutes(_duration) : 60;
+    final now = DateTime.now();
+    if (widget.date == dayKey(now)) {
+      _end = (now.hour * 60 + now.minute) ~/ 5 * 5;
+      _start = max(0, _end! - length);
+    } else {
+      _start = widget.shift == 'morning' ? 10 * 60 : 16 * 60;
+      _end = min(_start! + length, 23 * 60 + 55);
+    }
+  }
+
+  /// Length of the advanced log, or null while the end isn't after the start.
+  int? get _exactMinutes =>
+      _start != null && _end != null && _end! > _start! ? _end! - _start! : null;
+
+  void _setExact(bool v) {
+    setState(() {
+      _exact = v;
+      if (v) {
+        if (_start == null || _end == null) _defaultTimes();
+      } else if (_exactMinutes != null) {
+        _duration = nearestPreset(_exactMinutes!);
+      }
+    });
+    AppSettings.instance.setExactTimes(v);
+  }
+
+  Future<void> _pickTime({required bool start}) async {
+    final m = (start ? _start : _end) ?? 0;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: m ~/ 60, minute: m % 60),
+      builder: (ctx, child) => MediaQuery(
+        data: MediaQuery.of(ctx)
+            .copyWith(alwaysUse24HourFormat: AppSettings.instance.use24h),
+        child: child!,
+      ),
+    );
+    if (picked == null || !mounted) return;
+    final v = picked.hour * 60 + picked.minute;
+    setState(() {
+      if (start) {
+        // Moving the start keeps the length, like a calendar event.
+        final length = _exactMinutes;
+        _start = v;
+        if (length != null) _end = min(v + length, 23 * 60 + 59);
+      } else {
+        _end = v;
+      }
+    });
   }
 
   Future<void> _loadTags() async {
@@ -91,7 +165,7 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
     if (mounted) setState(() => _activityTags = tags);
   }
 
-  bool get _canSave => _users.isNotEmpty;
+  bool get _canSave => _users.isNotEmpty && (!_exact || _exactMinutes != null);
 
   List<String> get _absent =>
       widget.family.parents.where((p) => !_users.contains(p)).toList();
@@ -108,10 +182,12 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
       shift: widget.shift,
       user: _users.join(','),
       vacation: false,
-      duration: _duration,
+      duration: _exact ? formatMinutes(_exactMinutes!) : _duration,
       kids: _kids.isEmpty ? null : _kids.join(','),
       activities: _activities.isEmpty ? null : _activities.join(','),
       excuse: _absent.isEmpty ? null : _absentReason,
+      startTime: _exact ? clockLabel(_start!) : null,
+      endTime: _exact ? clockLabel(_end!) : null,
       lastModified: now,
       createdAt: widget.existing?.createdAt,
     );
@@ -252,10 +328,10 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
                       ),
                   ]),
                 ],
-                SectionLabel(context.l10n.howLong),
+                _howLongLabel(c),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _durationGrid(c),
+                  child: _exact ? _timesGrid(c) : _durationGrid(c),
                 ),
                 SectionLabel(context.l10n.activitiesOptional),
                 _wrap([
@@ -304,6 +380,108 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
   Widget _wrap(List<Widget> children) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
         child: Wrap(spacing: 8, runSpacing: 8, children: children),
+      );
+
+  /// "How long" with the Advanced toggle on the right, where SectionLabel
+  /// would show its trailing value.
+  Widget _howLongLabel(AppColors c) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 6, 8, 0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(context.l10n.howLong.toUpperCase(),
+                  style: AppType.label.copyWith(color: c.txt2)),
+            ),
+            Semantics(
+              toggled: _exact,
+              child: InkWell(
+                onTap: () => _setExact(!_exact),
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                          _exact
+                              ? Icons.check_box
+                              : Icons.check_box_outline_blank,
+                          size: 18,
+                          color: _exact ? c.green : c.txt2),
+                      const SizedBox(width: 6),
+                      Text(context.l10n.advanced.toUpperCase(),
+                          style: AppType.label.copyWith(
+                              color: _exact ? c.txt : c.txt2,
+                              letterSpacing: 0.8)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+  /// Advanced: start and end side by side, the length (or what is wrong)
+  /// underneath.
+  Widget _timesGrid(AppColors c) {
+    final length = _exactMinutes;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(border: Border.all(color: c.border, width: 2)),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                    child: _timeCell(c, context.l10n.startTime, _start,
+                        () => _pickTime(start: true))),
+                Container(width: 1, color: c.hairline),
+                Expanded(
+                    child: _timeCell(c, context.l10n.endTime, _end,
+                        () => _pickTime(start: false))),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(
+              length == null
+                  ? context.l10n.endAfterStart
+                  : context.l10n.timeOutside(formatMinutes(length)),
+              style: AppType.bodySm.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: length == null ? c.accentTxt : c.txt2)),
+        ),
+      ],
+    );
+  }
+
+  Widget _timeCell(
+          AppColors c, String label, int? minutes, VoidCallback onTap) =>
+      InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 11),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label.toUpperCase(),
+                  style: AppType.label.copyWith(fontSize: 10, color: c.txt2)),
+              const SizedBox(height: 3),
+              Text(
+                  minutes == null
+                      ? '—'
+                      : AppSettings.instance.fmtHM(minutes ~/ 60, minutes % 60),
+                  style: AppType.body.copyWith(
+                      fontSize: 20, fontWeight: FontWeight.w800, color: c.txt)),
+            ],
+          ),
+        ),
       );
 
   /// 4-column grid of preset durations plus a "—" to clear it. Presets beat

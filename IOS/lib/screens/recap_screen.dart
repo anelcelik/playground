@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../db/database_helper.dart';
 import '../models/entry.dart';
 import '../models/durations.dart';
+import '../models/streak.dart';
 import '../theme.dart';
 import '../l10n/l10n.dart';
 
@@ -124,7 +125,7 @@ class _RecapBody extends StatelessWidget {
     final topActivity = _topOf(_activityCounts(real));
     final topParent = _topOf(byUser);
     final topKid = _topOf(byKid);
-    final streak = _longestStreak(real);
+    final streak = longestStreak(entries);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -247,23 +248,6 @@ class _RecapBody extends StatelessWidget {
     final sorted = counts.entries.where((e) => e.value > 0).toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     return sorted.isEmpty ? null : sorted.first.key;
-  }
-
-  /// Longest run of consecutive calendar days with at least one real visit.
-  int _longestStreak(List<Entry> real) {
-    final dates = real.map((e) => DateTime.parse(e.date)).toSet().toList()
-      ..sort();
-    if (dates.isEmpty) return 0;
-    var longest = 1, current = 1;
-    for (var i = 1; i < dates.length; i++) {
-      if (dates[i].difference(dates[i - 1]).inDays == 1) {
-        current++;
-        if (current > longest) longest = current;
-      } else {
-        current = 1;
-      }
-    }
-    return longest;
   }
 
   String _fmtMins(int m) {

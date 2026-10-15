@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../db/database_helper.dart';
+import '../models/durations.dart';
 import '../models/entry.dart';
 import '../models/family.dart';
+import '../models/goal.dart';
 import '../models/recurring_activity.dart';
+import '../models/streak.dart';
 import '../services/recurring_service.dart';
 import '../settings/app_settings.dart';
 import '../theme.dart';
 import '../widgets/entry_actions.dart';
 import '../widgets/modernist.dart';
 import '../widgets/reason_sheet.dart';
+import 'goal_screen.dart';
 import 'quick_visit_sheet.dart';
 import 'recap_screen.dart';
 import '../l10n/l10n.dart';
@@ -49,6 +53,8 @@ class _TodayScreenState extends State<TodayScreen> {
   bool _loading = true;
   List<Entry> _entries = [];
   List<Entry> _lastVisit = [];
+  // Every entry, for the streak and the goal.
+  List<Entry> _all = [];
   List<RecurringActivityStatus> _recurring = [];
   // Weekday strip: date → number of parents who went that day.
   final Map<String, int> _week = {};
@@ -82,6 +88,7 @@ class _TodayScreenState extends State<TodayScreen> {
     final entries = await DatabaseHelper.instance.getEntriesForDate(_date);
     final recurring = await RecurringService.instance.getStatusForDate(_date);
     final last = await DatabaseHelper.instance.getMostRecentVisitEntries();
+    final all = await DatabaseHelper.instance.getAllEntries();
 
     // Seven small indexed queries beat one hand-rolled aggregate here.
     _week.clear();
@@ -105,6 +112,7 @@ class _TodayScreenState extends State<TodayScreen> {
       _entries = entries;
       _recurring = recurring;
       _lastVisit = last;
+      _all = all;
       _loading = false;
     });
   }
@@ -136,6 +144,8 @@ class _TodayScreenState extends State<TodayScreen> {
       duration: source.duration,
       kids: source.kids,
       activities: source.activities,
+      startTime: source.startTime,
+      endTime: source.endTime,
       lastModified: DateTime.now().millisecondsSinceEpoch,
     ));
     if (!mounted) return;
@@ -197,6 +207,7 @@ class _TodayScreenState extends State<TodayScreen> {
         children: [
           _header(c),
           _weekStrip(c),
+          if (_isToday) _progressBand(c),
           if (_isVacation || _isNoPlayground)
             _nonVisitNotice(c)
           else
@@ -362,6 +373,162 @@ class _TodayScreenState extends State<TodayScreen> {
         width: 7, height: 7, color: count >= 2 ? c.green : c.accentLt);
   }
 
+  // ── Streak & goal ───────────────────────────────────────
+
+  /// Today only, under the week strip: the running streak and how this
+  /// week's (month's, year's) goal is going.
+  Widget _progressBand(AppColors c) => Container(
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: c.border, width: 2)),
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(flex: 4, child: _streakCell(c, currentStreak(_all, _now))),
+              Container(width: 1, color: c.hairline),
+              Expanded(flex: 5, child: _goalCell(c, AppSettings.instance.goal)),
+            ],
+          ),
+        ),
+      );
+
+  /// Tap explains the rule, since a forgiven day can look like a bug.
+  Widget _streakCell(AppColors c, Streak s) {
+    final l = context.l10n;
+    final status = s.doneToday
+        ? l.streakDoneToday
+        : s.days == 0
+            ? l.streakStart
+            : s.atRisk
+                ? l.streakAtRisk
+                : l.streakKeepGoing;
+    return InkWell(
+      onTap: () => ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l.streakRule))),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 12, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text('${s.days}',
+                    style: AppType.title.copyWith(fontSize: 26, color: c.txt)),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(l.streakDays(s.days).toUpperCase(),
+                      style: AppType.label.copyWith(color: c.txt2)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(status,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: AppType.bodySm.copyWith(
+                    fontWeight: s.atRisk ? FontWeight.w700 : FontWeight.w500,
+                    color: s.atRisk ? c.accentTxt : c.txt2)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _goalCell(AppColors c, OutdoorGoal? goal) {
+    final l = context.l10n;
+    Future<void> open() async {
+      await Navigator.push(
+          context, MaterialPageRoute(builder: (_) => const GoalScreen()));
+      if (mounted) setState(() {});
+    }
+
+    if (goal == null) {
+      return InkWell(
+        onTap: open,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 20, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(l.goal.toUpperCase(),
+                  style: AppType.label.copyWith(color: c.txt2)),
+              const SizedBox(height: 6),
+              Text(l.setAGoal,
+                  style: AppType.bodySm.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: c.accentTxt,
+                      decoration: TextDecoration.underline,
+                      decorationColor: c.accentTxt)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final p = goalProgress(goal, _all, _now);
+    final title = switch (goal.period) {
+      GoalPeriod.week => l.thisWeek,
+      GoalPeriod.month => l.thisMonth,
+      GoalPeriod.year => l.thisYear,
+    };
+    final status = p.reached
+        ? l.goalReached
+        : p.behind > 0
+            ? l.goalBehind(formatMinutes(p.behind))
+            : l.goalOnTrack;
+    return InkWell(
+      onTap: open,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 20, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(title.toUpperCase(),
+                      style: AppType.label.copyWith(color: c.txt2)),
+                ),
+                Text('${(p.ratio * 100).floor()}%',
+                    style: AppType.label.copyWith(color: c.txt2)),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(l.goalOf(formatMinutes(p.done), formatMinutes(p.target)),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppType.body.copyWith(
+                    fontSize: 15, fontWeight: FontWeight.w800, color: c.txt)),
+            const SizedBox(height: 6),
+            Container(
+              height: 8,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                  color: c.recessed,
+                  border: Border.all(color: c.hairline, width: 1)),
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: p.ratio,
+                child: Container(color: c.green),
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(status,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppType.bodySm.copyWith(
+                    fontWeight: p.reached ? FontWeight.w700 : FontWeight.w500,
+                    color: p.reached ? c.accentTxt : c.txt2)),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ── Log section ─────────────────────────────────────────
 
   Widget _logSection(AppColors c) {
@@ -482,7 +649,10 @@ class _TodayScreenState extends State<TodayScreen> {
         e.shift == 'morning' ? context.l10n.morning : context.l10n.evening,
       if (e.userList.isNotEmpty) e.userList.join(' & '),
       if (e.kidList.isNotEmpty) e.kidList.join(' & '),
-      if (e.duration != null && e.duration!.isNotEmpty) e.duration!,
+      if (e.hasTimes)
+        AppSettings.instance.fmtClockRange(e.startTime!, e.endTime!)
+      else if (e.duration != null && e.duration!.isNotEmpty)
+        e.duration!,
     ];
     return parts.join(' · ');
   }

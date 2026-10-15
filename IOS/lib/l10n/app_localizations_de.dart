@@ -1175,4 +1175,111 @@ class AppLocalizationsDe extends AppLocalizations {
   String personRemoved(String name) {
     return '$name entfernt';
   }
+
+  @override
+  String get advanced => 'Erweitert';
+
+  @override
+  String get startTime => 'Beginn';
+
+  @override
+  String get endTime => 'Ende';
+
+  @override
+  String get endAfterStart => 'Das Ende muss nach dem Beginn liegen';
+
+  @override
+  String timeOutside(String time) {
+    return '$time draußen';
+  }
+
+  @override
+  String streakDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Tage in Folge',
+      one: 'Tag in Folge',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get streakDoneToday => 'Für heute geschafft';
+
+  @override
+  String get streakKeepGoing => 'Geh heute raus, dann geht sie weiter';
+
+  @override
+  String get streakAtRisk =>
+      'Gestern verpasst. Geh heute raus, sonst endet sie';
+
+  @override
+  String get streakStart => 'Geh heute raus und starte eine';
+
+  @override
+  String get streakRule =>
+      'Die Serie zählt die Tage, an denen ihr draußen wart. Ein verpasster Tag wird verziehen, zwei hintereinander beenden sie. Urlaub pausiert sie.';
+
+  @override
+  String get goal => 'Ziel';
+
+  @override
+  String get setAGoal => 'Setz dir ein Ziel für draußen';
+
+  @override
+  String goalOf(String done, String target) {
+    return '$done von $target';
+  }
+
+  @override
+  String get goalReached => 'Ziel erreicht';
+
+  @override
+  String get goalOnTrack => 'Im Plan';
+
+  @override
+  String goalBehind(String time) {
+    return '$time im Rückstand';
+  }
+
+  @override
+  String get outdoorGoal => 'Ziel für draußen';
+
+  @override
+  String get goalPeriod => 'Zeitraum';
+
+  @override
+  String get hoursOutside => 'Stunden draußen';
+
+  @override
+  String get otherAmount => 'Eigene';
+
+  @override
+  String get hoursHint => 'Stunden, z. B. 12';
+
+  @override
+  String get goalNote =>
+      'Zählt die Länge jedes eingetragenen Besuchs. Ein beliebtes Ziel sind 1000 Stunden im Jahr: etwa 2 Stunden 45 Minuten am Tag.';
+
+  @override
+  String get turnOffGoal => 'Ziel ausschalten';
+
+  @override
+  String get goalOff => 'Aus';
+
+  @override
+  String goalAWeek(String time) {
+    return '$time pro Woche';
+  }
+
+  @override
+  String goalAMonth(String time) {
+    return '$time pro Monat';
+  }
+
+  @override
+  String goalAYear(String time) {
+    return '$time pro Jahr';
+  }
 }

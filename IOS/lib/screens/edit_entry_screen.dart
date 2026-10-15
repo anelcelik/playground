@@ -102,6 +102,8 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
     final actStr = _acts.isEmpty ? null : _acts.join(', ');
     final someoneStayed = _absent.isNotEmpty;
 
+    // Exact times stay unless a different length was picked here.
+    final keepTimes = _duration == normalizeDuration(widget.entry.duration);
     final updated = Entry(
       id: widget.entry.id,
       uuid: widget.entry.uuid,
@@ -113,6 +115,8 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
       kids: kidStr.isEmpty ? null : kidStr,
       activities: actStr,
       excuse: someoneStayed ? _absentReason : null,
+      startTime: keepTimes ? widget.entry.startTime : null,
+      endTime: keepTimes ? widget.entry.endTime : null,
       lastModified: DateTime.now().millisecondsSinceEpoch,
       createdAt: widget.entry.createdAt,
     );
@@ -247,7 +251,13 @@ class _EditEntryScreenState extends State<EditEntryScreen> {
                 Wrap(
                   spacing: 7,
                   runSpacing: 7,
-                  children: kDurations.map((d) {
+                  // An exact length from the advanced log shows as one more
+                  // chip, selected, until another one is picked.
+                  children: [
+                    ...kDurations,
+                    if (_duration != null && !kDurations.contains(_duration))
+                      _duration!,
+                  ].map((d) {
                     final sel = _duration == d;
                     return GestureDetector(
                       onTap: () =>

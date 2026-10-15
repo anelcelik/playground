@@ -9,6 +9,7 @@ import 'setup_screen.dart';
 import 'invite_family_screen.dart';
 import 'notifications_screen.dart';
 import 'display_settings_screen.dart';
+import 'goal_screen.dart';
 import 'log_screen.dart';
 import 'privacy_screen.dart';
 import 'recap_screen.dart';
@@ -68,6 +69,15 @@ class SettingsScreen extends StatelessWidget {
         ),
         const Rule(),
         SectionLabel(context.l10n.app),
+        ListenableBuilder(
+          listenable: AppSettings.instance,
+          builder: (context, _) => _Row(
+            label: context.l10n.outdoorGoal,
+            value: goalSummary(context, AppSettings.instance.goal),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const GoalScreen())),
+          ),
+        ),
         _Row(
           label: context.l10n.remindersSetting,
           onTap: () => Navigator.push(context,

@@ -2131,6 +2131,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{name} removed'**
   String personRemoved(String name);
+
+  /// No description provided for @advanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get advanced;
+
+  /// No description provided for @startTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get startTime;
+
+  /// No description provided for @endTime.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get endTime;
+
+  /// No description provided for @endAfterStart.
+  ///
+  /// In en, this message translates to:
+  /// **'End has to be after start'**
+  String get endAfterStart;
+
+  /// No description provided for @timeOutside.
+  ///
+  /// In en, this message translates to:
+  /// **'{time} outside'**
+  String timeOutside(String time);
+
+  /// No description provided for @streakDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{day streak} other{day streak}}'**
+  String streakDays(int count);
+
+  /// No description provided for @streakDoneToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Done for today'**
+  String get streakDoneToday;
+
+  /// No description provided for @streakKeepGoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Go out today to keep it going'**
+  String get streakKeepGoing;
+
+  /// No description provided for @streakAtRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed yesterday. Go out today to keep it'**
+  String get streakAtRisk;
+
+  /// No description provided for @streakStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Go out today to start one'**
+  String get streakStart;
+
+  /// No description provided for @streakRule.
+  ///
+  /// In en, this message translates to:
+  /// **'A streak counts the days you went out. One missed day is forgiven, two in a row end it. Vacation days pause it.'**
+  String get streakRule;
+
+  /// No description provided for @goal.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal'**
+  String get goal;
+
+  /// No description provided for @setAGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Set an outdoor goal'**
+  String get setAGoal;
+
+  /// No description provided for @goalOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {target}'**
+  String goalOf(String done, String target);
+
+  /// No description provided for @goalReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal reached'**
+  String get goalReached;
+
+  /// No description provided for @goalOnTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'On track'**
+  String get goalOnTrack;
+
+  /// No description provided for @goalBehind.
+  ///
+  /// In en, this message translates to:
+  /// **'{time} behind'**
+  String goalBehind(String time);
+
+  /// No description provided for @outdoorGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Outdoor goal'**
+  String get outdoorGoal;
+
+  /// No description provided for @goalPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get goalPeriod;
+
+  /// No description provided for @hoursOutside.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours outside'**
+  String get hoursOutside;
+
+  /// No description provided for @otherAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get otherAmount;
+
+  /// No description provided for @hoursHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours, e.g. 12'**
+  String get hoursHint;
+
+  /// No description provided for @goalNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Counts the length of every visit you log. A popular goal is 1000 hours a year: about 2 hours 45 minutes a day.'**
+  String get goalNote;
+
+  /// No description provided for @turnOffGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off goal'**
+  String get turnOffGoal;
+
+  /// No description provided for @goalOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get goalOff;
+
+  /// No description provided for @goalAWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{time} a week'**
+  String goalAWeek(String time);
+
+  /// No description provided for @goalAMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'{time} a month'**
+  String goalAMonth(String time);
+
+  /// No description provided for @goalAYear.
+  ///
+  /// In en, this message translates to:
+  /// **'{time} a year'**
+  String goalAYear(String time);
 }
 
 class _AppLocalizationsDelegate

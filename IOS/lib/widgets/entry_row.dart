@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/entry.dart';
 import '../models/family.dart';
+import '../settings/app_settings.dart';
 import '../theme.dart';
 import 'entry_actions.dart';
 import '../l10n/l10n.dart';
@@ -36,6 +37,8 @@ class EntryRow extends StatelessWidget {
                 : context.l10n.evening);
     final visit = !e.vacation && !e.noPlayground;
     final detail = <String>[
+      if (visit && e.hasTimes)
+        AppSettings.instance.fmtClockRange(e.startTime!, e.endTime!),
       if (visit && e.duration != null) e.duration!,
       if (visit && e.kidList.isNotEmpty) e.kidList.join(' & '),
       if (e.noPlayground && (e.excuse?.isNotEmpty ?? false))

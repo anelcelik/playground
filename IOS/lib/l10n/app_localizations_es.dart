@@ -1170,4 +1170,110 @@ class AppLocalizationsEs extends AppLocalizations {
   String personRemoved(String name) {
     return '$name quitado';
   }
+
+  @override
+  String get advanced => 'Avanzado';
+
+  @override
+  String get startTime => 'Inicio';
+
+  @override
+  String get endTime => 'Fin';
+
+  @override
+  String get endAfterStart => 'El fin tiene que ser después del inicio';
+
+  @override
+  String timeOutside(String time) {
+    return '$time al aire libre';
+  }
+
+  @override
+  String streakDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'días de racha',
+      one: 'día de racha',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get streakDoneToday => 'Hecho por hoy';
+
+  @override
+  String get streakKeepGoing => 'Sal hoy para seguir la racha';
+
+  @override
+  String get streakAtRisk => 'Ayer no hubo salida. Sal hoy para no perderla';
+
+  @override
+  String get streakStart => 'Sal hoy para empezar una';
+
+  @override
+  String get streakRule =>
+      'La racha cuenta los días que saliste. Se perdona un día sin salir; dos seguidos la terminan. Las vacaciones la pausan.';
+
+  @override
+  String get goal => 'Meta';
+
+  @override
+  String get setAGoal => 'Fija una meta al aire libre';
+
+  @override
+  String goalOf(String done, String target) {
+    return '$done de $target';
+  }
+
+  @override
+  String get goalReached => 'Meta cumplida';
+
+  @override
+  String get goalOnTrack => 'Al día';
+
+  @override
+  String goalBehind(String time) {
+    return '$time de retraso';
+  }
+
+  @override
+  String get outdoorGoal => 'Meta al aire libre';
+
+  @override
+  String get goalPeriod => 'Periodo';
+
+  @override
+  String get hoursOutside => 'Horas al aire libre';
+
+  @override
+  String get otherAmount => 'Otro';
+
+  @override
+  String get hoursHint => 'Horas, p. ej. 12';
+
+  @override
+  String get goalNote =>
+      'Cuenta la duración de cada visita que registras. Una meta popular es 1000 horas al año: unas 2 horas y 45 minutos al día.';
+
+  @override
+  String get turnOffGoal => 'Quitar la meta';
+
+  @override
+  String get goalOff => 'Desactivada';
+
+  @override
+  String goalAWeek(String time) {
+    return '$time a la semana';
+  }
+
+  @override
+  String goalAMonth(String time) {
+    return '$time al mes';
+  }
+
+  @override
+  String goalAYear(String time) {
+    return '$time al año';
+  }
 }

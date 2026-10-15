@@ -1161,4 +1161,110 @@ class AppLocalizationsEn extends AppLocalizations {
   String personRemoved(String name) {
     return '$name removed';
   }
+
+  @override
+  String get advanced => 'Advanced';
+
+  @override
+  String get startTime => 'Start';
+
+  @override
+  String get endTime => 'End';
+
+  @override
+  String get endAfterStart => 'End has to be after start';
+
+  @override
+  String timeOutside(String time) {
+    return '$time outside';
+  }
+
+  @override
+  String streakDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'day streak',
+      one: 'day streak',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get streakDoneToday => 'Done for today';
+
+  @override
+  String get streakKeepGoing => 'Go out today to keep it going';
+
+  @override
+  String get streakAtRisk => 'Missed yesterday. Go out today to keep it';
+
+  @override
+  String get streakStart => 'Go out today to start one';
+
+  @override
+  String get streakRule =>
+      'A streak counts the days you went out. One missed day is forgiven, two in a row end it. Vacation days pause it.';
+
+  @override
+  String get goal => 'Goal';
+
+  @override
+  String get setAGoal => 'Set an outdoor goal';
+
+  @override
+  String goalOf(String done, String target) {
+    return '$done of $target';
+  }
+
+  @override
+  String get goalReached => 'Goal reached';
+
+  @override
+  String get goalOnTrack => 'On track';
+
+  @override
+  String goalBehind(String time) {
+    return '$time behind';
+  }
+
+  @override
+  String get outdoorGoal => 'Outdoor goal';
+
+  @override
+  String get goalPeriod => 'Period';
+
+  @override
+  String get hoursOutside => 'Hours outside';
+
+  @override
+  String get otherAmount => 'Other';
+
+  @override
+  String get hoursHint => 'Hours, e.g. 12';
+
+  @override
+  String get goalNote =>
+      'Counts the length of every visit you log. A popular goal is 1000 hours a year: about 2 hours 45 minutes a day.';
+
+  @override
+  String get turnOffGoal => 'Turn off goal';
+
+  @override
+  String get goalOff => 'Off';
+
+  @override
+  String goalAWeek(String time) {
+    return '$time a week';
+  }
+
+  @override
+  String goalAMonth(String time) {
+    return '$time a month';
+  }
+
+  @override
+  String goalAYear(String time) {
+    return '$time a year';
+  }
 }

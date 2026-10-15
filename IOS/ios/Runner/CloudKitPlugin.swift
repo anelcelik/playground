@@ -322,6 +322,10 @@ import UIKit
         setOptionalString(record: record, key: "activities", value: map["activities"])
         setOptionalString(record: record, key: "excuse",     value: map["excuse"])
         setOptionalString(record: record, key: "created_at", value: map["created_at"])
+        // Always written, "" for none: with .changedKeys an unset key would
+        // leave the old times on the server after a switch back to a preset.
+        record["start_time"] = (map["start_time"] as? String ?? "") as CKRecordValue
+        record["end_time"]   = (map["end_time"]   as? String ?? "") as CKRecordValue
 
         return record
     }
@@ -379,6 +383,11 @@ import UIKit
         if let str = value as? String, !str.isEmpty {
             record[key] = str as CKRecordValue
         }
+    }
+
+    private func nonEmpty(_ s: String?) -> String? {
+        guard let s = s, !s.isEmpty else { return nil }
+        return s
     }
 
     // MARK: - fetchChanges
@@ -814,6 +823,8 @@ import UIKit
         m["kids"]          = record["kids"]          as? String
         m["activities"]    = record["activities"]    as? String
         m["excuse"]        = record["excuse"]        as? String
+        m["start_time"]    = nonEmpty(record["start_time"] as? String)
+        m["end_time"]      = nonEmpty(record["end_time"]   as? String)
         m["last_modified"] = record["last_modified"] as? Int64 ?? 0
         m["is_deleted"]    = (record["is_deleted"]   as? Int64 ?? 0) == 1
         m["created_at"]    = record["created_at"]    as? String

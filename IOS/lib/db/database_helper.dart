@@ -40,7 +40,7 @@ class DatabaseHelper {
         join(await getDatabasesPath(), 'playground.db');
     return openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -76,6 +76,8 @@ class DatabaseHelper {
         kids          TEXT,
         activities    TEXT,
         excuse        TEXT,
+        start_time    TEXT,
+        end_time      TEXT,
         last_modified INTEGER NOT NULL,
         is_deleted    INTEGER DEFAULT 0,
         needs_push    INTEGER DEFAULT 1,
@@ -167,6 +169,12 @@ class DatabaseHelper {
       // is pushed once on the first sync after upgrading, then only changes.
       await db.execute(
           'ALTER TABLE entries ADD COLUMN needs_push INTEGER DEFAULT 1');
+    }
+    if (oldVersion < 8 &&
+        !await _columnExists(db, 'entries', 'start_time')) {
+      // Advanced log: exact start and end of a visit, "15:10".
+      await db.execute('ALTER TABLE entries ADD COLUMN start_time TEXT');
+      await db.execute('ALTER TABLE entries ADD COLUMN end_time TEXT');
     }
     if (oldVersion < 2) {
       // Add sync columns to existing entries table
@@ -587,6 +595,8 @@ class DatabaseHelper {
             'kids': r['kids'] as String?,
             'activities': r['activities'] as String?,
             'excuse': r['excuse'] as String?,
+            'start_time': r['start_time'] as String?,
+            'end_time': r['end_time'] as String?,
             'last_modified': remoteTs,
             'is_deleted': remoteDeleted ? 1 : 0,
             'needs_push': 0,
@@ -608,6 +618,8 @@ class DatabaseHelper {
                 'kids': r['kids'] as String?,
                 'activities': r['activities'] as String?,
                 'excuse': r['excuse'] as String?,
+                'start_time': r['start_time'] as String?,
+                'end_time': r['end_time'] as String?,
                 'last_modified': remoteTs,
                 'is_deleted': remoteDeleted ? 1 : 0,
                 'needs_push': 0,
