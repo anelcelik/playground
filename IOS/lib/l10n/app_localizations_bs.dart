@@ -1281,4 +1281,11 @@ class AppLocalizationsBs extends AppLocalizations {
   String goalAYear(String time) {
     return '$time godišnje';
   }
+
+  @override
+  String get outdoorActivity => 'Aktivnost napolju';
+
+  @override
+  String get outdoorActivitySub =>
+      'Kad je urađeno, računa se kao vrijeme napolju. Isključi za stvari kao što su časovi klavira.';
 }

@@ -668,5 +668,7 @@
         "type": "String"
       }
     }
-  }
+  },
+  "outdoorActivity": "Outdoor activity",
+  "outdoorActivitySub": "Done counts as time outside. Turn off for things like piano lessons."
 }

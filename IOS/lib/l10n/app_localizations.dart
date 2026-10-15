@@ -2299,6 +2299,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{time} a year'**
   String goalAYear(String time);
+
+  /// No description provided for @outdoorActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Outdoor activity'**
+  String get outdoorActivity;
+
+  /// No description provided for @outdoorActivitySub.
+  ///
+  /// In en, this message translates to:
+  /// **'Done counts as time outside. Turn off for things like piano lessons.'**
+  String get outdoorActivitySub;
 }
 
 class _AppLocalizationsDelegate

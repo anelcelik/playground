@@ -1276,4 +1276,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String goalAYear(String time) {
     return '$time al año';
   }
+
+  @override
+  String get outdoorActivity => 'Actividad al aire libre';
+
+  @override
+  String get outdoorActivitySub =>
+      'Al marcarla como hecha cuenta como tiempo al aire libre. Desactívalo para cosas como clases de piano.';
 }

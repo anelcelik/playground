@@ -13,6 +13,9 @@ class RecurringActivity {
   final String? dateFrom;        // YYYY-MM-DD, inclusive, nullable
   final String? dateTo;          // YYYY-MM-DD, inclusive, nullable
   final String shift;         // 'morning' | 'evening'
+  // Done logs a visit (time outside). Off for things like piano lessons:
+  // Done then only shows in the plan's own history.
+  final bool outdoor;
   final bool isActive;
   final bool notifyEnabled;
   final int? notifyHour;
@@ -28,6 +31,7 @@ class RecurringActivity {
     this.dateFrom,
     this.dateTo,
     this.shift = 'morning',
+    this.outdoor = true,
     this.isActive = true,
     this.notifyEnabled = false,
     this.notifyHour,
@@ -44,6 +48,7 @@ class RecurringActivity {
         dateFrom: m['date_from'] as String?,
         dateTo: m['date_to'] as String?,
         shift: m['shift'] as String? ?? 'morning',
+        outdoor: (m['outdoor'] as int? ?? 1) == 1,
         isActive: (m['is_active'] as int? ?? 1) == 1,
         notifyEnabled: (m['notify_enabled'] as int? ?? 0) == 1,
         notifyHour: m['notify_hour'] as int?,
@@ -60,6 +65,7 @@ class RecurringActivity {
         'date_from': dateFrom,
         'date_to': dateTo,
         'shift': shift,
+        'outdoor': outdoor ? 1 : 0,
         'is_active': isActive ? 1 : 0,
         'notify_enabled': notifyEnabled ? 1 : 0,
         'notify_hour': notifyHour,
@@ -74,6 +80,7 @@ class RecurringActivity {
     Object? dateFrom = _sentinel,
     Object? dateTo = _sentinel,
     String? shift,
+    bool? outdoor,
     bool? isActive,
     bool? notifyEnabled,
     Object? notifyHour = _sentinel,
@@ -88,6 +95,7 @@ class RecurringActivity {
         dateFrom: dateFrom == _sentinel ? this.dateFrom : dateFrom as String?,
         dateTo: dateTo == _sentinel ? this.dateTo : dateTo as String?,
         shift: shift ?? this.shift,
+        outdoor: outdoor ?? this.outdoor,
         isActive: isActive ?? this.isActive,
         notifyEnabled: notifyEnabled ?? this.notifyEnabled,
         notifyHour:

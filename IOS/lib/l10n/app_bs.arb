@@ -365,5 +365,7 @@
   "goalOff": "Isključeno",
   "goalAWeek": "{time} sedmično",
   "goalAMonth": "{time} mjesečno",
-  "goalAYear": "{time} godišnje"
+  "goalAYear": "{time} godišnje",
+  "outdoorActivity": "Aktivnost napolju",
+  "outdoorActivitySub": "Kad je urađeno, računa se kao vrijeme napolju. Isključi za stvari kao što su časovi klavira."
 }

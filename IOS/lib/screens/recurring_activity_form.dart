@@ -54,6 +54,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
   late bool _oneTime;
   String? _onDate;
   late String _shift;
+  late bool _outdoor;
   late bool _isActive;
   late bool _notifyEnabled;
   late int _notifyHour;
@@ -76,6 +77,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
     _oneTime = a?.isOneTime ?? false;
     _onDate = _oneTime ? a!.dateFrom : null;
     _shift = a?.shift ?? 'morning';
+    _outdoor = a?.outdoor ?? true;
     _isActive = a?.isActive ?? true;
     _notifyEnabled = a?.notifyEnabled ?? false;
     _notifyHour = a?.notifyHour ?? 9;
@@ -111,6 +113,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
       dateFrom: _oneTime ? _onDate : _dateFrom,
       dateTo: _oneTime ? _onDate : _dateTo,
       shift: _shift,
+      outdoor: _outdoor,
       isActive: _isActive,
       notifyEnabled: _notifyEnabled,
       notifyHour: _notifyEnabled ? _notifyHour : null,
@@ -276,6 +279,28 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
               ),
             ),
           ])),
+
+          // Time outside or not: decides whether Done logs a visit.
+          _card(Row(
+            children: [
+              Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(context.l10n.outdoorActivity,
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600)),
+                      Text(context.l10n.outdoorActivitySub,
+                          style: TextStyle(fontSize: 12, color: _kTxt2)),
+                    ]),
+              ),
+              const SizedBox(width: 12),
+              SquareSwitch(
+                value: _outdoor,
+                onChanged: (v) => setState(() => _outdoor = v),
+              ),
+            ],
+          )),
 
           // Repeats on weekdays, or happens once
           _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

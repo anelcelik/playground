@@ -365,5 +365,7 @@
   "goalOff": "Vypnuto",
   "goalAWeek": "{time} týdně",
   "goalAMonth": "{time} měsíčně",
-  "goalAYear": "{time} ročně"
+  "goalAYear": "{time} ročně",
+  "outdoorActivity": "Aktivita venku",
+  "outdoorActivitySub": "Splněno se počítá jako čas venku. Vypněte u věcí jako hodiny klavíru."
 }

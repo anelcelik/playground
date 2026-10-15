@@ -1283,4 +1283,11 @@ class AppLocalizationsCs extends AppLocalizations {
   String goalAYear(String time) {
     return '$time ročně';
   }
+
+  @override
+  String get outdoorActivity => 'Aktivita venku';
+
+  @override
+  String get outdoorActivitySub =>
+      'Splněno se počítá jako čas venku. Vypněte u věcí jako hodiny klavíru.';
 }

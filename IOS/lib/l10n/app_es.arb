@@ -365,5 +365,7 @@
   "goalOff": "Desactivada",
   "goalAWeek": "{time} a la semana",
   "goalAMonth": "{time} al mes",
-  "goalAYear": "{time} al año"
+  "goalAYear": "{time} al año",
+  "outdoorActivity": "Actividad al aire libre",
+  "outdoorActivitySub": "Al marcarla como hecha cuenta como tiempo al aire libre. Desactívalo para cosas como clases de piano."
 }

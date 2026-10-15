@@ -62,6 +62,7 @@ void main() {
         isDeleted: true,
       );
       final back = Entry.fromMap(e.toMap());
+      expect(back.hasTimes, isFalse);
       expect(back.shift, 'evening');
       expect(back.vacation, isTrue);
       expect(back.isDeleted, isTrue);

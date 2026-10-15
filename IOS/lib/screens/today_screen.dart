@@ -728,8 +728,12 @@ class _TodayScreenState extends State<TodayScreen> {
     ].join(' · ');
 
     if (resolved) {
+      // A plan that isn't time outside logs no visit, so there is nothing
+      // to edit.
       final statusText = r.isConfirmed
-          ? context.l10n.confirmedTapToEdit
+          ? (r.entry == null
+              ? context.l10n.done
+              : context.l10n.confirmedTapToEdit)
           : r.isSkipped
               ? (r.log?.skipReason != null
                   ? context.l10n.skippedBecause(

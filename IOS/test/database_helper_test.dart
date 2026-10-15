@@ -6,9 +6,11 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:playground_tracker/db/database_helper.dart';
 import 'package:playground_tracker/models/entry.dart';
+import 'package:playground_tracker/models/family.dart';
 import 'package:playground_tracker/models/goal.dart';
 import 'package:playground_tracker/models/recurring_activity.dart';
 import 'package:playground_tracker/services/data_reset.dart';
+import 'package:playground_tracker/services/recurring_service.dart';
 import 'package:playground_tracker/settings/app_settings.dart';
 import 'package:playground_tracker/theme.dart';
 
@@ -229,6 +231,34 @@ void main() {
     expect(updated.noPlayground, isTrue);
   });
 
+  test('Done on an indoor plan logs no visit; an outdoor one does', () async {
+    const family = Family(parents: ['Mom'], kids: ['Bean']);
+    const piano = RecurringActivity(
+        id: 'piano', title: 'Piano', kidNames: ['Bean'], repeatDays: [0],
+        outdoor: false);
+    const football = RecurringActivity(
+        id: 'football', title: 'Football', kidNames: ['Bean'], repeatDays: [0]);
+    await db.upsertRecurringActivity(piano);
+    await db.upsertRecurringActivity(football);
+    expect((await db.getAllRecurringActivities())
+        .firstWhere((a) => a.id == 'piano').outdoor, isFalse);
+
+    // 2026-06-01 is a Monday.
+    final indoor = await RecurringService.instance
+        .confirm(activity: piano, date: '2026-06-01', family: family);
+    expect(indoor.entry, isNull);
+    expect(indoor.log!.status, 'confirmed');
+    final outdoor = await RecurringService.instance
+        .confirm(activity: football, date: '2026-06-01', family: family);
+    expect(outdoor.entry!.activities, 'Football');
+
+    final day = await db.getEntriesForDate('2026-06-01');
+    expect(day.map((e) => e.activities), ['Football']);
+    final status =
+        await RecurringService.instance.getStatusForDate('2026-06-01');
+    expect(status.every((s) => s.isConfirmed), isTrue);
+  });
+
   test('reminder time labels follow the 24-hour setting', () async {
     const a = RecurringActivity(
       id: 'a1',
@@ -335,7 +365,8 @@ void main() {
     expect(AppSettings.instance.exactTimes, isFalse);
   });
 
-  test('a version 7 database upgrades and keeps its visits', () async {
+  test('a version 7 database upgrades and keeps its visits and plans',
+      () async {
     final dir = Directory.systemTemp.createTempSync('playground_v7');
     final path = '${dir.path}/playground.db';
     final old = await databaseFactory.openDatabase(path,
@@ -362,8 +393,28 @@ void main() {
                 created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
               )
             ''');
+            // And the plans table, as versions 5 to 8 had it.
+            await d.execute('''
+              CREATE TABLE recurring_activities (
+                id             TEXT PRIMARY KEY,
+                title          TEXT NOT NULL,
+                kid_names      TEXT NOT NULL DEFAULT '[]',
+                repeat_days    TEXT NOT NULL DEFAULT '[]',
+                date_from      TEXT,
+                date_to        TEXT,
+                shift          TEXT NOT NULL DEFAULT 'morning',
+                is_active      INTEGER DEFAULT 1,
+                notify_enabled INTEGER DEFAULT 0,
+                notify_hour    INTEGER,
+                notify_minute  INTEGER,
+                notify_message TEXT,
+                created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+              )
+            ''');
           },
         ));
+    await old.insert('recurring_activities',
+        {'id': 'p1', 'title': 'Football', 'repeat_days': '[0]'});
     await old.insert('entries', {
       'uuid': 'old-1',
       'date': '2026-06-01',
@@ -381,6 +432,10 @@ void main() {
       DatabaseHelper.databasePathOverride = inMemoryDatabasePath;
       dir.deleteSync(recursive: true);
     });
+
+    // Plans from before the switch were all logged as visits.
+    final plans = await db.getAllRecurringActivities();
+    expect(plans.single.outdoor, isTrue);
 
     final kept = await db.getEntryByUuid('old-1');
     expect(kept!.duration, '1h');

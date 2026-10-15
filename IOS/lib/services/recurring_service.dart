@@ -96,8 +96,8 @@ class RecurringService {
     return result;
   }
 
-  /// Confirm an activity: creates a log Entry and a RecurringLog record.
-  /// Returns the created Entry so the UI can update immediately.
+  /// Confirm an activity: a RecurringLog record, plus a visit Entry when the
+  /// plan is time outside. Returns both so the UI can update immediately.
   Future<RecurringActivityStatus> confirm({
     required RecurringActivity activity,
     required String date,
@@ -107,22 +107,24 @@ class RecurringService {
     final kidStr = activity.kidNames.join(',');
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    final entry = await DatabaseHelper.instance.insertEntry(Entry(
-      date: date,
-      shift: activity.shift,
-      user: userStr,
-      vacation: false,
-      kids: kidStr.isEmpty ? null : kidStr,
-      activities: activity.title,
-      lastModified: now,
-    ));
+    final entry = !activity.outdoor
+        ? null
+        : await DatabaseHelper.instance.insertEntry(Entry(
+            date: date,
+            shift: activity.shift,
+            user: userStr,
+            vacation: false,
+            kids: kidStr.isEmpty ? null : kidStr,
+            activities: activity.title,
+            lastModified: now,
+          ));
 
     final log = await DatabaseHelper.instance.upsertRecurringLog(RecurringLog(
       id: Entry.generateUuid(),
       activityId: activity.id,
       date: date,
       status: 'confirmed',
-      entryUuid: entry.uuid,
+      entryUuid: entry?.uuid,
     ));
 
     return RecurringActivityStatus(activity: activity, log: log, entry: entry);
