@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/family.dart';
@@ -15,6 +18,10 @@ class DatabaseHelper {
   static Future<Database>? _dbFuture;
 
   DatabaseHelper._();
+
+  /// Counts up whenever entries change (saved, edited, deleted, merged from
+  /// iCloud). The daily reminders listen: a logged day needs none.
+  final ValueNotifier<int> entriesVersion = ValueNotifier(0);
 
   Future<Database> get database => _dbFuture ??= _initDB();
 
@@ -252,7 +259,15 @@ class DatabaseHelper {
   static String sanitizeName(String name) =>
       name.replaceAll(',', ' ').trim().replaceAll(RegExp(r'\s+'), ' ');
 
-  Future<void> saveFamily(List<String> parents, List<String> kids) async {
+  /// [renamedParents] / [renamedKids] map an old name to its new one (Mom →
+  /// Mama). Visits and plans store names as text, so they are rewritten
+  /// here; otherwise the old visits would drop out of that person's counts.
+  Future<void> saveFamily(
+    List<String> parents,
+    List<String> kids, {
+    Map<String, String> renamedParents = const {},
+    Map<String, String> renamedKids = const {},
+  }) async {
     final db = await database;
     final cleanParents =
         parents.map(sanitizeName).where((n) => n.isNotEmpty).toList();
@@ -269,6 +284,9 @@ class DatabaseHelper {
         await txn.insert('kids', {'name': cleanKids[i], 'sort_order': i},
             conflictAlgorithm: ConflictAlgorithm.ignore);
       }
+      await _renameInEntries(txn, 'user', renamedParents);
+      await _renameInEntries(txn, 'kids', renamedKids);
+      await _renameInPlans(txn, renamedKids);
       // Record when family config last changed — used by sync merge,
       // and mark the config for push on the next sync cycle.
       await txn.insert(
@@ -282,6 +300,70 @@ class DatabaseHelper {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     });
+  }
+
+  static Map<String, String> _cleanRenames(Map<String, String> renames) => {
+        for (final e in renames.entries)
+          if (sanitizeName(e.value).isNotEmpty &&
+              sanitizeName(e.value) != e.key)
+            e.key: sanitizeName(e.value),
+      };
+
+  /// Rewrites the comma-separated names in [column] of every entry, marking
+  /// the changed ones for push so the other phone follows.
+  Future<void> _renameInEntries(
+      Transaction txn, String column, Map<String, String> renames) async {
+    final map = _cleanRenames(renames);
+    if (map.isEmpty) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final rows = await txn.query('entries',
+        columns: ['id', column], where: "$column IS NOT NULL AND $column != ''");
+    for (final row in rows) {
+      final old = (row[column] as String)
+          .split(',')
+          .map((n) => n.trim())
+          .where((n) => n.isNotEmpty)
+          .toList();
+      if (!old.any(map.containsKey)) continue;
+      final renamed = <String>[];
+      for (final n in old) {
+        final name = map[n] ?? n;
+        if (!renamed.contains(name)) renamed.add(name);
+      }
+      await txn.update(
+          'entries',
+          {column: renamed.join(','), 'last_modified': now, 'needs_push': 1},
+          where: 'id = ?',
+          whereArgs: [row['id']]);
+    }
+  }
+
+  Future<void> _renameInPlans(
+      Transaction txn, Map<String, String> renames) async {
+    final map = _cleanRenames(renames);
+    if (map.isEmpty) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final rows = await txn.query('recurring_activities',
+        columns: ['id', 'kid_names'], where: 'is_deleted = 0');
+    for (final row in rows) {
+      final old =
+          List<String>.from(jsonDecode(row['kid_names'] as String? ?? '[]'));
+      if (!old.any(map.containsKey)) continue;
+      final renamed = <String>[];
+      for (final n in old) {
+        final name = map[n] ?? n;
+        if (!renamed.contains(name)) renamed.add(name);
+      }
+      await txn.update(
+          'recurring_activities',
+          {
+            'kid_names': jsonEncode(renamed),
+            'last_modified': now,
+            'needs_push': 1,
+          },
+          where: 'id = ?',
+          whereArgs: [row['id']]);
+    }
   }
 
   // ── Tags ──────────────────────────────────────────────────
@@ -357,6 +439,7 @@ class DatabaseHelper {
       ..['last_modified'] = entry.lastModified == 0 ? now : entry.lastModified
       ..['needs_push'] = 1;
     final id = await db.insert('entries', map);
+    entriesVersion.value++;
     final rows = await db.query('entries', where: 'id = ?', whereArgs: [id]);
     return Entry.fromMap(rows.first);
   }
@@ -374,6 +457,7 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
+    entriesVersion.value++;
   }
 
   // Undo — flips a soft-deleted entry back to present. Bumping
@@ -391,6 +475,7 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
+    entriesVersion.value++;
   }
 
   // ── Dashboard ─────────────────────────────────────────────
@@ -468,8 +553,6 @@ class DatabaseHelper {
 
   // ── Sync helpers ──────────────────────────────────────────
 
-  Future<String?> _getMeta(String key) => getMeta(key);
-
   Future<String?> getMeta(String key) async {
     final db = await database;
     final rows = await db.query('sync_meta', where: 'key = ?', whereArgs: [key]);
@@ -485,7 +568,7 @@ class DatabaseHelper {
   // ── Notification prefs ────────────────────────────────────
 
   Future<NotifPrefs> getNotifPrefs() async {
-    Future<String?> g(String k) => _getMeta(k);
+    Future<String?> g(String k) => getMeta(k);
     return NotifPrefs(
       outdoorEnabled: (await g('notif_outdoor_on')) == '1',
       outdoorHour: int.tryParse(await g('notif_outdoor_h') ?? '') ?? 15,
@@ -507,18 +590,6 @@ class DatabaseHelper {
     await s('notif_log_on', p.logEnabled ? '1' : '0');
     await s('notif_log_h', '${p.logHour}');
     await s('notif_log_m', '${p.logMinute}');
-  }
-
-  /// Returns a stable UUID for this device, creating one on first call.
-  Future<String> getOrCreateDeviceId() async {
-    var id = await _getMeta('device_id');
-    if (id == null) {
-      id = Entry.generateUuid();
-      final db = await database;
-      await db.insert('sync_meta', {'key': 'device_id', 'value': id},
-          conflictAlgorithm: ConflictAlgorithm.ignore);
-    }
-    return id;
   }
 
   // ── Incremental push helpers ──────────────────────────────
@@ -649,27 +720,6 @@ class DatabaseHelper {
       'excuse_tags': await getTags('excuse'),
       'family_updated_at':
           int.parse(await getMeta('family_updated_at') ?? '0'),
-    };
-  }
-
-  /// Exports all local data (including soft-deleted entries) as a JSON snapshot.
-  Future<Map<String, dynamic>> exportToJson() async {
-    final db = await database;
-    final family = await getFamily();
-    final actTags = await getTags('activity');
-    final excTags = await getTags('excuse');
-    final entryRows = await db.query('entries', orderBy: 'last_modified');
-    final familyUpdatedAt = await _getMeta('family_updated_at') ?? '0';
-
-    return {
-      'version': 2,
-      'exported_at': DateTime.now().millisecondsSinceEpoch,
-      'family_updated_at': int.parse(familyUpdatedAt),
-      'parents': family.parents,
-      'kids': family.kids,
-      'activity_tags': actTags,
-      'excuse_tags': excTags,
-      'entries': entryRows.map(Entry.fromMap).map((e) => e.toJsonMap()).toList(),
     };
   }
 
@@ -896,6 +946,7 @@ class DatabaseHelper {
             conflictAlgorithm: ConflictAlgorithm.ignore);
       }
     });
+    if (changed) entriesVersion.value++;
     return changed;
   }
 
@@ -907,6 +958,7 @@ class DatabaseHelper {
       ..['last_modified'] = DateTime.now().millisecondsSinceEpoch
       ..['needs_push'] = 1;
     await db.update('entries', map, where: 'uuid = ?', whereArgs: [entry.uuid]);
+    entriesVersion.value++;
     final rows = await db.query('entries', where: 'uuid = ?', whereArgs: [entry.uuid]);
     return Entry.fromMap(rows.first);
   }

@@ -59,9 +59,9 @@ Future<void> main() async {
 
   // Local notifications (no-op on unsupported platforms)
   await _startupStep('notifications', NotificationService.instance.init);
-
-  // The app is paid up front on the App Store: no in-app purchase, nothing
-  // to unlock, no screen is ever gated.
+  // A day that gets logged no longer needs its reminders.
+  DatabaseHelper.instance.entriesVersion
+      .addListener(NotificationService.instance.refreshDaily);
 
   // iCloud sync (no-op on non-iOS platforms)
   SyncController.instance.start();

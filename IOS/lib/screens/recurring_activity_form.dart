@@ -12,12 +12,6 @@ import '../theme.dart';
 import '../widgets/modernist.dart';
 import '../l10n/l10n.dart';
 
-// Brand accent colours — intentionally fixed in both light and dark mode
-// _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
-
-
-
-
 class RecurringActivityForm extends StatefulWidget {
   final Family family;
   final RecurringActivity? existing; // null = creating new
@@ -33,13 +27,12 @@ class RecurringActivityForm extends StatefulWidget {
 }
 
 class _RecurringActivityFormState extends State<RecurringActivityForm> {
-  // Theme-aware colour getters — readable from any method on this State
   Color get _kCard   => AppColors.of(context).card;
   Color get _kBorder => AppColors.of(context).border;
   Color get _kTxt    => AppColors.of(context).txt;
   Color get _kTxt2   => AppColors.of(context).txt2;
   Color get _kTint   => AppColors.of(context).greenTint;
-  // Theme-following accents (were const kGreen / kGreenLt).
+  // Theme-following accents.
   Color get _kGreen => AppColors.of(context).green;
   Color get _kGreenLt => AppColors.of(context).green;
   Color get _kOn => AppColors.of(context).onAccent;
@@ -147,11 +140,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
 
     if (mounted) Navigator.pop(context, true);
     if (notes.isNotEmpty) {
-      messenger.showSnackBar(SnackBar(
-        content: Text(notes.join('. ')),
-        behavior: SnackBarBehavior.floating,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      ));
+      messenger.showSnackBar(toast(notes.join('. ')));
     }
   }
 
@@ -216,11 +205,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
 
   void _toast(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      behavior: SnackBarBehavior.floating,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(toast(msg));
   }
 
   String _fmtDate(String? d) =>
@@ -339,7 +324,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
                         border: Border.all(color: sel ? _kGreen : _kBorder, width: 2),
                         borderRadius: BorderRadius.zero,
                       ),
-                      child: _checkText(weekdayShort(i), sel,
+                      child: checkText(weekdayShort(i), sel,
                           style: TextStyle(
                               color: sel ? _kOn : _kTxt,
                               fontWeight: FontWeight.w600,
@@ -619,7 +604,7 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
           border: Border.all(color: sel ? activeColor : _kBorder, width: 2),
           borderRadius: BorderRadius.zero,
         ),
-        child: _checkText(label, sel,
+        child: checkText(label, sel,
             textAlign: TextAlign.center,
             style: TextStyle(
                 color: sel ? _kOn : _kTxt,
@@ -642,22 +627,3 @@ class _RecurringActivityFormState extends State<RecurringActivityForm> {
         ),
       );
 }
-
-/// A chip label with a check in front when selected, like the kids' chips.
-Widget _checkText(String label, bool selected,
-        {required TextStyle style, TextAlign? textAlign}) =>
-    Text.rich(
-      TextSpan(children: [
-        if (selected)
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: Icon(Icons.check, size: 14, color: style.color),
-            ),
-          ),
-        TextSpan(text: label),
-      ]),
-      textAlign: textAlign,
-      style: style,
-    );

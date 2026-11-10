@@ -15,6 +15,8 @@ import '../l10n/l10n.dart';
 
 /// The second tap. Everything below "who went" is optional and prefilled
 /// from the last visit of the same shift, so Save is reachable immediately.
+/// With [existing] it edits that visit (Today, and Edit in the Log), and
+/// morning / evening can be changed too.
 ///
 /// Returns true if something was written.
 Future<bool?> showQuickVisitSheet(
@@ -59,6 +61,8 @@ class _QuickVisitSheet extends StatefulWidget {
 }
 
 class _QuickVisitSheetState extends State<_QuickVisitSheet> {
+  // Fixed for a new visit (Today asks first); an edit can move it.
+  late String _shift = widget.shift;
 
   late Set<String> _users;
   late Set<String> _kids;
@@ -114,7 +118,7 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
       _end = (now.hour * 60 + now.minute) ~/ 5 * 5;
       _start = max(0, _end! - length);
     } else {
-      _start = widget.shift == 'morning' ? 10 * 60 : 16 * 60;
+      _start = _shift == 'morning' ? 10 * 60 : 16 * 60;
       _end = min(_start! + length, 23 * 60 + 55);
     }
   }
@@ -179,7 +183,7 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
       id: widget.existing?.id,
       uuid: widget.existing?.uuid ?? '',
       date: widget.date,
-      shift: widget.shift,
+      shift: _shift,
       user: _users.join(','),
       vacation: false,
       duration: _exact ? formatMinutes(_exactMinutes!) : _duration,
@@ -240,7 +244,7 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    final title = widget.shift == 'morning'
+    final title = _shift == 'morning'
         ? context.l10n.morningVisit
         : context.l10n.eveningVisit;
 
@@ -294,6 +298,21 @@ class _QuickVisitSheetState extends State<_QuickVisitSheet> {
               padding: EdgeInsets.zero,
               shrinkWrap: true,
               children: [
+                if (widget.existing != null) ...[
+                  SectionLabel(context.l10n.whenQ),
+                  _wrap([
+                    SquareChip(
+                      label: context.l10n.morning,
+                      selected: _shift == 'morning',
+                      onTap: () => setState(() => _shift = 'morning'),
+                    ),
+                    SquareChip(
+                      label: context.l10n.evening,
+                      selected: _shift == 'evening',
+                      onTap: () => setState(() => _shift = 'evening'),
+                    ),
+                  ]),
+                ],
                 SectionLabel(context.l10n.whoWent),
                 _wrap([
                   for (final p in widget.family.parents)

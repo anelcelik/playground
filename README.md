@@ -1,121 +1,36 @@
-# 🌳 Playground Tracker
+# Playground Tracker
 
-A private family app to track daily playground outings — who went, when, how long, what the kids did, and why nobody went.
+An iPhone app for parents: log who took the kids out, for how long and what
+they did, mark the days nobody went and why, keep plans that repeat, and
+share the log with a partner through iCloud.
 
----
+Everything is stored on the phone. With iCloud signed in, the log also lives
+in the family's own iCloud; nothing goes to a server of ours.
 
-## Platform overview
+## What's here
 
-| Feature | iOS | Android |
-|---------|:---:|:-------:|
-| **Log Entry** — morning / evening / vacation / no playground | ✅ | ✅ |
-| **Reasons for no playground** (Rain, Sick, etc.) | ✅ | ✅ |
-| **Dashboard** — stats, charts, log | ✅ | ✅ |
-| **Customisable dashboard layout** (drag & hide sections) | ✅ | ✅ |
-| **Recurring activities** (weekly schedule) | ✅ | ✅ |
-| **Recurring activity notifications** (per-activity reminder) | ✅ | ✅ |
-| **Daily reminders** (outdoor + log-entry) | ✅ | ✅ |
-| **Date & time format settings** (EU / US, 12h / 24h) | ✅ | ✅ |
-| **Family setup** (unlimited parents, kids, grandparents) | ✅ | ✅ |
-| **Local SQLite storage** — fully offline | ✅ | ✅ |
-| **App icon** | ✅ | ✅ |
-| **CloudKit sync** between different Apple IDs | ✅ | ❌ |
-| **Family invite** (share link, multi-device) | ✅ | ❌ |
-| **Multi-user sync** | ✅ | ❌ Single user only |
-| **Install without developer account** | ❌ Needs $99/yr | ✅ Sideload APK |
-| **Build via GitHub Actions** | ✅ unsigned `.app` | ✅ debug `.apk` |
-| **Minimum OS** | iOS 15.0 | Android 5.0 (API 21) |
+| Path | What it is |
+|------|------------|
+| `IOS/` | The app (Flutter, with a committed Xcode project). See `IOS/README.md`. |
+| `webpagepreparation/` | Texts for the App Store listing, the privacy policy and the support page, plus the store screenshots. |
+| `.github/workflows/` | `ios.yml` builds an unsigned IPA; `ios-testflight.yml` builds, signs and uploads for a `v*` tag. |
 
----
+## Build and run
 
-## Folder structure
-
-```
-playground/
-├── IOS/                        Flutter iOS app (primary)
-│   ├── lib/                    Dart source — all screens & logic
-│   ├── ios/                    Committed Xcode project (CloudKitPlugin.swift,
-│   │                           AppDelegate, SceneDelegate, Runner.entitlements)
-│   ├── test/                   Unit + widget tests (merge rules, models, smoke)
-│   ├── assets/icon.png         1024×1024 app icon
-│   └── pubspec.yaml
-│
-├── ANDROID/                    Flutter Android app (same Dart code, no sync)
-│   ├── lib/                    Identical Dart source to IOS/lib/
-│   ├── assets/icon.png         Same icon
-│   └── pubspec.yaml
-│
-├── WebServerApp/               Original Python/Flask PWA (unchanged)
-│   ├── app.py
-│   └── static/
-│
-├── .github/workflows/
-│   ├── ios.yml                 Builds unsigned Runner.app (macos-latest)
-│   └── android.yml             Builds debug APK (ubuntu-latest)
-│
-└── todo#apple#mac.md           Step-by-step Mac/Xcode setup guide
-```
-
----
-
-## Getting a build
-
-### Android — no accounts needed
-
-1. Push to `main` → GitHub Actions builds automatically
-2. Go to **Actions → Build Android APK → latest run → Artifacts**
-3. Download `playground-tracker-android-debug-xxx.zip` → extract the `.apk`
-4. On your phone: **Settings → Apps → Special app access → Install unknown apps** → allow
-5. Tap the APK to install
-
-### iOS — Mac required
-
-The `IOS/ios/` Xcode project is committed and fully wired: CloudKit plugin,
-entitlements (`iCloud.com.playground.tracker` + push), background mode for
-silent sync pushes, and minimum iOS 15.0. On the Mac:
-
-1. Install Xcode + Flutter
-2. `cd IOS && flutter pub get`
-3. Open `ios/Runner.xcworkspace`, select your development team under
-   **Signing & Capabilities** (Xcode auto-creates the CloudKit container on
-   first signed build)
-4. `flutter run -d YOUR_IPHONE` via USB — no TestFlight needed for personal use
-
-See **`todo#apple#mac.md`** for the long-form guide.
-
----
-
-## What CloudKit sync does (iOS only)
-
-- Every save/delete pushes to your private CloudKit zone immediately
-- Other devices are notified by CloudKit silent pushes; the app also syncs on
-  foreground and every 3 minutes as a fallback
-- Only records changed since the last successful push are uploaded (batched)
-- **Different Apple IDs supported** — owner taps ⚙️ → Family Sync → Invite Someone, sends a link, partner accepts → both sync automatically
-- Merge rule: `last_modified` timestamp wins; ties go to the local device
-- Soft deletes propagate across devices
-
----
-
-## Local preview on Linux (no iOS device needed)
+Development happens on Linux; the app runs there as a desktop window with
+iCloud sync switched off:
 
 ```bash
 cd IOS
-./flutter/bin/flutter run -d linux
+flutter pub get
+flutter run -d linux
+flutter analyze && flutter test
 ```
 
-Runs the full app as a Linux desktop window — all features work except CloudKit sync (shows grey dot).
+iPhone builds come from GitHub Actions, so no Mac is needed. `IOS/README.md`
+has the details, including how sync and sharing work.
 
----
+## Tech
 
-## Tech stack
-
-| Layer | Technology |
-|-------|-----------|
-| UI | Flutter 3.x / Dart 3.x |
-| Local storage | SQLite via `sqflite` |
-| iOS sync | CloudKit (CKShare zone, per-device files) via MethodChannel |
-| Notifications | `flutter_local_notifications` |
-| Icons | `flutter_launcher_icons` from `assets/icon.png` |
-| CI | GitHub Actions — `macos-latest` (iOS), `ubuntu-latest` (Android) |
-| Original PWA | Python Flask + vanilla JS (in `WebServerApp/`) |
+Flutter / Dart, SQLite (`sqflite`), CloudKit through a small Swift plugin,
+`flutter_local_notifications` for reminders.

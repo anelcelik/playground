@@ -201,15 +201,6 @@ class AppSettings extends ChangeNotifier {
         : DateFormat('EEE, MMM d, yyyy').format(d);
   }
 
-  /// "3 Jun"  /  "Jun 3"
-  String fmtDateShort(String dateStr) {
-    final d = DateTime.parse(dateStr);
-    if (!isEnglish) return DateFormat.MMMd().format(d);
-    return _euDate
-        ? DateFormat('d MMM').format(d)
-        : DateFormat('MMM d').format(d);
-  }
-
   /// "June 2025"  —  month label, same either way
   String fmtMonth(String yearMonth) {
     final p = yearMonth.split('-').map(int.parse).toList();

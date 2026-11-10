@@ -143,9 +143,20 @@ class RecurringActivity {
       ? ''
       : AppSettings.instance.fmtHM(notifyHour!, notifyMinute ?? 0);
 
-  /// Stable notification ID for (this activity, dayOfWeek), range 100–9099.
-  int notifId(int dayOfWeek) =>
-      100 + (id.hashCode.abs() * 7 + dayOfWeek) % 9000;
+  /// First of this plan's 32 notification ids (NotificationService uses 15
+  /// of them). From a hash written out here: String.hashCode may change
+  /// with the Flutter version, and a reminder set under the old id could
+  /// then never be cancelled.
+  int get notifBase => 1000 + (stableHash(id) % 100000) * 32;
+}
+
+/// FNV-1a, 32 bit.
+int stableHash(String s) {
+  var h = 0x811c9dc5;
+  for (final unit in s.codeUnits) {
+    h = ((h ^ unit) * 0x01000193) & 0xffffffff;
+  }
+  return h;
 }
 
 const _sentinel = Object();

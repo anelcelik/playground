@@ -13,10 +13,7 @@ import 'manage_recurring_screen.dart';
 import 'settings_screen.dart';
 import '../l10n/l10n.dart';
 
-/// Four destinations in a bottom tab bar, replacing the green AppBar +
-/// top TabBar + gear PopupMenuButton. Recap and Recurring Activities used
-/// to live inside that popup; they are content, not settings, so Recurring
-/// is now the Plans tab and Recap sits at the top of History.
+/// Four destinations in a bottom tab bar: Today, History, Plans, Settings.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -116,8 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       label: context.l10n.settings,
                       selected: _index == 3,
                       onTap: () => setState(() => _index = 3),
-                      // The sync dot moved out of the AppBar and onto the
-                      // Settings tab, where sync actually lives.
+                      // The sync dot sits on Settings, where sync lives.
                       badge: ValueListenableBuilder<SyncStatus>(
                         valueListenable: SyncController.instance.statusNotifier,
                         builder: (_, status, __) => _SyncDot(status: status),
@@ -196,7 +192,7 @@ class _SyncDot extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final color = switch (status) {
-      SyncStatus.syncing => const Color(0xFFF5A623),
+      SyncStatus.syncing => AppColors.pending,
       SyncStatus.error => AppColors.of(context).green,
       _ => AppColors.of(context).hairline,
     };

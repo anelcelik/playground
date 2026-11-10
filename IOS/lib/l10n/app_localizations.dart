@@ -512,35 +512,11 @@ abstract class AppLocalizations {
   /// **'{names} didn’t go · {reasons}'**
   String absentDidntGo(String names, String reasons);
 
-  /// No description provided for @selectWhoWent.
-  ///
-  /// In en, this message translates to:
-  /// **'Select who went'**
-  String get selectWhoWent;
-
-  /// No description provided for @editEntryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit entry'**
-  String get editEntryTitle;
-
-  /// No description provided for @whoWentQ.
-  ///
-  /// In en, this message translates to:
-  /// **'Who went?'**
-  String get whoWentQ;
-
   /// No description provided for @whenQ.
   ///
   /// In en, this message translates to:
   /// **'When?'**
   String get whenQ;
-
-  /// No description provided for @howLongQ.
-  ///
-  /// In en, this message translates to:
-  /// **'How long?'**
-  String get howLongQ;
 
   /// No description provided for @whichKidsQ.
   ///
@@ -553,12 +529,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Activities'**
   String get activities;
-
-  /// No description provided for @addActivityEllipsis.
-  ///
-  /// In en, this message translates to:
-  /// **'Add activity…'**
-  String get addActivityEllipsis;
 
   /// No description provided for @log.
   ///
@@ -1358,11 +1328,23 @@ abstract class AppLocalizations {
   /// **'Your data'**
   String get yourData;
 
-  /// No description provided for @logSub.
+  /// No description provided for @exportData.
   ///
   /// In en, this message translates to:
-  /// **'Every visit, newest first'**
-  String get logSub;
+  /// **'Export'**
+  String get exportData;
+
+  /// No description provided for @exportDataSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Every entry as a CSV file'**
+  String get exportDataSub;
+
+  /// No description provided for @exportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The export could not be made.'**
+  String get exportFailed;
 
   /// No description provided for @deleteAllData.
   ///

@@ -19,8 +19,8 @@ back.
 
 ### Where do I see everything I logged?
 
-In **Settings > Log**: every visit, vacation and nobody-went day, newest
-first. Tap one to edit or delete it. On **Today**, long-press a logged
+Open **History** and tap the list icon at the top: every visit, vacation and
+nobody-went day, newest first. Tap one to edit or delete it. On **Today**, long-press a logged
 **Morning** or **Evening** box to edit or delete that visit.
 
 ### Nobody went today. How do I record that?
@@ -66,6 +66,21 @@ Visits, vacation and nobody-went days, the names of parents and kids, and the
 activities and reasons you typed. Plans are shared too, with the days you
 marked **Done** or **Skip**. Reminders (also a plan's own reminder), the outdoor
 goal and the look of the app are set on each phone.
+
+### Can I get my log out of the app?
+
+Yes. **Settings > Export** makes a CSV file of every entry and opens the share
+sheet, so you can save it to Files or send it to yourself. It opens in Numbers
+and Excel.
+
+### I renamed someone. What happens to the old visits?
+
+They are renamed too. Change the name in **Settings > Parents and kids**; the
+visits and plans under the old name follow, and their counts stay together.
+
+### Why didn't I get a reminder today?
+
+The daily reminders stay quiet on a day that is already logged.
 
 ### My reminders don't arrive.
 

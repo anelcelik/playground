@@ -7,10 +7,7 @@ import 'l10n/l10n.dart';
 // Flat, architectural, one accent. No gradients, no radii, 2px rules.
 
 const kInk       = Color(0xFF201E1D); // near-black — text, rules, chrome
-const kInk2      = Color(0xFF444141);
 const kInk3      = Color(0xFF605D5D); // secondary text
-const kInk4      = Color(0xFF7D7979); // labels
-const kInk5      = Color(0xFF9B9797); // disabled
 const kPaper     = Color(0xFFF3F2F2); // page
 const kPaper2    = Color(0xFFEAE9E9); // recessed surface
 const kAccent    = Color(0xFFEC3013); // the single accent
@@ -33,17 +30,6 @@ const kSwingGreen  = Color(0xFF12443A);
 const kSwingOrange = Color(0xFFF0512E);
 
 const kFont = 'Archivo';
-
-// Legacy names, Modernist values. The screens that were not rewritten
-// (entry_screen, edit_entry_screen, setup_screen, dashboard_screen,
-// notifications_screen, recurring_activity_form, manage_recurring_screen,
-// invite_family_screen) still reference these as const, so they keep the
-// names and pick up the new palette for free.
-const kGreen   = kAccent;
-const kGreenLt = Color(0xFFFF563C);
-const kGreenDk = kAccentDk;
-const kAmber   = kInk;
-const kBlue    = kInk3;
 
 // ── Type scale ────────────────────────────────────────────
 // Archivo at heavy weights with tight tracking is the whole identity.
@@ -287,6 +273,12 @@ List<Color> swatchesOf(AppColors c) =>
 // accent; rename it across the codebase when convenient.
 
 class AppColors extends ThemeExtension<AppColors> {
+  /// Delete, remove access: the same red in every theme.
+  static const Color danger = Colors.red;
+
+  /// The sync square while a sync is running.
+  static const Color pending = Color(0xFFF5A623);
+
   final Color bg;
   final Color card;
 

@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../db/database_helper.dart';
-import '../models/entry.dart';
 import '../models/recurring_activity.dart';
 import '../notifications/notification_service.dart';
 
@@ -98,22 +97,6 @@ class SyncService {
     }
   }
 
-  /// Push a single entry immediately after save / soft-delete.
-  /// Silent — does not change the status dot. On failure the entry keeps its
-  /// needs_push flag and is retried on the next sync cycle.
-  Future<void> pushEntry(Entry entry) async {
-    if (!_isIos || paused) return;
-    try {
-      await _kChannel
-          .invokeMethod<void>('saveEntry', entry.toJsonMap())
-          .timeout(_kCallTimeout);
-      await DatabaseHelper.instance
-          .markEntriesPushed([(uuid: entry.uuid, lastModified: entry.lastModified)]);
-    } catch (e) {
-      debugPrint('[CloudKit] pushEntry error: $e');
-    }
-  }
-
   /// Settings › Delete all data: deletes this family's iCloud copy so sync
   /// can't bring it back. True when it is gone or there is none to reach
   /// (not iOS, a build without iCloud, signed out of iCloud); false when the
@@ -189,19 +172,6 @@ class SyncService {
     }
   }
 
-  /// Returns the iCloud share URL string, or null on error.
-  /// Owner calls this once and sends the link via WhatsApp / iMessage.
-  /// Partner taps the link → iOS handles the accept flow automatically.
-  Future<String?> createShareLink() async {
-    if (!_isIos) return null;
-    try {
-      return await _kChannel.invokeMethod<String>('createShareLink');
-    } catch (e) {
-      debugPrint('[CloudKit] createShareLink error: $e');
-      return null;
-    }
-  }
-
   // ── Private helpers ───────────────────────────────────
 
   Future<void> _push() async {
@@ -251,7 +221,7 @@ class SyncService {
       if (id.isEmpty) continue;
       try {
         final plan = await DatabaseHelper.instance.getRecurringActivity(id);
-        if (plan != null && plan.isActive && plan.notifyEnabled) {
+        if (plan != null) {
           await NotificationService.instance.scheduleRecurringActivity(plan);
         } else {
           await NotificationService.instance.cancelRecurringActivity(plan ??

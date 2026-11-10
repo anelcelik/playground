@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/family.dart';
 import '../services/data_reset.dart';
+import '../services/export_service.dart';
 import '../sync/sync_service.dart';
 import '../theme.dart';
 import '../widgets/modernist.dart';
@@ -10,14 +11,12 @@ import 'invite_family_screen.dart';
 import 'notifications_screen.dart';
 import 'display_settings_screen.dart';
 import 'goal_screen.dart';
-import 'log_screen.dart';
 import 'privacy_screen.dart';
-import 'recap_screen.dart';
 import '../l10n/l10n.dart';
 import '../settings/app_settings.dart';
 
-/// The fourth tab. Collects what the gear PopupMenuButton used to hold,
-/// minus Recap (now on Today) and Recurring Activities (now the Plans tab).
+/// The fourth tab: the family, how the app looks and behaves, and the data
+/// (export, delete everything). Recap is on Today, the Log on History.
 class SettingsScreen extends StatelessWidget {
   final Family family;
   final VoidCallback onFamilyChanged;
@@ -92,11 +91,6 @@ class SettingsScreen extends StatelessWidget {
                   builder: (_) => const DisplaySettingsScreen())),
         ),
         _Row(
-          label: context.l10n.recap,
-          onTap: () => Navigator.push(context,
-              MaterialPageRoute(builder: (_) => const RecapScreen())),
-        ),
-        _Row(
           label: context.l10n.privacy,
           value: context.l10n.noDataCollected,
           onTap: () => Navigator.push(context,
@@ -105,10 +99,15 @@ class SettingsScreen extends StatelessWidget {
         const Rule(),
         SectionLabel(context.l10n.yourData),
         _Row(
-          label: context.l10n.log,
-          value: context.l10n.logSub,
-          onTap: () => Navigator.push(context,
-              MaterialPageRoute(builder: (_) => LogScreen(family: family))),
+          label: context.l10n.exportData,
+          value: context.l10n.exportDataSub,
+          onTap: () async {
+            final messenger = ScaffoldMessenger.of(context);
+            final failed = context.l10n.exportFailed;
+            if (!await ExportService.exportLog()) {
+              messenger.showSnackBar(toast(failed));
+            }
+          },
         ),
         _Row(
           label: context.l10n.deleteAllData,
@@ -190,7 +189,7 @@ Future<void> _confirmDeleteAll(BuildContext context) async {
         TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(ctx.l10n.deleteEverything,
-                style: const TextStyle(color: Colors.red))),
+                style: const TextStyle(color: AppColors.danger))),
       ],
     ),
   );

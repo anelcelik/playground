@@ -10,9 +10,6 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
-    # Reference drop-ins from the design restructure — kept for diffing,
-    # not part of the package tree.
-    - iOS app design improvements*/**
   errors:
     # Keep the tree clean — unused code fails CI instead of accumulating.
     unused_local_variable: warning

@@ -493,6 +493,44 @@ void main() {
     });
   });
 
+  test('renaming a parent or kid renames them in visits and plans', () async {
+    await db.saveFamily(['Mom', 'Dad'], ['Bean', 'Pip']);
+    final both = await db.insertEntry(const Entry(
+        date: '2026-06-01',
+        shift: 'morning',
+        user: 'Mom,Dad',
+        vacation: false,
+        kids: 'Bean,Pip'));
+    final dadOnly = await db.insertEntry(const Entry(
+        date: '2026-06-02',
+        shift: 'morning',
+        user: 'Dad',
+        vacation: false,
+        kids: 'Pip'));
+    await db.upsertRecurringActivity(const RecurringActivity(
+        id: 'swim', title: 'Swimming', kidNames: ['Bean'], repeatDays: [0]));
+    await db.markEntriesPushed([
+      (uuid: both.uuid, lastModified: both.lastModified),
+      (uuid: dadOnly.uuid, lastModified: dadOnly.lastModified),
+    ]);
+
+    await db.saveFamily(['Mama', 'Dad'], ['Beanie', 'Pip'],
+        renamedParents: {'Mom': 'Mama'}, renamedKids: {'Bean': 'Beanie'});
+
+    final renamed = (await db.getEntryByUuid(both.uuid))!;
+    expect(renamed.user, 'Mama,Dad');
+    expect(renamed.kids, 'Beanie,Pip');
+    expect((await db.getEntryByUuid(dadOnly.uuid))!.user, 'Dad');
+    expect((await db.getAllRecurringActivities()).single.kidNames, ['Beanie']);
+    // Only the visit that changed goes to iCloud again.
+    expect((await db.getDirtyEntries()).map((e) => e.uuid), [both.uuid]);
+
+    // The old visits count for the new name.
+    final stats = await db.getDashboard(period: 'all');
+    expect((stats['by_user'] as Map)['Mama'], 1);
+    expect((stats['kids'] as Map)['Beanie'], 1);
+  });
+
   test('reminder time labels follow the 24-hour setting', () async {
     const a = RecurringActivity(
       id: 'a1',

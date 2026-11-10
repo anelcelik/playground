@@ -10,9 +10,8 @@ import '../widgets/entry_row.dart';
 import '../widgets/modernist.dart';
 import '../l10n/l10n.dart';
 
-/// Settings › Log: every visit, vacation and nobody-went day, newest first,
-/// grouped by day. Tap one to edit or delete it. (Moved here from the Today
-/// and History tabs, which keep their summaries.)
+/// History › Log (the list icon): every visit, vacation and nobody-went day, newest first,
+/// grouped by day. Tap one to edit or delete it.
 class LogScreen extends StatefulWidget {
   final Family family;
 

@@ -4,16 +4,13 @@ Family playground visit tracker: who went, when, how long, what the kids did,
 and why nobody went. Fully local SQLite storage with optional CloudKit sync
 between family members (works across different Apple IDs).
 
-The Android variant lives in `../ANDROID/`; see the repo root README for the
-feature matrix.
-
 ## Layout
 
 | Path | What it is |
 |------|------------|
 | `lib/` | All Dart code (screens, models, db, sync, notifications) |
 | `ios/` | Committed Xcode project — includes `CloudKitPlugin.swift`, CloudKit-aware `AppDelegate`/`SceneDelegate`, `Runner.entitlements` (dev push env, used for Debug/Profile) + `Runner-Release.entitlements` (production push env, used for Release/App Store), `PrivacyInfo.xcprivacy` (declares `UserDefaults` usage per Apple's May 2024 policy) |
-| `test/` | Unit tests (sync merge rules, models) + widget smoke tests |
+| `test/` | Unit tests (merge rules, the sync cycle, reminders, models) + widget smoke tests |
 | `assets/icon.png` | 1024×1024 source icon (`dart run flutter_launcher_icons`) |
 
 ## Develop on Linux (no Mac needed)
@@ -52,13 +49,16 @@ The iOS project is fully wired in this repo — nothing to copy or generate:
    and push entitlement are already in `Runner.entitlements`.
 3. `flutter run -d <your-iphone>` over USB.
 
-Unsigned CI builds: GitHub Actions (`.github/workflows/ios.yml`) produces an
-unsigned IPA artifact on every push touching `IOS/`.
+Without a Mac: GitHub Actions (`.github/workflows/ios.yml`) builds an
+unsigned IPA for every pull request and every push to `main` that touches
+`IOS/`; `ios-testflight.yml` builds and uploads a signed one for a `v*` tag.
 
 ## How sync works
 
-- SQLite is the source of truth; every entry has a `uuid`, `last_modified`
-  (Unix ms) and an `is_deleted` tombstone.
+- SQLite is the source of truth; every entry and every plan has an id,
+  `last_modified` (Unix ms) and an `is_deleted` tombstone. A plan's Done /
+  Skip days sync too, one record per plan and day.
+- Per phone, never synced: reminders (also a plan's own), the goal, the look.
 - A `needs_push` flag marks locally changed rows; sync pushes only those,
   batched into one `CKModifyRecordsOperation` (savePolicy `.changedKeys`).
 - Sync order is fetch → merge → push. Merge rule: newer `last_modified`

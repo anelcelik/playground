@@ -108,11 +108,14 @@ void main() {
       expect(activity(active: false).appliesTo(monday), isFalse);
     });
 
-    test('notifId stays in the reserved 100–9099 range', () {
-      for (var day = 0; day < 7; day++) {
-        final id = activity().notifId(day);
-        expect(id, inInclusiveRange(100, 9099));
-      }
+    test('notification ids are fixed, above the daily ones, and fit 32 bits',
+        () {
+      // Written out: the value must never change between app versions.
+      expect(stableHash('football'), 0x659bc978);
+      final base = activity().notifBase;
+      expect(base, greaterThanOrEqualTo(1000));
+      expect(base + 31, lessThan(0x7fffffff));
+      expect(base, activity().notifBase);
     });
   });
 

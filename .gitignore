@@ -1,10 +1,4 @@
-playground.db
-__pycache__/
-*.pyc
-*.pyo
-.env
-
-# Flutter SDK (downloaded locally by VS Code extension — not committed)
+# Flutter SDK, if it was downloaded into the project
 IOS/flutter/
 
 # Flutter build output
@@ -12,4 +6,6 @@ IOS/build/
 IOS/.dart_tool/
 IOS/.flutter-plugins
 IOS/.flutter-plugins-dependencies
+
 *.zip
+.env

@@ -230,28 +230,13 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get selectWhoWent => 'Vyberte, kdo šel';
-
-  @override
-  String get editEntryTitle => 'Upravit záznam';
-
-  @override
-  String get whoWentQ => 'Kdo šel?';
-
-  @override
   String get whenQ => 'Kdy?';
-
-  @override
-  String get howLongQ => 'Jak dlouho?';
 
   @override
   String get whichKidsQ => 'Které děti?';
 
   @override
   String get activities => 'Aktivity';
-
-  @override
-  String get addActivityEllipsis => 'Přidat aktivitu…';
 
   @override
   String get log => 'Záznamy';
@@ -710,7 +695,13 @@ class AppLocalizationsCs extends AppLocalizations {
   String get yourData => 'Vaše data';
 
   @override
-  String get logSub => 'Všechny návštěvy, nejnovější nahoře';
+  String get exportData => 'Export';
+
+  @override
+  String get exportDataSub => 'Všechny záznamy jako soubor CSV';
+
+  @override
+  String get exportFailed => 'Export se nepodařilo vytvořit.';
 
   @override
   String get deleteAllData => 'Smazat všechna data';

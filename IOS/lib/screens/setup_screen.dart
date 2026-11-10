@@ -2,12 +2,8 @@ import 'package:flutter/material.dart';
 import '../db/database_helper.dart';
 
 import '../theme.dart';
+import '../widgets/modernist.dart';
 import '../l10n/l10n.dart';
-
-// Brand accent colours — intentionally fixed in both light and dark mode
-// _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
-
-
 
 class SetupScreen extends StatefulWidget {
   final bool isEditing;
@@ -28,20 +24,24 @@ class SetupScreen extends StatefulWidget {
 }
 
 class _SetupScreenState extends State<SetupScreen> {
-  // Theme-aware colour getters — readable from any method on this State
-
   final List<TextEditingController> _parents = [];
   final List<TextEditingController> _kids = [];
+  // The name each field started with, to tell a rename from a new person.
+  final Map<TextEditingController, String> _was = {};
 
   @override
   void initState() {
     super.initState();
     if (widget.isEditing) {
       for (final p in widget.initialParents) {
-        _parents.add(TextEditingController(text: p));
+        final c = TextEditingController(text: p);
+        _parents.add(c);
+        _was[c] = p;
       }
       for (final k in widget.initialKids) {
-        _kids.add(TextEditingController(text: k));
+        final c = TextEditingController(text: k);
+        _kids.add(c);
+        _was[c] = k;
       }
     } else {
       _parents.add(TextEditingController());
@@ -68,19 +68,27 @@ class _SetupScreenState extends State<SetupScreen> {
       _toast(context.l10n.addParentAndKid);
       return;
     }
-    await DatabaseHelper.instance.saveFamily(parents, kids);
+    // A field whose name changed is the same person under a new name, as
+    // long as the old name isn't still someone else's.
+    Map<String, String> renames(
+            List<TextEditingController> fields, List<String> names) =>
+        {
+          for (final c in fields)
+            if (_was[c] != null &&
+                c.text.trim().isNotEmpty &&
+                c.text.trim() != _was[c] &&
+                !names.contains(_was[c]))
+              _was[c]!: c.text.trim(),
+        };
+    await DatabaseHelper.instance.saveFamily(parents, kids,
+        renamedParents: renames(_parents, parents),
+        renamedKids: renames(_kids, kids));
     widget.onComplete();
   }
 
   void _toast(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        behavior: SnackBarBehavior.floating,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(toast(msg));
   }
 
   void _removeCtrl(List<TextEditingController> list, int i) {

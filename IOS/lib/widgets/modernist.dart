@@ -266,3 +266,30 @@ class SquareSwitch extends StatelessWidget {
     );
   }
 }
+
+/// The app's snack bar: floating, square, gone after [seconds].
+SnackBar toast(String message, {int seconds = 4}) => SnackBar(
+      content: Text(message),
+      behavior: SnackBarBehavior.floating,
+      duration: Duration(seconds: seconds),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+    );
+
+/// A chip label with a check in front when selected, like the kids' chips.
+Widget checkText(String label, bool selected,
+        {required TextStyle style, TextAlign? textAlign}) =>
+    Text.rich(
+      TextSpan(children: [
+        if (selected)
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Icon(Icons.check, size: 14, color: style.color),
+            ),
+          ),
+        TextSpan(text: label),
+      ]),
+      textAlign: textAlign,
+      style: style,
+    );

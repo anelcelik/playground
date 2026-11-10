@@ -1,9 +1,10 @@
+import '../theme.dart';
 import 'package:flutter/material.dart';
 
 import '../db/database_helper.dart';
 import '../models/entry.dart';
 import '../models/family.dart';
-import '../screens/edit_entry_screen.dart';
+import '../screens/quick_visit_sheet.dart';
 import '../settings/app_settings.dart';
 import 'reason_sheet.dart';
 import '../l10n/l10n.dart';
@@ -44,9 +45,9 @@ Future<void> showEntryActions(
               onTap: () => Navigator.pop(ctx, 'reason'),
             ),
           ListTile(
-            leading: const Icon(Icons.delete_outline, color: Colors.red),
+            leading: const Icon(Icons.delete_outline, color: AppColors.danger),
             title: Text(ctx.l10n.deleteEntry,
-                style: const TextStyle(color: Colors.red)),
+                style: const TextStyle(color: AppColors.danger)),
             onTap: () => Navigator.pop(ctx, 'delete'),
           ),
           const SizedBox(height: 8),
@@ -57,16 +58,9 @@ Future<void> showEntryActions(
   if (action == null || !context.mounted) return;
 
   if (action == 'edit') {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EditEntryScreen(
-          entry: entry,
-          family: family,
-          onSaved: onChanged,
-        ),
-      ),
-    );
+    final saved = await showQuickVisitSheet(context,
+        family: family, date: entry.date, shift: entry.shift, existing: entry);
+    if (saved == true) onChanged();
     return;
   }
 
@@ -92,7 +86,7 @@ Future<void> showEntryActions(
         TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(ctx.l10n.delete,
-                style: const TextStyle(color: Colors.red))),
+                style: const TextStyle(color: AppColors.danger))),
       ],
     ),
   );

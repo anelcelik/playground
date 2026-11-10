@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../notifications/notification_service.dart';
 import 'sync_service.dart';
 
 /// Triggers sync on app-foreground and keeps a slow polling timer as a
@@ -35,7 +36,11 @@ class SyncController with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _doSync();
+    if (state == AppLifecycleState.resumed) {
+      _doSync();
+      // Another day than when the reminders were last set, perhaps.
+      NotificationService.instance.onResume();
+    }
   }
 
   void _doSync() => SyncService.instance.sync();

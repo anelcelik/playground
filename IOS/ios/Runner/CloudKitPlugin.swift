@@ -8,7 +8,7 @@
 //   - Background mode "remote-notification" (Info.plist) for silent change pushes
 //
 // SHARING BETWEEN DIFFERENT APPLE IDs:
-//   - Owner calls openShareSheet() / createShareLink() and sends the link
+//   - Owner calls openShareSheet() and sends the link
 //   - Partner taps the URL → iOS calls SceneDelegate.windowScene(_:userDidAcceptCloudKitShareWith:)
 //     which forwards to acceptShare(metadata:)
 //   - Owner writes to privateCloudDatabase; partner writes to sharedCloudDatabase
@@ -30,7 +30,6 @@ import UIKit
     // UserDefaults keys
     private let kPrivateToken      = "ck_private_token"
     private let kSharedToken       = "ck_shared_token"
-    private let kIsParticipant     = "ck_is_participant"
     private let kPrivateSubCreated = "ck_private_sub_created"
     private let kSharedSubCreated  = "ck_shared_sub_created"
     // Which zone this device syncs with ("private|<owner>" / "shared|<owner>"),
@@ -113,14 +112,6 @@ import UIKit
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
-        case "saveEntry":
-            guard let args = call.arguments as? [String: Any] else {
-                finish(result, err("ARGS", "saveEntry requires a map")); return
-            }
-            withZone(result) { db, zoneID in
-                self.saveEntries([args], db: db, zoneID: zoneID, result: result)
-            }
-
         case "saveEntries":
             guard let args = call.arguments as? [[String: Any]] else {
                 finish(result, err("ARGS", "saveEntries requires a list of maps")); return
@@ -153,11 +144,6 @@ import UIKit
         case "ensureSubscriptions":
             withZone(result) { db, _ in
                 self.ensureSubscription(db: db, result: result)
-            }
-
-        case "createShareLink":
-            withZone(result) { db, zoneID in
-                self.createShareLink(db: db, zoneID: zoneID, result: result)
             }
 
         case "openShareSheet":
@@ -240,7 +226,7 @@ import UIKit
                     self.finish(result, self.err("DELETE_FAILED", error.localizedDescription))
                     return
                 }
-                for key in [self.kPrivateToken, self.kSharedToken, self.kIsParticipant,
+                for key in [self.kPrivateToken, self.kSharedToken,
                             self.kZoneKey, self.kZoneChanged, self.kJoined] {
                     UserDefaults.standard.removeObject(forKey: key)
                 }
@@ -332,7 +318,6 @@ import UIKit
                 return
             }
             if let zone = sharedZones?.first(where: { $0.zoneID.zoneName == Self.zoneName }) {
-                UserDefaults.standard.set(true, forKey: self.kIsParticipant)
                 completion(zone, sharedDB)
                 return
             }
@@ -344,7 +329,6 @@ import UIKit
                     return
                 }
                 if let zone = zones?.first(where: { $0.zoneID.zoneName == Self.zoneName }) {
-                    UserDefaults.standard.set(false, forKey: self.kIsParticipant)
                     completion(zone, privateDB)
                     return
                 }
@@ -367,7 +351,6 @@ import UIKit
         op.modifyRecordZonesResultBlock = { result in
             switch result {
             case .success:
-                UserDefaults.standard.set(false, forKey: self.kIsParticipant)
                 completion(zone, self.ckContainer.privateCloudDatabase)
             case .failure(let error):
                 print("[CloudKit] createZone failed: \(error)")
@@ -394,7 +377,9 @@ import UIKit
         record["last_modified"] = (map["last_modified"] as? Int ?? 0) as CKRecordValue
         record["is_deleted"]    = ((map["is_deleted"]   as? Bool ?? false) ? 1 : 0) as CKRecordValue
 
-        setOptionalString(record: record, key: "created_at", value: map["created_at"])
+        if let created = map["created_at"] as? String, !created.isEmpty {
+            record["created_at"] = created as CKRecordValue
+        }
         // Always written, "" for none: with .changedKeys an unset key would
         // keep its old value on the server, so clearing a field on one phone
         // would never reach the other.
@@ -503,12 +488,6 @@ import UIKit
             }
         }
         db.add(op)
-    }
-
-    private func setOptionalString(record: CKRecord, key: String, value: Any?) {
-        if let str = value as? String, !str.isEmpty {
-            record[key] = str as CKRecordValue
-        }
     }
 
     private func nonEmpty(_ s: String?) -> String? {
@@ -744,7 +723,6 @@ import UIKit
                 // sync, reset the shared-DB change token, and sync immediately.
                 self.cachedZone = nil
                 self.cachedDB   = nil
-                UserDefaults.standard.set(true, forKey: self.kIsParticipant)
                 UserDefaults.standard.removeObject(forKey: self.kSharedToken)
                 print("[CloudKit] Share accepted successfully")
                 self.notifyRemoteChange()
@@ -798,31 +776,6 @@ import UIKit
                 }
             }
             db.add(op)
-        }
-    }
-
-    // MARK: - createShareLink
-
-    /// Owner calls this once and sends the URL to family members.
-    private func createShareLink(
-        db: CKDatabase,
-        zoneID: CKRecordZone.ID,
-        result: @escaping FlutterResult
-    ) {
-        guard db.databaseScope == .private else {
-            finish(result, err("NOT_OWNER",
-                "Only the share owner can create a link. " +
-                "Have the original device create the link.")); return
-        }
-        fetchOrCreateShare(db: db, zoneID: zoneID) { share, error in
-            if let url = share?.url {
-                self.finish(result, url.absoluteString)
-            } else if let error = error {
-                self.finish(result, self.err("SHARE_FAILED", error.localizedDescription))
-            } else {
-                self.finish(result, self.err("NO_URL",
-                    "Share saved but no URL was returned yet. Try again in a moment."))
-            }
         }
     }
 
@@ -1033,7 +986,6 @@ extension CloudKitPlugin: UICloudSharingControllerDelegate {
     ) {
         cachedZone = nil
         cachedDB   = nil
-        UserDefaults.standard.set(false, forKey: kIsParticipant)
     }
 
     public func itemTitle(for csc: UICloudSharingController) -> String? {

@@ -99,16 +99,16 @@ class _TodayScreenState extends State<TodayScreen> {
     final last = await DatabaseHelper.instance.getMostRecentVisitEntries();
     final all = await DatabaseHelper.instance.getAllEntries();
 
-    // Seven small indexed queries beat one hand-rolled aggregate here.
-    _week.clear();
-    final monday = _day.subtract(Duration(days: _day.weekday - 1));
+    // The week strip, from the entries already in hand.
+    final week = <String, int>{};
+    final monday = DateTime(_day.year, _day.month, _day.day - (_day.weekday - 1));
     for (var i = 0; i < 7; i++) {
-      final d = _fmt(monday.add(Duration(days: i)));
-      final dayEntries = await DatabaseHelper.instance.getEntriesForDate(d);
+      final d = _fmt(DateTime(monday.year, monday.month, monday.day + i));
+      final dayEntries = all.where((e) => e.date == d);
       if (dayEntries.any((e) => e.vacation)) {
-        _week[d] = -1; // vacation
+        week[d] = -1; // vacation
       } else {
-        _week[d] = dayEntries
+        week[d] = dayEntries
             .where((e) => !e.vacation && !e.noPlayground)
             .expand((e) => e.userList)
             .toSet()
@@ -118,6 +118,9 @@ class _TodayScreenState extends State<TodayScreen> {
 
     if (!mounted) return;
     setState(() {
+      _week
+        ..clear()
+        ..addAll(week);
       _entries = entries;
       _recurring = recurring;
       _lastVisit = last;
@@ -270,7 +273,6 @@ class _TodayScreenState extends State<TodayScreen> {
                     style: AppType.label
                         .copyWith(color: c.accentTxt, fontSize: 11)),
               ),
-            // Recap used to be buried in the gear popup.
             TextButton(
               onPressed: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const RecapScreen())),
@@ -596,7 +598,7 @@ class _TodayScreenState extends State<TodayScreen> {
   Widget _shiftBlock(AppColors c, String shift, String label, Entry? entry) {
     final logged = entry != null;
     // Tap edits the visit; a long press offers Edit / Delete (the day's full
-    // list lives in Settings › Log now).
+    // list is the Log, on History).
     return GestureDetector(
       onLongPress: logged
           ? () => showEntryActions(context,

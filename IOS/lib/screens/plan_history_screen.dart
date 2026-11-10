@@ -75,11 +75,7 @@ class _PlanHistoryScreenState extends State<PlanHistoryScreen> {
     if (!mounted) return;
     final msg = CalendarService.message(result, reminders: reminders);
     if (msg == null) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      behavior: SnackBarBehavior.floating,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(toast(msg));
   }
 
   @override

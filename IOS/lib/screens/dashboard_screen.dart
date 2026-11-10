@@ -10,6 +10,7 @@ import '../theme.dart';
 import '../widgets/modernist.dart';
 import '../models/durations.dart';
 import 'dashboard_customise_screen.dart';
+import 'log_screen.dart';
 import '../l10n/l10n.dart';
 import '../sync/sync_service.dart';
 
@@ -132,6 +133,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Expanded(
                 child: Text(context.l10n.history,
                     style: AppType.title.copyWith(color: c.txt)),
+              ),
+              // Every entry, newest first: where one is edited or deleted.
+              Semantics(
+                button: true,
+                label: context.l10n.log,
+                child: InkWell(
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => LogScreen(family: widget.family)),
+                    );
+                    _load();
+                  },
+                  child: SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: Icon(Icons.format_list_bulleted_rounded,
+                        size: 20, color: c.txt2),
+                  ),
+                ),
               ),
               Semantics(
                 button: true,

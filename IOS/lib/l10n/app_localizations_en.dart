@@ -228,28 +228,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get selectWhoWent => 'Select who went';
-
-  @override
-  String get editEntryTitle => 'Edit entry';
-
-  @override
-  String get whoWentQ => 'Who went?';
-
-  @override
   String get whenQ => 'When?';
-
-  @override
-  String get howLongQ => 'How long?';
 
   @override
   String get whichKidsQ => 'Which kids?';
 
   @override
   String get activities => 'Activities';
-
-  @override
-  String get addActivityEllipsis => 'Add activity…';
 
   @override
   String get log => 'Log';
@@ -702,7 +687,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get yourData => 'Your data';
 
   @override
-  String get logSub => 'Every visit, newest first';
+  String get exportData => 'Export';
+
+  @override
+  String get exportDataSub => 'Every entry as a CSV file';
+
+  @override
+  String get exportFailed => 'The export could not be made.';
 
   @override
   String get deleteAllData => 'Delete all data';

@@ -26,6 +26,9 @@ import UIKit
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "CalendarBridge") {
       CalendarBridge.shared.register(with: registrar.messenger())
     }
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "ShareBridge") {
+      ShareBridge.register(with: registrar.messenger())
+    }
   }
 
   // CloudKit sends a silent push when the other device changes synced data
@@ -198,6 +201,43 @@ final class CalendarBridge: NSObject, EKEventEditViewDelegate {
       top = presented
     }
     return top
+  }
+}
+
+// Settings › Export (lib/services/export_service.dart): hands a file the app
+// wrote to iOS's share sheet (Save to Files, Mail, AirDrop).
+enum ShareBridge {
+  static func register(with messenger: FlutterBinaryMessenger) {
+    let channel = FlutterMethodChannel(
+      name: "com.playground.tracker/share", binaryMessenger: messenger)
+    channel.setMethodCallHandler { call, result in
+      guard call.method == "shareFile",
+            let args = call.arguments as? [String: Any],
+            let path = args["path"] as? String else {
+        result(FlutterMethodNotImplemented)
+        return
+      }
+      let window = UIApplication.shared.connectedScenes
+        .compactMap { $0 as? UIWindowScene }
+        .flatMap { $0.windows }
+        .first { $0.isKeyWindow }
+      var top = window?.rootViewController
+      while let presented = top?.presentedViewController {
+        top = presented
+      }
+      guard let presenter = top else {
+        result(FlutterError(code: "NO_VC", message: "Nothing to present from", details: nil))
+        return
+      }
+      let sheet = UIActivityViewController(
+        activityItems: [URL(fileURLWithPath: path)], applicationActivities: nil)
+      // iPhone only, but an iPad running the iPhone app still wants an anchor.
+      sheet.popoverPresentationController?.sourceView = presenter.view
+      sheet.popoverPresentationController?.sourceRect = CGRect(
+        x: presenter.view.bounds.midX, y: presenter.view.bounds.midY, width: 0, height: 0)
+      presenter.present(sheet, animated: true)
+      result(nil)
+    }
   }
 }
 

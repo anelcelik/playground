@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../sync/sync_service.dart';
 import '../theme.dart';
+import '../widgets/modernist.dart';
 import '../l10n/l10n.dart';
 
 /// "just now" / "3 min ago" / "2 h ago" / "5 days ago".
@@ -67,7 +68,7 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
           TextButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(context.l10n.remove,
-                  style: const TextStyle(color: Colors.red))),
+                  style: const TextStyle(color: AppColors.danger))),
         ],
       ),
     );
@@ -92,12 +93,7 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
 
   void _toast(String msg, {int seconds = 2}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      behavior: SnackBarBehavior.floating,
-      duration: Duration(seconds: seconds),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(toast(msg, seconds: seconds));
   }
 
   @override
@@ -330,7 +326,7 @@ class _ParticipantTile extends StatelessWidget {
           TextButton(
             onPressed: onRevoke,
             style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
+                foregroundColor: AppColors.danger,
                 padding: const EdgeInsets.symmetric(
                     horizontal: 10, vertical: 4)),
             child: Text(context.l10n.remove,

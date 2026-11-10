@@ -69,14 +69,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final family = _family;
     await DatabaseHelper.instance.saveFamily(family.parents, family.kids);
     await DatabaseHelper.instance.saveNotifPrefs(_reminders);
-    if (_reminders.outdoorEnabled) {
-      await NotificationService.instance
-          .scheduleOutdoor(_reminders.outdoorHour, _reminders.outdoorMinute);
-    }
-    if (_reminders.logEnabled) {
-      await NotificationService.instance
-          .scheduleLog(_reminders.logHour, _reminders.logMinute);
-    }
+    await NotificationService.instance.refreshDaily();
     SyncService.instance.sync();
     widget.onComplete();
   }

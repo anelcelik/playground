@@ -230,28 +230,13 @@ class AppLocalizationsBs extends AppLocalizations {
   }
 
   @override
-  String get selectWhoWent => 'Odaberi ko je išao';
-
-  @override
-  String get editEntryTitle => 'Uredi unos';
-
-  @override
-  String get whoWentQ => 'Ko je išao?';
-
-  @override
   String get whenQ => 'Kada?';
-
-  @override
-  String get howLongQ => 'Koliko dugo?';
 
   @override
   String get whichKidsQ => 'Koja djeca?';
 
   @override
   String get activities => 'Aktivnosti';
-
-  @override
-  String get addActivityEllipsis => 'Dodaj aktivnost…';
 
   @override
   String get log => 'Dnevnik';
@@ -709,7 +694,13 @@ class AppLocalizationsBs extends AppLocalizations {
   String get yourData => 'Tvoji podaci';
 
   @override
-  String get logSub => 'Sve posjete, najnovije prve';
+  String get exportData => 'Izvoz';
+
+  @override
+  String get exportDataSub => 'Svi unosi kao CSV datoteka';
+
+  @override
+  String get exportFailed => 'Izvoz nije uspio.';
 
   @override
   String get deleteAllData => 'Obriši sve podatke';

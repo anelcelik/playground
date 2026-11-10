@@ -8,7 +8,7 @@ import 'entry_actions.dart';
 import '../l10n/l10n.dart';
 
 /// One logged entry: who, when, how long, which kids, activities. Tapping it
-/// opens Edit / Delete (entry_actions.dart). Used by Settings › Log.
+/// opens Edit / Delete (entry_actions.dart). Used by the Log.
 class EntryRow extends StatelessWidget {
   final Entry entry;
   final Family family;

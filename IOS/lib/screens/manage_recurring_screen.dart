@@ -11,11 +11,6 @@ import '../theme.dart';
 import '../l10n/l10n.dart';
 import '../settings/app_settings.dart';
 
-// Brand accent colours — intentionally fixed in both light and dark mode
-// _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
-
-
-
 class ManageRecurringScreen extends StatefulWidget {
   const ManageRecurringScreen({super.key});
 
@@ -24,8 +19,6 @@ class ManageRecurringScreen extends StatefulWidget {
 }
 
 class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
-  // Theme-aware colour getters — readable from any method on this State
-
   List<RecurringActivity> _activities = [];
   Family _family = const Family(parents: [], kids: []);
   bool _loading = true;
@@ -99,7 +92,7 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
           TextButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(context.l10n.delete,
-                  style: const TextStyle(color: Colors.red))),
+                  style: const TextStyle(color: AppColors.danger))),
         ],
       ),
     );
@@ -270,7 +263,7 @@ class _ActivityTile extends StatelessWidget {
           _TileAction(
               icon: Icons.delete_outline,
               label: context.l10n.delete,
-              color: Colors.red,
+              color: AppColors.danger,
               onTap: onDelete),
         ]),
       ]),

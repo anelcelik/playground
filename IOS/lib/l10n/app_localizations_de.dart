@@ -228,28 +228,13 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get selectWhoWent => 'Wähle, wer dabei war';
-
-  @override
-  String get editEntryTitle => 'Eintrag bearbeiten';
-
-  @override
-  String get whoWentQ => 'Wer war dabei?';
-
-  @override
   String get whenQ => 'Wann?';
-
-  @override
-  String get howLongQ => 'Wie lange?';
 
   @override
   String get whichKidsQ => 'Welche Kinder?';
 
   @override
   String get activities => 'Aktivitäten';
-
-  @override
-  String get addActivityEllipsis => 'Aktivität hinzufügen…';
 
   @override
   String get log => 'Protokoll';
@@ -709,7 +694,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get yourData => 'Deine Daten';
 
   @override
-  String get logSub => 'Jeder Besuch, die neuesten zuerst';
+  String get exportData => 'Exportieren';
+
+  @override
+  String get exportDataSub => 'Alle Einträge als CSV-Datei';
+
+  @override
+  String get exportFailed => 'Der Export konnte nicht erstellt werden.';
 
   @override
   String get deleteAllData => 'Alle Daten löschen';

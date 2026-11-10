@@ -7,11 +7,6 @@ import '../theme.dart';
 import '../widgets/modernist.dart';
 import '../l10n/l10n.dart';
 
-// Brand accent colours — intentionally fixed in both light and dark mode
-// _kCard / _kBorder / _kTxt / _kTxt2 / _kBg come from AppColors.of(context) per build()
-
-
-
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
@@ -20,8 +15,6 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  // Theme-aware colour getters — readable from any method on this State
-
   NotifPrefs _prefs = const NotifPrefs();
   bool _loading = true;
   bool _permissionGranted = false;
@@ -55,18 +48,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
 
     // Apply immediately
-    if (prefs.outdoorEnabled) {
-      await NotificationService.instance
-          .scheduleOutdoor(prefs.outdoorHour, prefs.outdoorMinute);
-    } else {
-      await NotificationService.instance.cancelOutdoor();
-    }
-    if (prefs.logEnabled) {
-      await NotificationService.instance
-          .scheduleLog(prefs.logHour, prefs.logMinute);
-    } else {
-      await NotificationService.instance.cancelLog();
-    }
+    await NotificationService.instance.refreshDaily();
   }
 
   Future<TimeOfDay?> _pickTime(TimeOfDay initial) =>
