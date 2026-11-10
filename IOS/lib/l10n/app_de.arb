@@ -214,7 +214,7 @@
   "deleteAllDataSub": "Auf diesem iPhone und in iCloud",
   "aboutNote": "Playground Tracker ist ein einmaliger Kauf im App Store. Kein Abo, kein Konto, keine Werbung. Dein Protokoll bleibt auf deinen Geräten und wird über deine eigene iCloud synchronisiert.",
   "deleteAllDataQuestion": "Alle Daten löschen?",
-  "deleteAllDataBody": "Jeder Besuch, Plan, Name und jede Einstellung wird von diesem iPhone und aus deiner iCloud gelöscht. Wenn du das Protokoll mit deiner Familie teilst, verliert sie es auch. Das lässt sich nicht rückgängig machen.",
+  "deleteAllDataBody": "Jeder Besuch, Plan, Name und jede Einstellung wird von diesem iPhone und aus deiner iCloud gelöscht. Wenn du das Protokoll mit deiner Familie teilst, endet das Teilen und die geteilte Kopie wird gelöscht; was schon auf ihrem iPhone ist, bleibt, bis sie es dort löscht. Das lässt sich nicht rückgängig machen.",
   "deleteEverything": "Alles löschen",
   "deleting": "Wird gelöscht…",
   "nothingDeleted": "Nichts wurde gelöscht",
@@ -328,7 +328,7 @@
   "privChildrenTitle": "Kinder",
   "privChildren": "Die App ist für Eltern gedacht. Die Namen der Kinder bleiben auf deinem iPhone und in deiner eigenen iCloud. Nichts über Kinder wird an den Entwickler oder an andere gesendet.",
   "privDeletingTitle": "Deine Daten löschen",
-  "privDeleting": "Einstellungen › Alle Daten löschen entfernt alles auf einmal, von deinem iPhone und aus deiner iCloud; wenn du das Protokoll mit deiner Familie teilst, wird es auch für sie entfernt. Du kannst auch jederzeit einzelne Einträge löschen, und wenn du die App löschst, wird alles auf dem iPhone Gespeicherte entfernt. Um das Teilen zu beenden, nutze Familien-Sync in den Einstellungen.",
+  "privDeleting": "Einstellungen › Alle Daten löschen entfernt alles auf einmal, von deinem iPhone und aus deiner iCloud; wenn du das Protokoll mit deiner Familie teilst, endet das Teilen und die geteilte iCloud-Kopie wird gelöscht, während das, was schon auf ihren iPhones ist, bleibt, bis sie es dort löschen. Du kannst auch jederzeit einzelne Einträge löschen, und wenn du die App löschst, wird alles auf dem iPhone Gespeicherte entfernt. Um das Teilen zu beenden, nutze Familien-Sync in den Einstellungen.",
   "privChangesTitle": "Änderungen",
   "privChanges": "Ändert sich diese Richtlinie, kommt die neue Fassung mit einem App-Update, und das Datum oben ändert sich.",
   "privacyEffective": "Gültig ab {date}",
@@ -366,5 +366,7 @@
   "goalAYear": "{time} pro Jahr",
   "outdoorActivity": "Aktivität draußen",
   "outdoorActivitySub": "Erledigt zählt als Zeit draußen. Für Dinge wie Klavierunterricht ausschalten.",
-  "goalToGo": "Noch {time}"
+  "goalToGo": "Noch {time}",
+  "shareNeedsICloud": "Melde dich in den Einstellungen des iPhones bei iCloud an, um dein Protokoll zu teilen.",
+  "shareFailed": "Das Teilen konnte nicht geöffnet werden. Prüfe deine Internetverbindung und versuch es noch einmal."
 }

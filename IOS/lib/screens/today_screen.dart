@@ -18,6 +18,7 @@ import 'goal_screen.dart';
 import 'quick_visit_sheet.dart';
 import 'recap_screen.dart';
 import '../l10n/l10n.dart';
+import '../sync/sync_service.dart';
 
 /// Replaces the old EntryScreen as the first tab.
 ///
@@ -82,6 +83,14 @@ class _TodayScreenState extends State<TodayScreen> {
   void initState() {
     super.initState();
     _load();
+    // A visit logged on the other phone shows up without leaving the tab.
+    SyncService.instance.dataVersion.addListener(_load);
+  }
+
+  @override
+  void dispose() {
+    SyncService.instance.dataVersion.removeListener(_load);
+    super.dispose();
   }
 
   Future<void> _load() async {

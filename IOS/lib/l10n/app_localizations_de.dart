@@ -726,7 +726,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get deleteAllDataBody =>
-      'Jeder Besuch, Plan, Name und jede Einstellung wird von diesem iPhone und aus deiner iCloud gelöscht. Wenn du das Protokoll mit deiner Familie teilst, verliert sie es auch. Das lässt sich nicht rückgängig machen.';
+      'Jeder Besuch, Plan, Name und jede Einstellung wird von diesem iPhone und aus deiner iCloud gelöscht. Wenn du das Protokoll mit deiner Familie teilst, endet das Teilen und die geteilte Kopie wird gelöscht; was schon auf ihrem iPhone ist, bleibt, bis sie es dort löscht. Das lässt sich nicht rückgängig machen.';
 
   @override
   String get deleteEverything => 'Alles löschen';
@@ -1126,7 +1126,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get privDeleting =>
-      'Einstellungen › Alle Daten löschen entfernt alles auf einmal, von deinem iPhone und aus deiner iCloud; wenn du das Protokoll mit deiner Familie teilst, wird es auch für sie entfernt. Du kannst auch jederzeit einzelne Einträge löschen, und wenn du die App löschst, wird alles auf dem iPhone Gespeicherte entfernt. Um das Teilen zu beenden, nutze Familien-Sync in den Einstellungen.';
+      'Einstellungen › Alle Daten löschen entfernt alles auf einmal, von deinem iPhone und aus deiner iCloud; wenn du das Protokoll mit deiner Familie teilst, endet das Teilen und die geteilte iCloud-Kopie wird gelöscht, während das, was schon auf ihren iPhones ist, bleibt, bis sie es dort löschen. Du kannst auch jederzeit einzelne Einträge löschen, und wenn du die App löschst, wird alles auf dem iPhone Gespeicherte entfernt. Um das Teilen zu beenden, nutze Familien-Sync in den Einstellungen.';
 
   @override
   String get privChangesTitle => 'Änderungen';
@@ -1286,4 +1286,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String goalToGo(String time) {
     return 'Noch $time';
   }
+
+  @override
+  String get shareNeedsICloud =>
+      'Melde dich in den Einstellungen des iPhones bei iCloud an, um dein Protokoll zu teilen.';
+
+  @override
+  String get shareFailed =>
+      'Das Teilen konnte nicht geöffnet werden. Prüfe deine Internetverbindung und versuch es noch einmal.';
 }

@@ -719,7 +719,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteAllDataBody =>
-      'Every visit, plan, name and setting is deleted from this iPhone and from your iCloud. If you share the log with family, they lose it too. This can’t be undone.';
+      'Every visit, plan, name and setting is deleted from this iPhone and from your iCloud. If you share the log with family, sharing stops and the shared copy is deleted; what is already on their iPhone stays until they delete it there. This can’t be undone.';
 
   @override
   String get deleteEverything => 'Delete everything';
@@ -1112,7 +1112,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privDeleting =>
-      'Settings › Delete all data removes everything at once, from your iPhone and from your iCloud; if you share the log with family, it is removed for them too. You can also delete single entries at any time, and deleting the app removes everything stored on the iPhone. To stop sharing, use Family sync in Settings.';
+      'Settings › Delete all data removes everything at once, from your iPhone and from your iCloud; if you share the log with family, sharing stops and the shared iCloud copy is deleted, while what is already on their iPhones stays until they delete it there. You can also delete single entries at any time, and deleting the app removes everything stored on the iPhone. To stop sharing, use Family sync in Settings.';
 
   @override
   String get privChangesTitle => 'Changes';
@@ -1271,4 +1271,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String goalToGo(String time) {
     return '$time to go';
   }
+
+  @override
+  String get shareNeedsICloud =>
+      'Sign in to iCloud in the iPhone’s Settings app to share your log.';
+
+  @override
+  String get shareFailed =>
+      'Sharing couldn’t be opened. Check your internet connection and try again.';
 }

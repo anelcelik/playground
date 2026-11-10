@@ -726,7 +726,7 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get deleteAllDataBody =>
-      'Svaka posjeta, plan, ime i postavka briše se sa ovog iPhonea i iz tvog iClouda. Ako dnevnik dijeliš sa porodicom, i oni ga gube. Ovo se ne može poništiti.';
+      'Svaka posjeta, plan, ime i postavka briše se sa ovog iPhonea i iz tvog iClouda. Ako dnevnik dijeliš sa porodicom, dijeljenje prestaje i dijeljena kopija se briše; ono što je već na njihovom iPhoneu ostaje dok ga tamo ne obrišu. Ovo se ne može poništiti.';
 
   @override
   String get deleteEverything => 'Obriši sve';
@@ -1123,7 +1123,7 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get privDeleting =>
-      'Postavke › Obriši sve podatke briše sve odjednom, sa tvog iPhonea i iz tvog iClouda; ako dnevnik dijeliš sa porodicom, briše se i za njih. Pojedinačne unose možeš obrisati bilo kad, a brisanjem aplikacije briše se sve što je sačuvano na iPhoneu. Da prestaneš dijeliti, koristi Porodičnu sinhronizaciju u Postavkama.';
+      'Postavke › Obriši sve podatke briše sve odjednom, sa tvog iPhonea i iz tvog iClouda; ako dnevnik dijeliš sa porodicom, dijeljenje prestaje i dijeljena kopija u iCloudu se briše, a ono što je već na njihovim iPhoneima ostaje dok ga tamo ne obrišu. Pojedinačne unose možeš obrisati bilo kad, a brisanjem aplikacije briše se sve što je sačuvano na iPhoneu. Da prestaneš dijeliti, koristi Porodičnu sinhronizaciju u Postavkama.';
 
   @override
   String get privChangesTitle => 'Promjene';
@@ -1285,4 +1285,12 @@ class AppLocalizationsBs extends AppLocalizations {
   String goalToGo(String time) {
     return 'Još $time';
   }
+
+  @override
+  String get shareNeedsICloud =>
+      'Prijavi se na iCloud u Postavkama iPhonea da bi dijelio dnevnik.';
+
+  @override
+  String get shareFailed =>
+      'Dijeljenje se nije moglo otvoriti. Provjeri internet vezu i pokušaj ponovo.';
 }

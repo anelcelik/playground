@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 
 import '../db/database_helper.dart';
 import '../models/entry.dart';
+import '../models/recurring_activity.dart';
+import '../notifications/notification_service.dart';
 
 // ── Channel ───────────────────────────────────────────────
 // Matches the channel name registered in CloudKitPlugin.swift
@@ -32,6 +34,14 @@ class SyncService {
   DateTime? _lastSyncedAt;
   DateTime? get lastSyncedAt => _lastSyncedAt;
 
+  /// Counts up whenever a sync brought in something from iCloud (a visit
+  /// from the other phone, new names). Screens listen and reload.
+  final ValueNotifier<int> dataVersion = ValueNotifier(0);
+
+  /// A sync was asked for while one was running: run once more after it, so
+  /// a change push or an accepted invitation is never dropped.
+  bool _again = false;
+
   /// Set while all data is being deleted, so no sync recreates the iCloud
   /// copy between deleting it and wiping the local database.
   bool paused = false;
@@ -52,7 +62,10 @@ class SyncService {
       return;
     }
     if (paused) return;
-    if (status.value == SyncStatus.syncing) return;
+    if (status.value == SyncStatus.syncing) {
+      _again = true;
+      return;
+    }
     status.value = SyncStatus.syncing;
 
     try {
@@ -65,9 +78,23 @@ class SyncService {
       // Native side skipped CloudKit: this build has no iCloud entitlement
       // (see CloudKitPlugin.isAvailable).
       status.value = SyncStatus.unavailable;
+    } on PlatformException catch (e, st) {
+      if (e.code == 'ICLOUD_UNAVAILABLE') {
+        // Not signed in to iCloud: the app simply works on this iPhone
+        // alone. Not an error worth a warning dot.
+        status.value = SyncStatus.unavailable;
+      } else {
+        debugPrint('[CloudKit] sync error: $e\n$st');
+        status.value = SyncStatus.error;
+      }
     } catch (e, st) {
       debugPrint('[CloudKit] sync error: $e\n$st');
       status.value = SyncStatus.error;
+    }
+
+    if (_again) {
+      _again = false;
+      await sync();
     }
   }
 
@@ -111,12 +138,24 @@ class SyncService {
   /// Opens the native iOS UICloudSharingController.
   /// Shows current participants, lets owner invite via Messages / WhatsApp /
   /// copy link, and revoke access — all in Apple's own UI.
-  Future<void> openShareSheet() async {
-    if (!_isIos) return;
+  /// Null when the sheet opened; otherwise why not: 'ICLOUD_UNAVAILABLE'
+  /// (not signed in to iCloud), 'UNAVAILABLE' (not an iPhone, or a build
+  /// without iCloud) or another error code (offline, …).
+  Future<String?> openShareSheet() async {
+    if (!_isIos) return 'UNAVAILABLE';
     try {
-      await _kChannel.invokeMethod<void>('openShareSheet');
+      await _kChannel
+          .invokeMethod<void>('openShareSheet')
+          .timeout(_kCallTimeout);
+      return null;
+    } on MissingPluginException {
+      return 'UNAVAILABLE';
+    } on PlatformException catch (e) {
+      debugPrint('[CloudKit] openShareSheet error: $e');
+      return e.code;
     } catch (e) {
       debugPrint('[CloudKit] openShareSheet error: $e');
+      return 'ERROR';
     }
   }
 
@@ -178,13 +217,51 @@ class SyncService {
     // Entries — only the ones modified since their last successful push,
     // all in one batched native call (one CKModifyRecordsOperation).
     final dirty = await db.getDirtyEntries();
-    if (dirty.isEmpty) return;
+    if (dirty.isNotEmpty) {
+      await _kChannel.invokeMethod<void>(
+          'saveEntries', dirty.map((e) => e.toJsonMap()).toList());
+      await db.markEntriesPushed([
+        for (final e in dirty) (uuid: e.uuid, lastModified: e.lastModified),
+      ]);
+    }
 
-    await _kChannel.invokeMethod<void>(
-        'saveEntries', dirty.map((e) => e.toJsonMap()).toList());
-    await db.markEntriesPushed([
-      for (final e in dirty) (uuid: e.uuid, lastModified: e.lastModified),
+    // Plans and their Done / Skip days. One record per plan, and one per
+    // plan and day, so two phones marking the same day meet in one record.
+    final plans = await db.getDirtyPlans();
+    final logs = await db.getDirtyPlanLogs();
+    if (plans.isEmpty && logs.isEmpty) return;
+    await _kChannel.invokeMethod<void>('saveRecords', [
+      for (final p in plans)
+        {'type': 'PlaygroundPlan', 'name': 'plan_${p['id']}', 'fields': p},
+      for (final l in logs)
+        {
+          'type': 'PlaygroundPlanLog',
+          'name': 'planlog_${l['activity_id']}_${l['date']}',
+          'fields': l,
+        },
     ]);
+    await db.markPlansPushed(plans, logs);
+  }
+
+  /// A plan changed on the other phone: this phone's own reminder for it
+  /// follows the new days, or goes when the plan was paused or deleted.
+  Future<void> _refreshPlanReminders(List plans) async {
+    for (final p in plans) {
+      final id = (p as Map)['id'] as String? ?? '';
+      if (id.isEmpty) continue;
+      try {
+        final plan = await DatabaseHelper.instance.getRecurringActivity(id);
+        if (plan != null && plan.isActive && plan.notifyEnabled) {
+          await NotificationService.instance.scheduleRecurringActivity(plan);
+        } else {
+          await NotificationService.instance.cancelRecurringActivity(plan ??
+              RecurringActivity(
+                  id: id, title: '', kidNames: const [], repeatDays: const []));
+        }
+      } catch (e) {
+        debugPrint('[CloudKit] plan reminder refresh error: $e');
+      }
+    }
   }
 
   Future<void> _fetchAndMerge() async {
@@ -193,14 +270,29 @@ class SyncService {
     if (jsonStr == null || jsonStr.isEmpty || jsonStr == '{}') return;
 
     final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+    final db = DatabaseHelper.instance;
+
+    // This device now syncs with a different iCloud zone than before: it
+    // joined a family's shared log, or lost access to one and is back on its
+    // own. That zone has none of this device's records, so all of them are
+    // pushed again.
+    if (data['zone_changed'] == true) await db.markAllForPush();
+    // Joined a family's log: their names win over the ones typed here.
+    if (data['joined'] == true) await db.setMeta('family_updated_at', '0');
 
     // Only merge if there are actual changes
     final entries = data['entries'] as List?;
     final deleted = data['deleted_uuids'] as List?;
+    final plans = data['plans'] as List? ?? [];
+    final planLogs = data['plan_logs'] as List? ?? [];
     if ((entries != null && entries.isNotEmpty) ||
         (deleted != null && deleted.isNotEmpty) ||
+        plans.isNotEmpty ||
+        planLogs.isNotEmpty ||
         data['parents'] != null) {
-      await DatabaseHelper.instance.mergeFromJson(data);
+      final changed = await db.mergeFromJson(data);
+      if (plans.isNotEmpty) await _refreshPlanReminders(plans);
+      if (changed) dataVersion.value++;
     }
   }
 

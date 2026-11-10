@@ -1391,7 +1391,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteAllDataBody.
   ///
   /// In en, this message translates to:
-  /// **'Every visit, plan, name and setting is deleted from this iPhone and from your iCloud. If you share the log with family, they lose it too. This can’t be undone.'**
+  /// **'Every visit, plan, name and setting is deleted from this iPhone and from your iCloud. If you share the log with family, sharing stops and the shared copy is deleted; what is already on their iPhone stays until they delete it there. This can’t be undone.'**
   String get deleteAllDataBody;
 
   /// No description provided for @deleteEverything.
@@ -2075,7 +2075,7 @@ abstract class AppLocalizations {
   /// No description provided for @privDeleting.
   ///
   /// In en, this message translates to:
-  /// **'Settings › Delete all data removes everything at once, from your iPhone and from your iCloud; if you share the log with family, it is removed for them too. You can also delete single entries at any time, and deleting the app removes everything stored on the iPhone. To stop sharing, use Family sync in Settings.'**
+  /// **'Settings › Delete all data removes everything at once, from your iPhone and from your iCloud; if you share the log with family, sharing stops and the shared iCloud copy is deleted, while what is already on their iPhones stays until they delete it there. You can also delete single entries at any time, and deleting the app removes everything stored on the iPhone. To stop sharing, use Family sync in Settings.'**
   String get privDeleting;
 
   /// No description provided for @privChangesTitle.
@@ -2305,6 +2305,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{time} to go'**
   String goalToGo(String time);
+
+  /// No description provided for @shareNeedsICloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to iCloud in the iPhone’s Settings app to share your log.'**
+  String get shareNeedsICloud;
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing couldn’t be opened. Check your internet connection and try again.'**
+  String get shareFailed;
 }
 
 class _AppLocalizationsDelegate

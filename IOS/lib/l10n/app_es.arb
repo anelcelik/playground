@@ -214,7 +214,7 @@
   "deleteAllDataSub": "En este iPhone y en iCloud",
   "aboutNote": "Playground Tracker es una compra única en el App Store. Sin suscripción, sin cuenta, sin anuncios. Tu registro se queda en tus dispositivos y se sincroniza con tu propio iCloud.",
   "deleteAllDataQuestion": "¿Eliminar todos los datos?",
-  "deleteAllDataBody": "Todas las visitas, planes, nombres y ajustes se eliminan de este iPhone y de tu iCloud. Si compartes el registro con tu familia, ellos también lo pierden. No se puede deshacer.",
+  "deleteAllDataBody": "Todas las visitas, planes, nombres y ajustes se eliminan de este iPhone y de tu iCloud. Si compartes el registro con tu familia, se deja de compartir y se elimina la copia compartida; lo que ya está en su iPhone se queda hasta que lo eliminen allí. No se puede deshacer.",
   "deleteEverything": "Eliminarlo todo",
   "deleting": "Eliminando…",
   "nothingDeleted": "No se ha eliminado nada",
@@ -328,7 +328,7 @@
   "privChildrenTitle": "Niños",
   "privChildren": "La app está pensada para padres. Los nombres de los niños se quedan en tu iPhone y en tu propio iCloud. No se envía nada sobre los niños al desarrollador ni a nadie más.",
   "privDeletingTitle": "Eliminar tus datos",
-  "privDeleting": "Ajustes › Eliminar todos los datos borra todo de una vez, de tu iPhone y de tu iCloud; si compartes el registro con tu familia, también se borra para ellos. También puedes eliminar registros sueltos en cualquier momento, y al eliminar la app se borra todo lo guardado en el iPhone. Para dejar de compartir, usa Sincronizar en familia en Ajustes.",
+  "privDeleting": "Ajustes › Eliminar todos los datos borra todo de una vez, de tu iPhone y de tu iCloud; si compartes el registro con tu familia, se deja de compartir y se borra la copia compartida de iCloud, mientras que lo que ya está en sus iPhone se queda hasta que lo eliminen allí. También puedes eliminar registros sueltos en cualquier momento, y al eliminar la app se borra todo lo guardado en el iPhone. Para dejar de compartir, usa Sincronizar en familia en Ajustes.",
   "privChangesTitle": "Cambios",
   "privChanges": "Si esta política cambia, la nueva versión llega con una actualización de la app y su fecha de entrada en vigor cambia arriba.",
   "privacyEffective": "En vigor desde el {date}",
@@ -366,5 +366,7 @@
   "goalAYear": "{time} al año",
   "outdoorActivity": "Actividad al aire libre",
   "outdoorActivitySub": "Al marcarla como hecha cuenta como tiempo al aire libre. Desactívalo para cosas como clases de piano.",
-  "goalToGo": "Faltan {time}"
+  "goalToGo": "Faltan {time}",
+  "shareNeedsICloud": "Inicia sesión en iCloud en los Ajustes del iPhone para compartir tu registro.",
+  "shareFailed": "No se pudo abrir la opción de compartir. Comprueba tu conexión a internet e inténtalo de nuevo."
 }

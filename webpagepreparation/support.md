@@ -57,7 +57,15 @@ the plan's time, repeating on the plan's days.
 
 Both of you need to be signed in to iCloud. Go to **Settings > Family sync**,
 tap **Invite someone** and send the link. When your partner taps the link and
-accepts, both phones stay in sync automatically.
+accepts, both phones stay in sync automatically, and your partner's app takes
+over the names you set up.
+
+### What exactly is shared?
+
+Visits, vacation and nobody-went days, the names of parents and kids, and the
+activities and reasons you typed. Plans are shared too, with the days you
+marked **Done** or **Skip**. Reminders (also a plan's own reminder), the outdoor
+goal and the look of the app are set on each phone.
 
 ### My reminders don't arrive.
 
@@ -78,12 +86,14 @@ See the [privacy policy](privacy-policy) for details.
 ### How do I delete my data?
 
 Go to **Settings > Delete all data**. It removes everything from your iPhone
-and from your iCloud at once; if you share the log with family, it is removed
-for them too. You can also delete single entries at any time.
+and from your iCloud at once. If you share the log with family, sharing stops
+and the shared copy is deleted; what is already on their iPhones stays until
+they use **Delete all data** there too. You can also delete single entries at
+any time.
 
 ### Does it work on iPad?
 
-It runs on iPad as an iPhone app.
+Playground Tracker is made for iPhone. There is no iPad version.
 
 ### Is there a subscription?
 

@@ -40,7 +40,7 @@ class DatabaseHelper {
         join(await getDatabasesPath(), 'playground.db');
     return openDatabase(
       path,
-      version: 9,
+      version: 10,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -118,6 +118,9 @@ class DatabaseHelper {
         notify_hour    INTEGER,
         notify_minute  INTEGER,
         notify_message TEXT,
+        last_modified  INTEGER DEFAULT 0,
+        is_deleted     INTEGER DEFAULT 0,
+        needs_push     INTEGER DEFAULT 1,
         created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     ''');
@@ -129,6 +132,8 @@ class DatabaseHelper {
         status      TEXT NOT NULL,
         entry_uuid  TEXT,
         skip_reason TEXT,
+        last_modified INTEGER DEFAULT 0,
+        needs_push    INTEGER DEFAULT 1,
         created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(activity_id, date)
       )
@@ -183,6 +188,25 @@ class DatabaseHelper {
       // all logged as visits, so they stay outdoor.
       await db.execute(
           'ALTER TABLE recurring_activities ADD COLUMN outdoor INTEGER DEFAULT 1');
+    }
+    if (oldVersion < 10) {
+      // Plans and how each day went now sync like visits do. DEFAULT 1 →
+      // everything already on this phone is pushed once.
+      await _createRecurringTables(db);
+      if (!await _columnExists(db, 'recurring_activities', 'needs_push')) {
+        await db.execute(
+            'ALTER TABLE recurring_activities ADD COLUMN last_modified INTEGER DEFAULT 0');
+        await db.execute(
+            'ALTER TABLE recurring_activities ADD COLUMN is_deleted INTEGER DEFAULT 0');
+        await db.execute(
+            'ALTER TABLE recurring_activities ADD COLUMN needs_push INTEGER DEFAULT 1');
+      }
+      if (!await _columnExists(db, 'recurring_activity_logs', 'needs_push')) {
+        await db.execute(
+            'ALTER TABLE recurring_activity_logs ADD COLUMN last_modified INTEGER DEFAULT 0');
+        await db.execute(
+            'ALTER TABLE recurring_activity_logs ADD COLUMN needs_push INTEGER DEFAULT 1');
+      }
     }
     if (oldVersion < 2) {
       // Add sync columns to existing entries table
@@ -525,6 +549,89 @@ class DatabaseHelper {
     await batch.commit(noResult: true);
   }
 
+  /// Everything goes to iCloud again on the next sync (the device switched
+  /// to a zone that has none of its records, see SyncService).
+  Future<void> markAllForPush() async {
+    final db = await database;
+    await db.update('entries', {'needs_push': 1});
+    await db.update('recurring_activities', {'needs_push': 1});
+    await db.update('recurring_activity_logs', {'needs_push': 1});
+    await setMeta('config_needs_push', '1');
+  }
+
+  // ── Plans: push helpers ───────────────────────────────────
+  // A plan and each day's Done / Skip sync like visits. What stays on this
+  // phone: the plan's reminder (notify_*), so one parent's reminder doesn't
+  // start ringing on the other's phone, and "missed" days, which every
+  // phone works out for itself from the days nobody marked.
+
+  /// Plans changed since their last push, deleted ones included, as the
+  /// fields of their iCloud record ("" for none: an unset field would keep
+  /// its old value on the server).
+  Future<List<Map<String, Object>>> getDirtyPlans() async {
+    final db = await database;
+    final rows = await db.query('recurring_activities',
+        where: 'needs_push = 1', orderBy: 'last_modified');
+    return [
+      for (final r in rows)
+        {
+          'id': r['id'] as String,
+          'title': r['title'] as String,
+          'kid_names': r['kid_names'] as String? ?? '[]',
+          'repeat_days': r['repeat_days'] as String? ?? '[]',
+          'date_from': r['date_from'] as String? ?? '',
+          'date_to': r['date_to'] as String? ?? '',
+          'shift': r['shift'] as String? ?? 'morning',
+          'outdoor': r['outdoor'] as int? ?? 1,
+          'is_active': r['is_active'] as int? ?? 1,
+          'created_at': r['created_at']?.toString() ?? '',
+          'last_modified': r['last_modified'] as int? ?? 0,
+          'is_deleted': r['is_deleted'] as int? ?? 0,
+        },
+    ];
+  }
+
+  /// Done and Skip days changed since their last push.
+  Future<List<Map<String, Object>>> getDirtyPlanLogs() async {
+    final db = await database;
+    final rows = await db.query('recurring_activity_logs',
+        where: "needs_push = 1 AND status != 'missed'",
+        orderBy: 'last_modified');
+    return [
+      for (final r in rows)
+        {
+          'id': r['id'] as String,
+          'activity_id': r['activity_id'] as String,
+          'date': r['date'] as String,
+          'status': r['status'] as String,
+          'entry_uuid': r['entry_uuid'] as String? ?? '',
+          'skip_reason': r['skip_reason'] as String? ?? '',
+          'last_modified': r['last_modified'] as int? ?? 0,
+        },
+    ];
+  }
+
+  /// Clears the dirty flags after a push of what [getDirtyPlans] and
+  /// [getDirtyPlanLogs] returned. Guarded by last_modified, so a change made
+  /// while the push was in flight stays dirty.
+  Future<void> markPlansPushed(List<Map<String, Object>> plans,
+      List<Map<String, Object>> logs) async {
+    if (plans.isEmpty && logs.isEmpty) return;
+    final db = await database;
+    final batch = db.batch();
+    for (final p in plans) {
+      batch.update('recurring_activities', {'needs_push': 0},
+          where: 'id = ? AND last_modified = ?',
+          whereArgs: [p['id'], p['last_modified']]);
+    }
+    for (final l in logs) {
+      batch.update('recurring_activity_logs', {'needs_push': 0},
+          where: 'activity_id = ? AND date = ? AND last_modified = ?',
+          whereArgs: [l['activity_id'], l['date'], l['last_modified']]);
+    }
+    await batch.commit(noResult: true);
+  }
+
   /// True when family/tags changed since the last config push.
   /// Defaults to true so a fresh install pushes its config once.
   Future<bool> isConfigDirty() async =>
@@ -574,8 +681,11 @@ class DatabaseHelper {
   ///   • deleted_uuids (hard-deleted on server) → soft-delete locally
   ///   • Family/tags: remote wins only if its family_updated_at > ours
   /// Rows written here come FROM the server, so needs_push stays 0.
-  Future<void> mergeFromJson(Map<String, dynamic> remote) async {
+  /// Returns true when anything the screens show changed (an entry, the
+  /// names), so they know to reload.
+  Future<bool> mergeFromJson(Map<String, dynamic> remote) async {
     final db = await database;
+    var changed = false;
 
     await db.transaction((txn) async {
       // ── Entries ──────────────────────────────────────────
@@ -610,6 +720,7 @@ class DatabaseHelper {
             'needs_push': 0,
             'created_at': r['created_at'] as String?,
           }, conflictAlgorithm: ConflictAlgorithm.ignore);
+          if (!remoteDeleted) changed = true;
         } else {
           final localTs = existing.first['last_modified'] as int? ?? 0;
           // Remote strictly newer → take remote version
@@ -635,6 +746,7 @@ class DatabaseHelper {
               where: 'uuid = ?',
               whereArgs: [uuid],
             );
+            changed = true;
           }
           // remoteTs <= localTs → keep local (tie-break: local device wins)
         }
@@ -643,12 +755,103 @@ class DatabaseHelper {
       // ── Records hard-deleted on the server ───────────────
       for (final uuid
           in (remote['deleted_uuids'] as List? ?? []).cast<String>()) {
-        await txn.update(
+        final n = await txn.update(
           'entries',
           {'is_deleted': 1, 'needs_push': 0},
-          where: 'uuid = ?',
+          where: 'uuid = ? AND is_deleted = 0',
           whereArgs: [uuid],
         );
+        if (n > 0) changed = true;
+      }
+
+      // ── Plans ─────────────────────────────────────────────
+      // Newer wins, like entries. The reminder columns are never touched:
+      // each phone keeps its own.
+      String? text(Object? v) => v is String && v.isNotEmpty ? v : null;
+      for (final r
+          in (remote['plans'] as List? ?? []).cast<Map<String, dynamic>>()) {
+        final id = r['id'] as String? ?? '';
+        if (id.isEmpty) continue;
+        final remoteTs = r['last_modified'] as int? ?? 0;
+        final deleted = (r['is_deleted'] as int? ?? 0) == 1;
+        final values = <String, Object?>{
+          'title': r['title'] as String? ?? '',
+          'kid_names': text(r['kid_names']) ?? '[]',
+          'repeat_days': text(r['repeat_days']) ?? '[]',
+          'date_from': text(r['date_from']),
+          'date_to': text(r['date_to']),
+          'shift': text(r['shift']) ?? 'morning',
+          'outdoor': r['outdoor'] as int? ?? 1,
+          'is_active': r['is_active'] as int? ?? 1,
+          'last_modified': remoteTs,
+          'is_deleted': deleted ? 1 : 0,
+          'needs_push': 0,
+        };
+        final createdAt = text(r['created_at']);
+        if (createdAt != null) values['created_at'] = createdAt;
+
+        final existing = await txn
+            .query('recurring_activities', where: 'id = ?', whereArgs: [id]);
+        if (existing.isEmpty) {
+          await txn.insert('recurring_activities', {'id': id, ...values});
+          if (!deleted) changed = true;
+        } else if (remoteTs >
+            (existing.first['last_modified'] as int? ?? 0)) {
+          await txn.update('recurring_activities', values,
+              where: 'id = ?', whereArgs: [id]);
+          changed = true;
+        } else {
+          continue;
+        }
+        if (deleted) {
+          await txn.delete('recurring_activity_logs',
+              where: 'activity_id = ?', whereArgs: [id]);
+        }
+      }
+
+      // ── Plan days (Done / Skip) ──────────────────────────
+      // One per plan and day. A day this phone only assumed was missed
+      // gives way to what the other phone actually marked.
+      for (final r in (remote['plan_logs'] as List? ?? [])
+          .cast<Map<String, dynamic>>()) {
+        final activityId = r['activity_id'] as String? ?? '';
+        final date = r['date'] as String? ?? '';
+        final status = r['status'] as String? ?? '';
+        if (activityId.isEmpty || date.isEmpty) continue;
+        if (status != 'confirmed' && status != 'skipped') continue;
+        final gone = await txn.query('recurring_activities',
+            where: 'id = ? AND is_deleted = 1', whereArgs: [activityId]);
+        if (gone.isNotEmpty) continue;
+
+        final remoteTs = r['last_modified'] as int? ?? 0;
+        final values = <String, Object?>{
+          'status': status,
+          'entry_uuid': text(r['entry_uuid']),
+          'skip_reason': text(r['skip_reason']),
+          'last_modified': remoteTs,
+          'needs_push': 0,
+        };
+        final existing = await txn.query('recurring_activity_logs',
+            where: 'activity_id = ? AND date = ?',
+            whereArgs: [activityId, date]);
+        if (existing.isEmpty) {
+          await txn.insert(
+              'recurring_activity_logs',
+              {
+                'id': text(r['id']) ?? Entry.generateUuid(),
+                'activity_id': activityId,
+                'date': date,
+                ...values,
+              },
+              conflictAlgorithm: ConflictAlgorithm.replace);
+          changed = true;
+        } else if (existing.first['status'] == 'missed' ||
+            remoteTs > (existing.first['last_modified'] as int? ?? 0)) {
+          await txn.update('recurring_activity_logs', values,
+              where: 'activity_id = ? AND date = ?',
+              whereArgs: [activityId, date]);
+          changed = true;
+        }
       }
 
       // ── Family config & tags ──────────────────────────────
@@ -679,6 +882,7 @@ class DatabaseHelper {
           await txn.insert('sync_meta',
               {'key': 'family_updated_at', 'value': '$remoteFamilyTs'},
               conflictAlgorithm: ConflictAlgorithm.replace);
+          changed = true;
         }
       }
 
@@ -692,6 +896,7 @@ class DatabaseHelper {
             conflictAlgorithm: ConflictAlgorithm.ignore);
       }
     });
+    return changed;
   }
 
   // ── Entry update (for edit-after-confirm) ─────────────────
@@ -717,26 +922,53 @@ class DatabaseHelper {
 
   Future<List<RecurringActivity>> getAllRecurringActivities() async {
     final db = await database;
-    final rows = await db.query('recurring_activities', orderBy: 'created_at');
+    final rows = await db.query('recurring_activities',
+        where: 'is_deleted = 0', orderBy: 'created_at');
     return rows.map(RecurringActivity.fromMap).toList();
   }
 
   Future<List<RecurringActivity>> getActiveRecurringActivities() async {
     final db = await database;
     final rows = await db.query('recurring_activities',
-        where: 'is_active = 1', orderBy: 'created_at');
+        where: 'is_active = 1 AND is_deleted = 0', orderBy: 'created_at');
     return rows.map(RecurringActivity.fromMap).toList();
   }
 
   Future<void> upsertRecurringActivity(RecurringActivity a) async {
     final db = await database;
-    await db.insert('recurring_activities', a.toMap(),
+    await db.insert(
+        'recurring_activities',
+        a.toMap()
+          ..['last_modified'] = DateTime.now().millisecondsSinceEpoch
+          ..['is_deleted'] = 0
+          ..['needs_push'] = 1,
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  /// The plan with [id]; null when there is none or it was deleted.
+  Future<RecurringActivity?> getRecurringActivity(String id) async {
+    final db = await database;
+    final rows = await db.query('recurring_activities',
+        where: 'id = ? AND is_deleted = 0', whereArgs: [id]);
+    return rows.isEmpty ? null : RecurringActivity.fromMap(rows.first);
+  }
+
+  // The row stays as a marker so the deletion reaches the other phone;
+  // the plan's days go right away.
   Future<void> deleteRecurringActivity(String id) async {
     final db = await database;
-    await db.delete('recurring_activities', where: 'id = ?', whereArgs: [id]);
+    await db.update(
+      'recurring_activities',
+      {
+        'is_deleted': 1,
+        'is_active': 0,
+        'notify_enabled': 0,
+        'last_modified': DateTime.now().millisecondsSinceEpoch,
+        'needs_push': 1,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
     await db.delete('recurring_activity_logs',
         where: 'activity_id = ?', whereArgs: [id]);
   }
@@ -760,7 +992,11 @@ class DatabaseHelper {
 
   Future<RecurringLog> upsertRecurringLog(RecurringLog log) async {
     final db = await database;
-    await db.insert('recurring_activity_logs', log.toMap(),
+    await db.insert(
+        'recurring_activity_logs',
+        log.toMap()
+          ..['last_modified'] = DateTime.now().millisecondsSinceEpoch
+          ..['needs_push'] = log.status == 'missed' ? 0 : 1,
         conflictAlgorithm: ConflictAlgorithm.replace);
     final rows = await db.query('recurring_activity_logs',
         where: 'activity_id = ? AND date = ?',

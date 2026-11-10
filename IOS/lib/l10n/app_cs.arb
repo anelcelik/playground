@@ -214,7 +214,7 @@
   "deleteAllDataSub": "V tomto iPhonu a na iCloudu",
   "aboutNote": "Playground Tracker se v App Storu kupuje jednou. Žádné předplatné, žádný účet, žádné reklamy. Vaše záznamy zůstávají ve vašich zařízeních a synchronizují se přes váš vlastní iCloud.",
   "deleteAllDataQuestion": "Smazat všechna data?",
-  "deleteAllDataBody": "Každá návštěva, plán, jméno i nastavení se smaže z tohoto iPhonu a z vašeho iCloudu. Pokud záznamy sdílíte s rodinou, přijdou o ně i oni. Tuto akci nelze vrátit.",
+  "deleteAllDataBody": "Každá návštěva, plán, jméno i nastavení se smaže z tohoto iPhonu a z vašeho iCloudu. Pokud záznamy sdílíte s rodinou, sdílení skončí a sdílená kopie se smaže; co už mají ve svém iPhonu, tam zůstane, dokud to sami nesmažou. Tuto akci nelze vrátit.",
   "deleteEverything": "Smazat vše",
   "deleting": "Mazání…",
   "nothingDeleted": "Nic nebylo smazáno",
@@ -328,7 +328,7 @@
   "privChildrenTitle": "Děti",
   "privChildren": "Aplikace je určena rodičům. Jména dětí zůstávají ve vašem iPhonu a ve vašem vlastním iCloudu. Nic o dětech se neodesílá vývojáři ani nikomu jinému.",
   "privDeletingTitle": "Smazání vašich dat",
-  "privDeleting": "Nastavení › Smazat všechna data odstraní vše najednou, z vašeho iPhonu i z vašeho iCloudu; pokud záznamy sdílíte s rodinou, odstraní se i jim. Jednotlivé záznamy můžete smazat kdykoli a smazáním aplikace se odstraní vše uložené v iPhonu. Sdílení ukončíte v Nastavení › Rodinná synchronizace.",
+  "privDeleting": "Nastavení › Smazat všechna data odstraní vše najednou, z vašeho iPhonu i z vašeho iCloudu; pokud záznamy sdílíte s rodinou, sdílení skončí a sdílená kopie na iCloudu se smaže, ale co už mají ve svých iPhonech, tam zůstane, dokud to sami nesmažou. Jednotlivé záznamy můžete smazat kdykoli a smazáním aplikace se odstraní vše uložené v iPhonu. Sdílení ukončíte v Nastavení › Rodinná synchronizace.",
   "privChangesTitle": "Změny",
   "privChanges": "Pokud se tyto zásady změní, nová verze přijde s aktualizací aplikace a datum nahoře se změní.",
   "privacyEffective": "Platné od {date}",
@@ -366,5 +366,7 @@
   "goalAYear": "{time} ročně",
   "outdoorActivity": "Aktivita venku",
   "outdoorActivitySub": "Splněno se počítá jako čas venku. Vypněte u věcí jako hodiny klavíru.",
-  "goalToGo": "Zbývá {time}"
+  "goalToGo": "Zbývá {time}",
+  "shareNeedsICloud": "Chcete-li záznamy sdílet, přihlaste se k iCloudu v Nastavení iPhonu.",
+  "shareFailed": "Sdílení se nepodařilo otevřít. Zkontrolujte připojení k internetu a zkuste to znovu."
 }

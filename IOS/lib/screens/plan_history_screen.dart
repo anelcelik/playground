@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../db/database_helper.dart';
+import '../sync/sync_service.dart';
 import '../models/family.dart';
 import '../models/recurring_activity.dart';
 import '../services/calendar_service.dart';
@@ -36,6 +37,14 @@ class _PlanHistoryScreenState extends State<PlanHistoryScreen> {
   void initState() {
     super.initState();
     _load();
+    // Done or Skip marked on the other phone.
+    SyncService.instance.dataVersion.addListener(_load);
+  }
+
+  @override
+  void dispose() {
+    SyncService.instance.dataVersion.removeListener(_load);
+    super.dispose();
   }
 
   Future<void> _load() async {

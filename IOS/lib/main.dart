@@ -17,6 +17,7 @@ import 'services/data_reset.dart';
 import 'services/quick_action_service.dart';
 import 'settings/app_settings.dart';
 import 'sync/sync_controller.dart';
+import 'sync/sync_service.dart';
 import 'theme.dart';
 
 Future<void> main() async {
@@ -133,6 +134,19 @@ class _AppRouterState extends State<_AppRouter> {
   void initState() {
     super.initState();
     _check();
+    SyncService.instance.dataVersion.addListener(_onSynced);
+  }
+
+  @override
+  void dispose() {
+    SyncService.instance.dataVersion.removeListener(_onSynced);
+    super.dispose();
+  }
+
+  /// Still at onboarding when iCloud delivers a family (a second iPhone, or
+  /// an accepted invitation): the names are already there, go to the app.
+  void _onSynced() {
+    if (!_hasFamily) _check();
   }
 
   Future<void> _check() async {

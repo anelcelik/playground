@@ -12,7 +12,7 @@ import '../settings/app_settings.dart';
 class PrivacyScreen extends StatelessWidget {
   const PrivacyScreen({super.key});
 
-  static const effective = '2026-10-11';
+  static const effective = '2026-11-10';
 
   /// Heading and text of each section, in the current language.
   static List<(String, String)> sections(AppLocalizations l) => [

@@ -33,6 +33,11 @@ import UIKit
     private let kIsParticipant     = "ck_is_participant"
     private let kPrivateSubCreated = "ck_private_sub_created"
     private let kSharedSubCreated  = "ck_shared_sub_created"
+    // Which zone this device syncs with ("private|<owner>" / "shared|<owner>"),
+    // and what the Dart side still has to be told about a switch.
+    private let kZoneKey           = "ck_zone_key"
+    private let kZoneChanged       = "ck_zone_changed"
+    private let kJoined            = "ck_joined_share"
 
     // MARK: - Properties
 
@@ -75,6 +80,20 @@ import UIKit
     /// share acceptance and remote-notification handling.
     private(set) static var shared: CloudKitPlugin?
 
+    /// A share accepted before the plugin was registered (the invitation
+    /// link launched the app); accepted as soon as it is.
+    private static var pendingShare: CKShare.Metadata?
+
+    /// Entry point for SceneDelegate, whether the app was running or not.
+    static func userAcceptedShare(_ metadata: CKShare.Metadata) {
+        guard isAvailable else { return }
+        if let plugin = shared {
+            plugin.acceptShare(metadata: metadata)
+        } else {
+            pendingShare = metadata
+        }
+    }
+
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(
             name: channelName,
@@ -84,6 +103,10 @@ import UIKit
         instance.channel = channel
         CloudKitPlugin.shared = instance
         registrar.addMethodCallDelegate(instance, channel: channel)
+        if let metadata = pendingShare {
+            pendingShare = nil
+            instance.acceptShare(metadata: metadata)
+        }
     }
 
     // MARK: - Method dispatch
@@ -104,6 +127,14 @@ import UIKit
             }
             withZone(result) { db, zoneID in
                 self.saveEntries(args, db: db, zoneID: zoneID, result: result)
+            }
+
+        case "saveRecords":
+            guard let args = call.arguments as? [[String: Any]] else {
+                finish(result, err("ARGS", "saveRecords requires a list of maps")); return
+            }
+            withZone(result) { db, zoneID in
+                self.saveRecords(args, db: db, zoneID: zoneID, result: result)
             }
 
         case "fetchChanges":
@@ -209,7 +240,8 @@ import UIKit
                     self.finish(result, self.err("DELETE_FAILED", error.localizedDescription))
                     return
                 }
-                for key in [self.kPrivateToken, self.kSharedToken, self.kIsParticipant] {
+                for key in [self.kPrivateToken, self.kSharedToken, self.kIsParticipant,
+                            self.kZoneKey, self.kZoneChanged, self.kJoined] {
                     UserDefaults.standard.removeObject(forKey: key)
                 }
                 self.cachedZone = nil
@@ -247,6 +279,7 @@ import UIKit
                         "NO_ZONE", "Could not find or create the CloudKit zone"))
                     return
                 }
+                self.noteZone(zone, db: db)
                 self.cachedZone = zone
                 self.cachedDB   = db
                 action(db, zone.zoneID)
@@ -254,24 +287,68 @@ import UIKit
         }
     }
 
+    /// Remembers which zone this device syncs with. When it is a different
+    /// one than last time (joined a family's share, or lost access to it and
+    /// fell back to the own zone), the change tokens are useless and the new
+    /// zone has none of this device's records: the next fetchChanges tells
+    /// the Dart side, which pushes everything again.
+    private func noteZone(_ zone: CKRecordZone, db: CKDatabase) {
+        let shared = db.databaseScope == .shared
+        let key = (shared ? "shared|" : "private|") + zone.zoneID.ownerName
+        let defaults = UserDefaults.standard
+        guard defaults.string(forKey: kZoneKey) != key else { return }
+        defaults.set(key, forKey: kZoneKey)
+        defaults.set(true, forKey: kZoneChanged)
+        defaults.set(shared, forKey: kJoined)
+        defaults.removeObject(forKey: kPrivateToken)
+        defaults.removeObject(forKey: kSharedToken)
+    }
+
+    /// The zone this device was using is gone: the owner deleted the log or
+    /// removed this person from the share. Forget it, so the next sync looks
+    /// again instead of failing against the old zone until the app restarts.
+    private func forgetZoneIfGone(_ error: Error) {
+        guard let ck = error as? CKError else { return }
+        let gone: (CKError) -> Bool = { $0.code == .zoneNotFound || $0.code == .userDeletedZone }
+        let partial = (ck.partialErrorsByItemID ?? [:]).values.compactMap { $0 as? CKError }
+        guard gone(ck) || partial.contains(where: gone) else { return }
+        cachedZone = nil
+        cachedDB = nil
+    }
+
     private func discoverOrCreateZone(
         completion: @escaping (CKRecordZone?, CKDatabase?) -> Void
     ) {
-        // 1. Check private database (owner)
-        ckContainer.privateCloudDatabase.fetchAllRecordZones { zones, _ in
-            if let zone = zones?.first(where: { $0.zoneID.zoneName == Self.zoneName }) {
-                UserDefaults.standard.set(false, forKey: self.kIsParticipant)
-                completion(zone, self.ckContainer.privateCloudDatabase)
+        // 1. Shared database first: someone who accepted a family's share
+        //    syncs with that log, even though their own app created a private
+        //    zone the first time it was opened. A failed lookup stops here
+        //    (no guessing: picking the wrong zone would move the data).
+        let sharedDB = ckContainer.sharedCloudDatabase
+        let privateDB = ckContainer.privateCloudDatabase
+        sharedDB.fetchAllRecordZones { sharedZones, sharedError in
+            if let error = sharedError {
+                print("[CloudKit] shared zone lookup failed: \(error)")
+                completion(nil, nil)
                 return
             }
-            // 2. Check shared database (participant — accepted a share)
-            self.ckContainer.sharedCloudDatabase.fetchAllRecordZones { sharedZones, _ in
-                if let zone = sharedZones?.first(where: { $0.zoneID.zoneName == Self.zoneName }) {
-                    UserDefaults.standard.set(true, forKey: self.kIsParticipant)
-                    completion(zone, self.ckContainer.sharedCloudDatabase)
+            if let zone = sharedZones?.first(where: { $0.zoneID.zoneName == Self.zoneName }) {
+                UserDefaults.standard.set(true, forKey: self.kIsParticipant)
+                completion(zone, sharedDB)
+                return
+            }
+            // 2. The own private zone (owner, or not sharing at all)
+            privateDB.fetchAllRecordZones { zones, error in
+                if let error = error {
+                    print("[CloudKit] private zone lookup failed: \(error)")
+                    completion(nil, nil)
                     return
                 }
-                // 3. Zone doesn't exist anywhere → create it (this device becomes owner)
+                if let zone = zones?.first(where: { $0.zoneID.zoneName == Self.zoneName }) {
+                    UserDefaults.standard.set(false, forKey: self.kIsParticipant)
+                    completion(zone, privateDB)
+                    return
+                }
+                // 3. No zone anywhere → create it (this device becomes owner)
                 self.createZone(completion: completion)
             }
         }
@@ -317,15 +394,13 @@ import UIKit
         record["last_modified"] = (map["last_modified"] as? Int ?? 0) as CKRecordValue
         record["is_deleted"]    = ((map["is_deleted"]   as? Bool ?? false) ? 1 : 0) as CKRecordValue
 
-        setOptionalString(record: record, key: "duration",   value: map["duration"])
-        setOptionalString(record: record, key: "kids",       value: map["kids"])
-        setOptionalString(record: record, key: "activities", value: map["activities"])
-        setOptionalString(record: record, key: "excuse",     value: map["excuse"])
         setOptionalString(record: record, key: "created_at", value: map["created_at"])
         // Always written, "" for none: with .changedKeys an unset key would
-        // leave the old times on the server after a switch back to a preset.
-        record["start_time"] = (map["start_time"] as? String ?? "") as CKRecordValue
-        record["end_time"]   = (map["end_time"]   as? String ?? "") as CKRecordValue
+        // keep its old value on the server, so clearing a field on one phone
+        // would never reach the other.
+        for key in ["duration", "kids", "activities", "excuse", "start_time", "end_time"] {
+            record[key] = (map[key] as? String ?? "") as CKRecordValue
+        }
 
         return record
     }
@@ -347,6 +422,57 @@ import UIKit
                 self.finish(result, nil)
             }
         }
+    }
+
+    // MARK: - saveRecords (plans and their days)
+
+    /// Records whose fields the Dart side decides: each map has "type",
+    /// "name" (the record name) and "fields" (text and whole numbers).
+    private func saveRecords(
+        _ maps: [[String: Any]],
+        db: CKDatabase,
+        zoneID: CKRecordZone.ID,
+        result: @escaping FlutterResult
+    ) {
+        let records: [CKRecord] = maps.compactMap { map in
+            guard let type = map["type"] as? String, !type.isEmpty,
+                  let name = map["name"] as? String, !name.isEmpty,
+                  let fields = map["fields"] as? [String: Any] else { return nil }
+            let record = CKRecord(
+                recordType: type, recordID: CKRecord.ID(recordName: name, zoneID: zoneID))
+            for (key, value) in fields {
+                if let text = value as? String {
+                    record[key] = text as CKRecordValue
+                } else if let number = value as? NSNumber {
+                    record[key] = number.int64Value as CKRecordValue
+                }
+            }
+            return record
+        }
+        guard !records.isEmpty else { finish(result, nil); return }
+
+        saveRecordsInChunks(records, db: db) { error in
+            if let error = error {
+                print("[CloudKit] saveRecords error: \(error)")
+                self.forgetZoneIfGone(error)
+                self.finish(result, self.err("SAVE_FAILED", error.localizedDescription))
+            } else {
+                self.finish(result, nil)
+            }
+        }
+    }
+
+    /// The reverse of saveRecords: every text and whole-number field.
+    private func fieldsToMap(_ record: CKRecord) -> [String: Any] {
+        var m: [String: Any] = [:]
+        for key in record.allKeys() {
+            if let text = record[key] as? String {
+                m[key] = text
+            } else if let number = record[key] as? Int64 {
+                m[key] = number
+            }
+        }
+        return m
     }
 
     /// Saves records in batches (CloudKit caps one operation at 400 records).
@@ -412,6 +538,8 @@ import UIKit
 
         var changedEntries: [[String: Any]] = []
         var deletedUuids: [String]          = []
+        var changedPlans: [[String: Any]]   = []
+        var changedPlanLogs: [[String: Any]] = []
         var configMap: [String: Any]?       = nil
         var newToken: CKServerChangeToken?  = nil
         var zoneError: Error?               = nil
@@ -431,6 +559,10 @@ import UIKit
                 changedEntries.append(self.entryToMap(record))
             } else if record.recordType == "FamilyConfig" {
                 configMap = self.configToMap(record)
+            } else if record.recordType == "PlaygroundPlan" {
+                changedPlans.append(self.fieldsToMap(record))
+            } else if record.recordType == "PlaygroundPlanLog" {
+                changedPlanLogs.append(self.fieldsToMap(record))
             }
         }
 
@@ -470,6 +602,7 @@ import UIKit
                     return
                 }
                 print("[CloudKit] fetchChanges error: \(error)")
+                self.forgetZoneIfGone(error)
                 self.finish(result, FlutterError(
                     code: "FETCH_FAILED",
                     message: error.localizedDescription,
@@ -486,10 +619,21 @@ import UIKit
                 UserDefaults.standard.set(data, forKey: tokenKey)
             }
 
+            // A switch of zone is reported once (see noteZone).
+            let defaults = UserDefaults.standard
+            let zoneChanged = defaults.bool(forKey: self.kZoneChanged)
+            let joined = defaults.bool(forKey: self.kJoined)
+            defaults.removeObject(forKey: self.kZoneChanged)
+            defaults.removeObject(forKey: self.kJoined)
+
             // Build payload compatible with DatabaseHelper.mergeFromJson
             let payload: [String: Any] = [
+                "zone_changed":      zoneChanged,
+                "joined":            joined,
                 "entries":           changedEntries,
                 "deleted_uuids":     deletedUuids,
+                "plans":             changedPlans,
+                "plan_logs":         changedPlanLogs,
                 "parents":           configMap?["parents"] ?? [],
                 "kids":              configMap?["kids"]    ?? [],
                 "activity_tags":     configMap?["activity_tags"] ?? [],
@@ -611,6 +755,52 @@ import UIKit
         ckContainer.add(op)
     }
 
+    // MARK: - The zone's share
+
+    /// A zone-wide share always has this record name; CloudKit picks it,
+    /// the app cannot choose its own.
+    private static func shareID(in zoneID: CKRecordZone.ID) -> CKRecord.ID {
+        CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: zoneID)
+    }
+
+    /// The zone's share, created (invitation-only) if there is none yet.
+    private func fetchOrCreateShare(
+        db: CKDatabase,
+        zoneID: CKRecordZone.ID,
+        completion: @escaping (CKShare?, Error?) -> Void
+    ) {
+        db.fetch(withRecordID: Self.shareID(in: zoneID)) { existing, error in
+            if let share = existing as? CKShare {
+                completion(share, nil)
+                return
+            }
+            if let ck = error as? CKError, ck.code != .unknownItem {
+                completion(nil, ck)
+                return
+            }
+
+            let share = CKShare(recordZoneID: zoneID)
+            share[CKShare.SystemFieldKey.title] = Self.shareTitle as CKRecordValue
+            share.publicPermission = .none  // invitation-only
+            var saved: CKShare? = nil
+
+            let op = CKModifyRecordsOperation(recordsToSave: [share], recordIDsToDelete: nil)
+            op.qualityOfService = .userInitiated
+            op.perRecordSaveBlock = { _, outcome in
+                if case .success(let record) = outcome { saved = record as? CKShare }
+            }
+            op.modifyRecordsResultBlock = { opResult in
+                switch opResult {
+                case .success:
+                    completion(saved ?? share, nil)
+                case .failure(let error):
+                    completion(nil, error)
+                }
+            }
+            db.add(op)
+        }
+    }
+
     // MARK: - createShareLink
 
     /// Owner calls this once and sends the URL to family members.
@@ -624,36 +814,15 @@ import UIKit
                 "Only the share owner can create a link. " +
                 "Have the original device create the link.")); return
         }
-
-        // Check for an existing share first
-        let shareID = CKRecord.ID(recordName: "pg_zone_share", zoneID: zoneID)
-        db.fetch(withRecordID: shareID) { existing, _ in
-            if let share = existing as? CKShare, let url = share.url {
+        fetchOrCreateShare(db: db, zoneID: zoneID) { share, error in
+            if let url = share?.url {
                 self.finish(result, url.absoluteString)
-                return
+            } else if let error = error {
+                self.finish(result, self.err("SHARE_FAILED", error.localizedDescription))
+            } else {
+                self.finish(result, self.err("NO_URL",
+                    "Share saved but no URL was returned yet. Try again in a moment."))
             }
-
-            // Create a new zone share
-            let share = CKShare(recordZoneID: zoneID)
-            share[CKShare.SystemFieldKey.title] = Self.shareTitle as CKRecordValue
-            share.publicPermission = .none  // invitation-only
-
-            let op = CKModifyRecordsOperation(recordsToSave: [share])
-            op.savePolicy = .changedKeys
-            op.modifyRecordsResultBlock = { opResult in
-                switch opResult {
-                case .success:
-                    guard let url = share.url else {
-                        self.finish(result, self.err("NO_URL",
-                            "Share saved but no URL was returned yet. " +
-                            "Try again in a moment.")); return
-                    }
-                    self.finish(result, url.absoluteString)
-                case .failure(let error):
-                    self.finish(result, self.err("SHARE_FAILED", error.localizedDescription))
-                }
-            }
-            db.add(op)
         }
     }
 
@@ -671,49 +840,32 @@ import UIKit
             return
         }
 
-        let shareID = CKRecord.ID(recordName: "pg_zone_share", zoneID: zoneID)
-
-        db.fetch(withRecordID: shareID) { existingRecord, _ in
+        fetchOrCreateShare(db: db, zoneID: zoneID) { share, error in
             DispatchQueue.main.async {
-                let controller: UICloudSharingController
-
-                if let share = existingRecord as? CKShare {
-                    // Share already exists — show management UI
-                    controller = UICloudSharingController(
-                        share: share, container: self.ckContainer
-                    )
-                } else {
-                    // No share yet — use preparation handler to create it
-                    controller = UICloudSharingController { (_, completion) in
-                        let newShare = CKShare(recordZoneID: zoneID)
-                        newShare[CKShare.SystemFieldKey.title] =
-                            Self.shareTitle as CKRecordValue
-                        newShare.publicPermission = .none
-
-                        let op = CKModifyRecordsOperation(recordsToSave: [newShare])
-                        op.modifyRecordsResultBlock = { opResult in
-                            switch opResult {
-                            case .success:
-                                completion(newShare, self.ckContainer, nil)
-                            case .failure(let error):
-                                completion(nil, self.ckContainer, error)
-                            }
-                        }
-                        db.add(op)
-                    }
+                guard let share = share else {
+                    print("[CloudKit] openShareSheet error: \(String(describing: error))")
+                    result(self.err("SHARE_FAILED",
+                                    error?.localizedDescription ?? "Could not prepare the share"))
+                    return
                 }
-
+                let controller = UICloudSharingController(
+                    share: share, container: self.ckContainer)
                 controller.availablePermissions = [.allowReadWrite, .allowPrivate]
                 controller.delegate = self
 
-                guard let rootVC = UIApplication.shared.connectedScenes
-                    .compactMap({ $0 as? UIWindowScene })
-                    .flatMap({ $0.windows })
-                    .first(where: { $0.isKeyWindow })?.rootViewController else {
-                    result(self.err("NO_VC", "Could not find root view controller"))
+                let window = UIApplication.shared.connectedScenes
+                    .compactMap { $0 as? UIWindowScene }
+                    .flatMap { $0.windows }
+                    .first { $0.isKeyWindow }
+                var top = window?.rootViewController
+                while let presented = top?.presentedViewController {
+                    top = presented
+                }
+                guard let presenter = top else {
+                    result(self.err("NO_VC", "Could not find a view controller"))
                     return
                 }
-                rootVC.present(controller, animated: true)
+                presenter.present(controller, animated: true)
                 result(nil)
             }
         }
@@ -726,31 +878,32 @@ import UIKit
         zoneID: CKRecordZone.ID,
         result: @escaping FlutterResult
     ) {
-        let shareID = CKRecord.ID(recordName: "pg_zone_share", zoneID: zoneID)
+        let shareID = Self.shareID(in: zoneID)
 
         db.fetch(withRecordID: shareID) { record, error in
             guard let share = record as? CKShare else {
                 // No share exists yet — just return owner-only list
                 self.finish(result, [[
                     "id": "",
-                    "name": "You",
+                    "name": "",
                     "email": "",
                     "role": "owner",
                     "status": "accepted",
+                    "me": true,
                 ]])
                 return
             }
 
             let participants: [[String: Any]] = share.participants.map { p in
                 let nameComponents = p.userIdentity.nameComponents
-                let name: String = {
-                    if let nc = nameComponents {
-                        let full = [nc.givenName, nc.familyName]
-                            .compactMap { $0 }.joined(separator: " ")
-                        return full.isEmpty ? "Connected user" : full
-                    }
-                    return "Connected user"
-                }()
+                // "" when iCloud gives no name; the Dart side has the wording.
+                let name = [nameComponents?.givenName, nameComponents?.familyName]
+                    .compactMap { $0 }.joined(separator: " ")
+                // The owner's database is the private one; a participant sees
+                // their own identity under the current-user record name.
+                let me = db.databaseScope == .private
+                    ? p.role == .owner
+                    : p.userIdentity.userRecordID?.recordName == CKCurrentUserDefaultName
                 let email = p.userIdentity.lookupInfo?.emailAddress ?? ""
                 let role  = p.role == .owner ? "owner" : "participant"
                 let status: String = {
@@ -767,6 +920,7 @@ import UIKit
                     "email":  email,
                     "role":   role,
                     "status": status,
+                    "me":     me,
                 ]
             }
             self.finish(result, participants)
@@ -781,7 +935,7 @@ import UIKit
         zoneID: CKRecordZone.ID,
         result: @escaping FlutterResult
     ) {
-        let shareID = CKRecord.ID(recordName: "pg_zone_share", zoneID: zoneID)
+        let shareID = Self.shareID(in: zoneID)
 
         db.fetch(withRecordID: shareID) { record, error in
             guard let share = record as? CKShare else {
@@ -819,10 +973,10 @@ import UIKit
         m["user"]          = record["user"]          as? String ?? ""
         m["vacation"]      = (record["vacation"]      as? Int64 ?? 0) == 1
         m["no_playground"] = (record["no_playground"] as? Int64 ?? 0) == 1
-        m["duration"]      = record["duration"]      as? String
-        m["kids"]          = record["kids"]          as? String
-        m["activities"]    = record["activities"]    as? String
-        m["excuse"]        = record["excuse"]        as? String
+        m["duration"]      = nonEmpty(record["duration"]   as? String)
+        m["kids"]          = nonEmpty(record["kids"]       as? String)
+        m["activities"]    = nonEmpty(record["activities"] as? String)
+        m["excuse"]        = nonEmpty(record["excuse"]     as? String)
         m["start_time"]    = nonEmpty(record["start_time"] as? String)
         m["end_time"]      = nonEmpty(record["end_time"]   as? String)
         m["last_modified"] = record["last_modified"] as? Int64 ?? 0

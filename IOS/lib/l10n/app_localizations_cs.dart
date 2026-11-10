@@ -727,7 +727,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get deleteAllDataBody =>
-      'Každá návštěva, plán, jméno i nastavení se smaže z tohoto iPhonu a z vašeho iCloudu. Pokud záznamy sdílíte s rodinou, přijdou o ně i oni. Tuto akci nelze vrátit.';
+      'Každá návštěva, plán, jméno i nastavení se smaže z tohoto iPhonu a z vašeho iCloudu. Pokud záznamy sdílíte s rodinou, sdílení skončí a sdílená kopie se smaže; co už mají ve svém iPhonu, tam zůstane, dokud to sami nesmažou. Tuto akci nelze vrátit.';
 
   @override
   String get deleteEverything => 'Smazat vše';
@@ -1124,7 +1124,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get privDeleting =>
-      'Nastavení › Smazat všechna data odstraní vše najednou, z vašeho iPhonu i z vašeho iCloudu; pokud záznamy sdílíte s rodinou, odstraní se i jim. Jednotlivé záznamy můžete smazat kdykoli a smazáním aplikace se odstraní vše uložené v iPhonu. Sdílení ukončíte v Nastavení › Rodinná synchronizace.';
+      'Nastavení › Smazat všechna data odstraní vše najednou, z vašeho iPhonu i z vašeho iCloudu; pokud záznamy sdílíte s rodinou, sdílení skončí a sdílená kopie na iCloudu se smaže, ale co už mají ve svých iPhonech, tam zůstane, dokud to sami nesmažou. Jednotlivé záznamy můžete smazat kdykoli a smazáním aplikace se odstraní vše uložené v iPhonu. Sdílení ukončíte v Nastavení › Rodinná synchronizace.';
 
   @override
   String get privChangesTitle => 'Změny';
@@ -1287,4 +1287,12 @@ class AppLocalizationsCs extends AppLocalizations {
   String goalToGo(String time) {
     return 'Zbývá $time';
   }
+
+  @override
+  String get shareNeedsICloud =>
+      'Chcete-li záznamy sdílet, přihlaste se k iCloudu v Nastavení iPhonu.';
+
+  @override
+  String get shareFailed =>
+      'Sdílení se nepodařilo otevřít. Zkontrolujte připojení k internetu a zkuste to znovu.';
 }

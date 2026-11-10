@@ -3,6 +3,7 @@ import '../db/database_helper.dart';
 import '../models/family.dart';
 import '../models/recurring_activity.dart';
 import '../notifications/notification_service.dart';
+import '../sync/sync_service.dart';
 import 'plan_history_screen.dart';
 import 'recurring_activity_form.dart';
 
@@ -33,6 +34,14 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
   void initState() {
     super.initState();
     _load();
+    // A plan made or changed on the other phone shows up right away.
+    SyncService.instance.dataVersion.addListener(_load);
+  }
+
+  @override
+  void dispose() {
+    SyncService.instance.dataVersion.removeListener(_load);
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -57,7 +66,10 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
         ),
       ),
     );
-    if (result == true) _load();
+    if (result == true) {
+      _load();
+      SyncService.instance.sync();
+    }
   }
 
   /// Tapping a plan shows its history and "Add to Calendar".
@@ -68,7 +80,10 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
         builder: (_) => PlanHistoryScreen(activity: a, family: _family),
       ),
     );
-    if (changed == true) _load();
+    if (changed == true) {
+      _load();
+      SyncService.instance.sync();
+    }
   }
 
   Future<void> _delete(RecurringActivity a) async {
@@ -92,6 +107,7 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
       await DatabaseHelper.instance.deleteRecurringActivity(a.id);
       await NotificationService.instance.cancelRecurringActivity(a);
       _load();
+      SyncService.instance.sync();
     }
   }
 
@@ -104,6 +120,7 @@ class _ManageRecurringScreenState extends State<ManageRecurringScreen> {
       await NotificationService.instance.scheduleRecurringActivity(updated);
     }
     _load();
+    SyncService.instance.sync();
   }
 
   @override

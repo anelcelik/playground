@@ -11,6 +11,7 @@ import '../widgets/modernist.dart';
 import '../models/durations.dart';
 import 'dashboard_customise_screen.dart';
 import '../l10n/l10n.dart';
+import '../sync/sync_service.dart';
 
 /// The History tab.
 ///
@@ -38,12 +39,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _load();
     AppSettings.instance.addListener(_onSettingsChanged);
     DashboardPrefs.instance.addListener(_onSettingsChanged);
+    SyncService.instance.dataVersion.addListener(_load);
   }
 
   @override
   void dispose() {
     AppSettings.instance.removeListener(_onSettingsChanged);
     DashboardPrefs.instance.removeListener(_onSettingsChanged);
+    SyncService.instance.dataVersion.removeListener(_load);
     super.dispose();
   }
 

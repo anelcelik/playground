@@ -20,6 +20,7 @@ import 'package:playground_tracker/db/database_helper.dart';
 import 'package:playground_tracker/l10n/app_localizations.dart';
 import 'package:playground_tracker/main.dart';
 import 'package:playground_tracker/models/entry.dart';
+import 'package:playground_tracker/models/goal.dart';
 import 'package:playground_tracker/models/recurring_activity.dart';
 import 'package:playground_tracker/settings/app_settings.dart';
 import 'package:playground_tracker/theme.dart';
@@ -440,6 +441,9 @@ Future<void> _boot(WidgetTester t, AppPalette palette,
     await AppSettings.instance.setLanguage(lang);
     await AppSettings.instance.setUse24h(true);
     await AppSettings.instance.setEuDate(true);
+    // The sample family has a goal, so Today shows the band filled in.
+    await AppSettings.instance.setGoal(
+        seed ? const OutdoorGoal(GoalPeriod.week, 7 * 60) : null);
   });
   await t.pumpWidget(const _Stage());
   await settle(t);

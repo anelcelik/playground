@@ -64,10 +64,17 @@ jobs:
 
       - run: flutter pub get
 
+      # Nothing goes to TestFlight that the normal build would have stopped.
+      - run: flutter analyze
+      - run: flutter test
+
+      # App Store Connect refuses a second upload with the same build number;
+      # the run number is different for every run of this workflow.
       - name: Build IPA
         run: |
           flutter build ipa \
             --release \
+            --build-number=${{ github.run_number }} \
             --export-options-plist=$HOME/export_options.plist
 
       - name: Upload to TestFlight

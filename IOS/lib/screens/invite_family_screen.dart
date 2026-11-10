@@ -37,7 +37,17 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
   }
 
   Future<void> _openShareSheet() async {
-    await SyncService.instance.openShareSheet();
+    final problem = await SyncService.instance.openShareSheet();
+    if (!mounted) return;
+    if (problem != null) {
+      // Say why nothing opened, instead of a button that does nothing.
+      _toast(
+          problem == 'ICLOUD_UNAVAILABLE'
+              ? context.l10n.shareNeedsICloud
+              : context.l10n.shareFailed,
+          seconds: 5);
+      return;
+    }
     // Refresh after closing the share sheet
     await Future.delayed(const Duration(milliseconds: 800));
     _load();
@@ -77,15 +87,15 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
     final email = p['email'] as String? ?? '';
     if (name.isNotEmpty && name != 'Unknown') return name;
     if (email.isNotEmpty) return email;
-    return currentL10n.connectedUser;
+    return p['me'] == true ? currentL10n.you : currentL10n.connectedUser;
   }
 
-  void _toast(String msg) {
+  void _toast(String msg, {int seconds = 2}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
       behavior: SnackBarBehavior.floating,
-      duration: const Duration(seconds: 2),
+      duration: Duration(seconds: seconds),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
     ));
   }
@@ -93,8 +103,9 @@ class _InviteFamilyScreenState extends State<InviteFamilyScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    // Only the person who started sharing can invite or remove people.
     final isOwner = _participants.isEmpty ||
-        _participants.any((p) => p['role'] == 'owner');
+        _participants.any((p) => p['role'] == 'owner' && p['me'] == true);
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -301,7 +312,7 @@ class _ParticipantTile extends StatelessWidget {
             ],
           ),
         ),
-        if (isOwner)
+        if (participant['me'] == true)
           Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

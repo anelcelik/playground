@@ -214,7 +214,7 @@
   "deleteAllDataSub": "Na ovom iPhoneu i u iCloudu",
   "aboutNote": "Playground Tracker se kupuje jednom u App Storeu. Bez pretplate, bez računa, bez reklama. Tvoj dnevnik ostaje na tvojim uređajima i sinhronizuje se kroz tvoj vlastiti iCloud.",
   "deleteAllDataQuestion": "Obrisati sve podatke?",
-  "deleteAllDataBody": "Svaka posjeta, plan, ime i postavka briše se sa ovog iPhonea i iz tvog iClouda. Ako dnevnik dijeliš sa porodicom, i oni ga gube. Ovo se ne može poništiti.",
+  "deleteAllDataBody": "Svaka posjeta, plan, ime i postavka briše se sa ovog iPhonea i iz tvog iClouda. Ako dnevnik dijeliš sa porodicom, dijeljenje prestaje i dijeljena kopija se briše; ono što je već na njihovom iPhoneu ostaje dok ga tamo ne obrišu. Ovo se ne može poništiti.",
   "deleteEverything": "Obriši sve",
   "deleting": "Brisanje…",
   "nothingDeleted": "Ništa nije obrisano",
@@ -328,7 +328,7 @@
   "privChildrenTitle": "Djeca",
   "privChildren": "Aplikacija je namijenjena roditeljima. Imena djece ostaju na tvom iPhoneu i u tvom vlastitom iCloudu. Ništa o djeci se ne šalje programeru niti bilo kome drugom.",
   "privDeletingTitle": "Brisanje tvojih podataka",
-  "privDeleting": "Postavke › Obriši sve podatke briše sve odjednom, sa tvog iPhonea i iz tvog iClouda; ako dnevnik dijeliš sa porodicom, briše se i za njih. Pojedinačne unose možeš obrisati bilo kad, a brisanjem aplikacije briše se sve što je sačuvano na iPhoneu. Da prestaneš dijeliti, koristi Porodičnu sinhronizaciju u Postavkama.",
+  "privDeleting": "Postavke › Obriši sve podatke briše sve odjednom, sa tvog iPhonea i iz tvog iClouda; ako dnevnik dijeliš sa porodicom, dijeljenje prestaje i dijeljena kopija u iCloudu se briše, a ono što je već na njihovim iPhoneima ostaje dok ga tamo ne obrišu. Pojedinačne unose možeš obrisati bilo kad, a brisanjem aplikacije briše se sve što je sačuvano na iPhoneu. Da prestaneš dijeliti, koristi Porodičnu sinhronizaciju u Postavkama.",
   "privChangesTitle": "Promjene",
   "privChanges": "Ako se ova politika promijeni, nova verzija dolazi sa ažuriranjem aplikacije, a datum iznad se mijenja.",
   "privacyEffective": "Važi od {date}",
@@ -366,5 +366,7 @@
   "goalAYear": "{time} godišnje",
   "outdoorActivity": "Aktivnost napolju",
   "outdoorActivitySub": "Kad je urađeno, računa se kao vrijeme napolju. Isključi za stvari kao što su časovi klavira.",
-  "goalToGo": "Još {time}"
+  "goalToGo": "Još {time}",
+  "shareNeedsICloud": "Prijavi se na iCloud u Postavkama iPhonea da bi dijelio dnevnik.",
+  "shareFailed": "Dijeljenje se nije moglo otvoriti. Provjeri internet vezu i pokušaj ponovo."
 }

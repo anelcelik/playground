@@ -138,6 +138,49 @@ void main() {
       expect((await db.getFamily()).kids, ['Y']);
     });
 
+    test('merge says whether the screens have something new to show',
+        () async {
+      // Nothing in it
+      expect(await db.mergeFromJson(remoteSnapshot()), isFalse);
+      // A visit from the other phone
+      expect(
+          await db.mergeFromJson(remoteSnapshot(
+              entries: [entry(uuid: 'remote-1', ts: 500).toJsonMap()])),
+          isTrue);
+      // The same visit again: already here
+      expect(
+          await db.mergeFromJson(remoteSnapshot(
+              entries: [entry(uuid: 'remote-1', ts: 500).toJsonMap()])),
+          isFalse);
+      // Names changed on the other phone
+      final future = DateTime.now().millisecondsSinceEpoch + 100000;
+      expect(
+          await db.mergeFromJson(remoteSnapshot(
+              familyUpdatedAt: future, parents: ['X'], kids: ['Y'])),
+          isTrue);
+    });
+
+    test('joining a shared log: its names win, own visits are pushed again',
+        () async {
+      await db.saveFamily(['Me'], ['Kid']);
+      final mine = await db.insertEntry(entry(uuid: 'mine'));
+      await db.markEntriesPushed(
+          [(uuid: mine.uuid, lastModified: mine.lastModified)]);
+      await db.markConfigPushed();
+      expect(await db.getDirtyEntries(), isEmpty);
+
+      // What SyncService does when the native side reports the switch
+      await db.markAllForPush();
+      await db.setMeta('family_updated_at', '0');
+      // The owner set the names up long before this phone did
+      await db.mergeFromJson(remoteSnapshot(
+          familyUpdatedAt: 1000, parents: ['Mom', 'Dad'], kids: ['Mia']));
+
+      expect((await db.getFamily()).parents, ['Mom', 'Dad']);
+      expect((await db.getDirtyEntries()).map((e) => e.uuid), ['mine']);
+      expect(await db.isConfigDirty(), isTrue);
+    });
+
     test('tags are unioned, never removed', () async {
       await db.addTag('activity', 'Swings');
       await db.mergeFromJson(remoteSnapshot(activityTags: ['Slide']));
@@ -257,6 +300,197 @@ void main() {
     final status =
         await RecurringService.instance.getStatusForDate('2026-06-01');
     expect(status.every((s) => s.isConfirmed), isTrue);
+  });
+
+  group('plan sync', () {
+    const football = RecurringActivity(
+        id: 'football',
+        title: 'Football',
+        kidNames: ['Bean'],
+        repeatDays: [0],
+        notifyEnabled: true,
+        notifyHour: 16,
+        notifyMinute: 30);
+
+    Map<String, dynamic> remotePlan(int ts,
+            {String title = 'Football', int deleted = 0, int active = 1}) =>
+        {
+          'id': 'football',
+          'title': title,
+          'kid_names': '["Bean"]',
+          'repeat_days': '[0,2]',
+          'date_from': '',
+          'date_to': '',
+          'shift': 'evening',
+          'outdoor': 1,
+          'is_active': active,
+          'created_at': '2026-05-01 10:00:00',
+          'last_modified': ts,
+          'is_deleted': deleted,
+        };
+
+    Map<String, dynamic> remoteLog(String status, int ts, {String reason = ''}) =>
+        {
+          'id': 'remote-log',
+          'activity_id': 'football',
+          'date': '2026-06-01',
+          'status': status,
+          'entry_uuid': '',
+          'skip_reason': reason,
+          'last_modified': ts,
+        };
+
+    test('making, changing and deleting a plan marks it for push', () async {
+      await db.upsertRecurringActivity(football);
+      var dirty = await db.getDirtyPlans();
+      expect(dirty.single['title'], 'Football');
+      expect(dirty.single['date_from'], '');
+      await db.markPlansPushed(dirty, []);
+      expect(await db.getDirtyPlans(), isEmpty);
+
+      await db.upsertRecurringActivity(football.copyWith(title: 'Soccer'));
+      dirty = await db.getDirtyPlans();
+      expect(dirty.single['title'], 'Soccer');
+      await db.markPlansPushed(dirty, []);
+
+      await db.deleteRecurringActivity('football');
+      expect(await db.getAllRecurringActivities(), isEmpty);
+      expect(await db.getRecurringActivity('football'), isNull);
+      expect((await db.getDirtyPlans()).single['is_deleted'], 1);
+    });
+
+    test('a change made while the push was running stays marked', () async {
+      await db.upsertRecurringActivity(football);
+      final sent = await db.getDirtyPlans();
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      await db.upsertRecurringActivity(football.copyWith(title: 'Soccer'));
+      await db.markPlansPushed(sent, []);
+      expect((await db.getDirtyPlans()).single['title'], 'Soccer');
+    });
+
+    test('a plan from the other phone arrives with its reminder off',
+        () async {
+      final changed = await db.mergeFromJson({
+        'plans': [remotePlan(1000)]
+      });
+      expect(changed, isTrue);
+      final plan = (await db.getAllRecurringActivities()).single;
+      expect(plan.title, 'Football');
+      expect(plan.repeatDays, [0, 2]);
+      expect(plan.shift, 'evening');
+      expect(plan.dateFrom, isNull);
+      expect(plan.notifyEnabled, isFalse);
+      expect(plan.createdAt, '2026-05-01 10:00:00');
+      expect(await db.getDirtyPlans(), isEmpty);
+    });
+
+    test('a newer change from the other phone keeps this phone’s reminder',
+        () async {
+      await db.upsertRecurringActivity(football);
+      final far = DateTime.now().millisecondsSinceEpoch + 100000;
+
+      // Older than what is here: ignored.
+      expect(
+          await db.mergeFromJson({
+            'plans': [remotePlan(5, title: 'Old')]
+          }),
+          isFalse);
+      expect((await db.getAllRecurringActivities()).single.title, 'Football');
+
+      await db.mergeFromJson({
+        'plans': [remotePlan(far, title: 'Soccer', active: 0)]
+      });
+      final plan = (await db.getAllRecurringActivities()).single;
+      expect(plan.title, 'Soccer');
+      expect(plan.isActive, isFalse);
+      expect(plan.notifyEnabled, isTrue);
+      expect(plan.notifyHour, 16);
+      expect(await db.getDirtyPlans(), isEmpty);
+    });
+
+    test('a plan deleted on the other phone goes here too, with its days',
+        () async {
+      const family = Family(parents: ['Mom'], kids: ['Bean']);
+      await db.upsertRecurringActivity(football);
+      await RecurringService.instance
+          .confirm(activity: football, date: '2026-06-01', family: family);
+      final far = DateTime.now().millisecondsSinceEpoch + 100000;
+
+      await db.mergeFromJson({
+        'plans': [remotePlan(far, deleted: 1)],
+        // A day of the deleted plan that is still in iCloud is not kept.
+        'plan_logs': [remoteLog('confirmed', far)],
+      });
+      expect(await db.getAllRecurringActivities(), isEmpty);
+      expect(await db.getRecurringLogsForActivity('football'), isEmpty);
+      // The visit that Done logged stays in the history.
+      expect((await db.getEntriesForDate('2026-06-01')).length, 1);
+    });
+
+    test('Done and Skip are pushed; a day nobody marked is not', () async {
+      await db.upsertRecurringActivity(football);
+      // 2026-06-01 is a Monday in the past: counted as missed.
+      final status =
+          await RecurringService.instance.getStatusForDate('2026-06-01');
+      expect(status.single.isMissed, isTrue);
+      expect(await db.getDirtyPlanLogs(), isEmpty);
+
+      await RecurringService.instance
+          .skip(activity: football, date: '2026-06-01', reason: 'sick');
+      final dirty = await db.getDirtyPlanLogs();
+      expect(dirty.single['status'], 'skipped');
+      expect(dirty.single['skip_reason'], 'sick');
+      expect(dirty.single['entry_uuid'], '');
+      await db.markPlansPushed([], dirty);
+      expect(await db.getDirtyPlanLogs(), isEmpty);
+    });
+
+    test('what the other phone marked replaces a day assumed missed',
+        () async {
+      await db.upsertRecurringActivity(football);
+      await RecurringService.instance.getStatusForDate('2026-06-01');
+
+      // Marked before this phone wrote its "missed": still wins.
+      final changed = await db.mergeFromJson({
+        'plan_logs': [remoteLog('confirmed', 5)]
+      });
+      expect(changed, isTrue);
+      final log = (await db.getRecurringLogsForActivity('football')).single;
+      expect(log.status, 'confirmed');
+      expect(await db.getDirtyPlanLogs(), isEmpty);
+    });
+
+    test('for a day marked on both phones the later one counts', () async {
+      await db.upsertRecurringActivity(football);
+      await RecurringService.instance
+          .skip(activity: football, date: '2026-06-01', reason: 'sick');
+      final far = DateTime.now().millisecondsSinceEpoch + 100000;
+
+      expect(
+          await db.mergeFromJson({
+            'plan_logs': [remoteLog('confirmed', 5)]
+          }),
+          isFalse);
+      expect((await db.getRecurringLogsForActivity('football')).single.status,
+          'skipped');
+
+      await db.mergeFromJson({
+        'plan_logs': [remoteLog('skipped', far, reason: 'cancelled')]
+      });
+      final log = (await db.getRecurringLogsForActivity('football')).single;
+      expect(log.skipReason, 'cancelled');
+    });
+
+    test('joining a shared log pushes this phone’s plans again', () async {
+      await db.upsertRecurringActivity(football);
+      await RecurringService.instance
+          .skip(activity: football, date: '2026-06-01', reason: 'sick');
+      await db.markPlansPushed(
+          await db.getDirtyPlans(), await db.getDirtyPlanLogs());
+      await db.markAllForPush();
+      expect((await db.getDirtyPlans()).length, 1);
+      expect((await db.getDirtyPlanLogs()).length, 1);
+    });
   });
 
   test('reminder time labels follow the 24-hour setting', () async {
@@ -436,6 +670,8 @@ void main() {
     // Plans from before the switch were all logged as visits.
     final plans = await db.getAllRecurringActivities();
     expect(plans.single.outdoor, isTrue);
+    // And they go to iCloud on the first sync after the update.
+    expect((await db.getDirtyPlans()).single['id'], 'p1');
 
     final kept = await db.getEntryByUuid('old-1');
     expect(kept!.duration, '1h');

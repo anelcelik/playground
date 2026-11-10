@@ -40,11 +40,14 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadFamily();
     RecurringService.instance.autoMarkMissed();
     QuickActionService.instance.lastAction.addListener(_onQuickAction);
+    // Names changed on the other phone.
+    SyncService.instance.dataVersion.addListener(_loadFamily);
   }
 
   @override
   void dispose() {
     QuickActionService.instance.lastAction.removeListener(_onQuickAction);
+    SyncService.instance.dataVersion.removeListener(_loadFamily);
     super.dispose();
   }
 

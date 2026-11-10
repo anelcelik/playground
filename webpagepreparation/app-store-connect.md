@@ -11,9 +11,9 @@ Playground Tracker
 
 Your family's outdoor log
 
-## Promotional text (148 of 170)
+## Promotional text (149 of 170)
 
-Log who took the kids out, fill in days you missed, track plans and share it all with your partner through iCloud. One purchase, no account, no ads.
+Log who took the kids out, fill in days you missed, track plans and share the log with your partner through iCloud. One purchase, no account, no ads.
 
 ## Keywords (96 of 100, commas, no spaces)
 
@@ -39,7 +39,7 @@ ADD PLANS TO YOUR CALENDAR OR REMINDERS
 Add a plan to your iPhone calendar, repeat included, and invite people from there. Or put it in the Reminders app with an alert at the plan's time.
 
 SHARE WITH YOUR FAMILY
-Invite your partner with a link. Your log stays in sync on both phones through iCloud.
+Invite your partner with a link. Your visits and plans stay in sync on both phones through iCloud. Reminders and the goal are set on each phone.
 
 MAKE IT YOURS
 Seven color themes or your own colors, 12- or 24-hour time, and five languages: English, Spanish, German, Bosnian and Czech.
@@ -92,7 +92,9 @@ creating a plan.
 
 Family sync (Settings > Family sync) uses CloudKit sharing and needs a second
 Apple ID to accept the invitation; everything else in the app works without
-it.
+it. It shares visits, plans (with their Done / Skip days), names and tags;
+reminders and the goal stay on each phone. On a device that is not signed in to iCloud, "Invite someone"
+shows a message asking to sign in.
 
 Notifications are only requested when a reminder is switched on (Settings >
 Reminders, or the reminder switch in a plan).

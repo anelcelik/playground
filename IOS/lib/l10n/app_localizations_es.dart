@@ -726,7 +726,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get deleteAllDataBody =>
-      'Todas las visitas, planes, nombres y ajustes se eliminan de este iPhone y de tu iCloud. Si compartes el registro con tu familia, ellos también lo pierden. No se puede deshacer.';
+      'Todas las visitas, planes, nombres y ajustes se eliminan de este iPhone y de tu iCloud. Si compartes el registro con tu familia, se deja de compartir y se elimina la copia compartida; lo que ya está en su iPhone se queda hasta que lo eliminen allí. No se puede deshacer.';
 
   @override
   String get deleteEverything => 'Eliminarlo todo';
@@ -1121,7 +1121,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get privDeleting =>
-      'Ajustes › Eliminar todos los datos borra todo de una vez, de tu iPhone y de tu iCloud; si compartes el registro con tu familia, también se borra para ellos. También puedes eliminar registros sueltos en cualquier momento, y al eliminar la app se borra todo lo guardado en el iPhone. Para dejar de compartir, usa Sincronizar en familia en Ajustes.';
+      'Ajustes › Eliminar todos los datos borra todo de una vez, de tu iPhone y de tu iCloud; si compartes el registro con tu familia, se deja de compartir y se borra la copia compartida de iCloud, mientras que lo que ya está en sus iPhone se queda hasta que lo eliminen allí. También puedes eliminar registros sueltos en cualquier momento, y al eliminar la app se borra todo lo guardado en el iPhone. Para dejar de compartir, usa Sincronizar en familia en Ajustes.';
 
   @override
   String get privChangesTitle => 'Cambios';
@@ -1280,4 +1280,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String goalToGo(String time) {
     return 'Faltan $time';
   }
+
+  @override
+  String get shareNeedsICloud =>
+      'Inicia sesión en iCloud en los Ajustes del iPhone para compartir tu registro.';
+
+  @override
+  String get shareFailed =>
+      'No se pudo abrir la opción de compartir. Comprueba tu conexión a internet e inténtalo de nuevo.';
 }
